@@ -208,31 +208,43 @@ State is persisted to `localStorage` under `poolmigo-demo-v1`.
 | `src/store/useStore.ts` | zustand store (persisted) with deposit / withdraw / stake / claim / lock / unlock |
 | `src/store/selectors.ts` | Derived hooks shared by Explore, Vault and Rewards |
 | `src/components/deposit/DepositCard.tsx` | The prototype deposit / withdraw card (demo data) |
-| `src/components/vault/PriceRange.tsx` | Price chart with the LP range band (lightweight-charts) |
+| `src/components/vault/PriceRange.tsx` | The range as an instrument: two stones on the bounds, the sun at the price, a graduated price axis (SVG) |
 | `src/test/` | Spec anchors, store consistency, chain helpers, multi-chain registry + switching, multi-vault registry + selection, vault picker, wallet picker, render smoke test |
 | `scripts/` | `sync-shared.ts` (CLI) + `generate.ts` (pure render) + `registry.ts` (validation), `e2e-local.ts` (viem end-to-end) |
 
 ## Brand
 
-Follows the Poolmigo brand kit v1.0 (`brand-tokens.json`). Tailwind token *names* were kept from the original build so
-components did not need to change; only the values did:
+Dusk direction (the product name is set in `src/lib/brand.ts`). Dark only. Tailwind token *names* were
+kept so components did not need to change; the values and a few meanings did (`src/index.css`, `tailwind.config.ts`):
 
 | Token | Value | Role |
 |---|---|---|
-| `deep` | `#FFF8EF` cream | page background, inset fields |
-| `panel` / `panel-2` | `#FFFFFF` / `#F6EFE4` | cards / hover surfaces |
-| `line` / `line-2` | `#DDD9D1` / `#C9C3B9` | borders |
-| `ink` / `ink-2` / `ink-3` | `#302823` / `#625D57` / `#8F8981` | text, muted, quiet labels |
-| `aqua` | `#244742` deep teal | primary actions, in-range, APR |
-| `up` / `down` / `amber` | `#28614F` / `#A33832` / `#8B5A13` | success / negative / warning |
-| `apricot` / `glass` | `#F3A66E` / `#7BB8B2` | character colours (decorative; apricot + ink for secondary CTAs) |
-| `tide` | `#9A5A22` | PMG-denominated numbers — apricot darkened for text contrast (not in the kit) |
+| `deep` | `#150D10` night | page background, wells inside panels |
+| `dusk` | `#1F1418` | sheets |
+| `panel` / `panel-2` | `#2A1B20` / `#36242A` | cards / hover and selected surfaces |
+| `line` / `line-2` | sand at 12% / 24% | borders |
+| `ink` / `ink-2` / `ink-3` | `#EFE3D1` / `#C4B19D` / `#9C8878` | text, muted, quiet labels |
+| `aqua` | `#EFE3D1` sand | primary actions: there is no second accent colour |
+| `up` / `down` / `amber` | `#92D6A6` / `#FF8A8F` / `#E0B07A` | gain / loss / caution |
+| `sun` / `sun-core` | `#FFAE3D` / `#FFE3A3` | the price. `apricot` and `tide` (PMG) map to the same colour |
+| `glass` | `#B36D5F` rose | decorative |
 
-Type is Rubik (400 / 500 / 700) via Google Fonts with tabular numerals. Cards use a 16 px radius, buttons a 12 px radius,
-and every action target is at least 36 px tall (44 px for primary CTAs). Wordmark SVGs and mascot crops live in `public/brand/`;
-the mascot appears only in empty states, never inside data tables.
+One rule shapes the interface: **only the price is round**. The sun, the price mark on a range and price points on a
+chart are circles; ranges, controls, cards and token tiles are square-cut. The radius scale is small all the way up to
+`rounded-full` for that reason; use `rounded-circle` for a real circle.
+
+The motif: two stones mark a range's bounds, the sun marks the price, a graduated scale is the price axis. It appears
+as the mark (`components/brand/Mark.tsx`), the range meter on each vault row (`components/vault/RangeMeter.tsx`), the
+price range on the vault page (`components/vault/PriceRange.tsx`) and the scene behind the Earn page
+(`components/brand/Scene.tsx`). Readings sit on an engraved rule (`StatRow`).
+
+Type: Geist (UI and numerals, tabular; emphasis at 500) and Geist Mono via Google Fonts; Zodiak (page titles, vault
+names; light, never bold) from the Fontshare CDN. Zodiak's licence does not allow its font files in a public repository,
+so it is loaded by `<link>` in `index.html` and never committed. Every action target is at least 36 px tall (44 px for
+primary CTAs).
 
 ## Design tokens
 
-Tailwind config is the token source: surfaces `deep` / `panel` / `line`, accent `aqua`, semantic `up` / `down` / `amber`,
-token colour `tide`. Display type is Archivo, body and numerals are Inter with tabular figures on by default.
+Tailwind config is the token source: surfaces `deep` / `dusk` / `panel` / `line`, action `aqua`, semantic `up` / `down` /
+`amber`, price and rewards `sun` / `tide`. `font-display` is Geist for numbers and UI titles, `font-serif` (class `title`)
+is Zodiak for page-level titles. Chart libraries that cannot read CSS variables take the same colours from `src/lib/theme.ts`.
