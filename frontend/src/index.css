@@ -33,6 +33,38 @@
   --c-shadow: 0 0 0;
 }
 
+/*
+ * Figures are set in Switzer; everything else in the sans stacks stays Geist. The unicode-range keeps
+ * these faces to the digits and the signs that travel with them ($ % + , . −), so the swap needs no
+ * class: a figure anywhere in the UI picks Switzer up from the font stack. Its figures are lining
+ * and of one width, so columns still align.
+ * Served from the Fontshare CDN: the licence does not allow the font files in a public repository.
+ */
+@font-face {
+  font-family: 'Switzer Figures';
+  src: url('https://cdn.fontshare.com/wf/EW5HJEX6O4L64XUWQA2XU7Q6BZ3B4JA4/ZWUP4SQYHHMMSS5LFHFFBX6DXL7C3DTU/H5EOHLIZH5K7IZK6SGYJI75L4KV6FUO7.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0024, U+0025, U+002B, U+002C, U+002E, U+0030-0039, U+2212;
+}
+@font-face {
+  font-family: 'Switzer Figures';
+  src: url('https://cdn.fontshare.com/wf/BLNB4FAQFNK56DWWNF7PMGTCOTZHOEII/ST3WKSSDMBK2MIQQO3MAVYWLF4FTOLFV/6IN5WOLRCYP4G4MOCOHOMXNON6Q7MDAR.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0024, U+0025, U+002B, U+002C, U+002E, U+0030-0039, U+2212;
+}
+@font-face {
+  font-family: 'Switzer Figures';
+  src: url('https://cdn.fontshare.com/wf/OYB4CXKJQXKTNSLJMTDQOIVUL2V5EL7S/WYO2P7DQVV5RNXGMCUO2HL4RJP4VFUAS/6XPIMU23OJVRY676OG5YVJMWEHWICATX.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0024, U+0025, U+002B, U+002C, U+002E, U+0030-0039, U+2212;
+}
+
 @layer base {
   html { background: rgb(var(--c-deep)); }
   body {
@@ -54,6 +86,8 @@
 @layer utilities {
   .num { font-variant-numeric: tabular-nums; }
   .display { @apply font-display font-medium; letter-spacing: -0.01em; }
+  /* A reading is one weight lighter than a title: figures at regular, titles at medium */
+  .display.num { font-weight: 400; }
   /* Page-level titles: the display serif, light, never bold */
   .title { @apply font-serif font-light; letter-spacing: -0.015em; line-height: 1; }
   .title em { font-style: italic; }

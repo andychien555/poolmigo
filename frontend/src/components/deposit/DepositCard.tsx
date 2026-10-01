@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Vault } from '@/lib/types';
-import { TOKEN_PRICES, vaultName } from '@/demo/data/vaults';
+import { STABLE, TOKEN_PRICES, vaultName } from '@/demo/data/vaults';
 import { CONSTANTS } from '@/demo/constants';
 import * as m from '@/demo/math';
 import { useStore } from '@/store/useStore';
@@ -153,7 +153,7 @@ function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?
   const { tvl, breakdown: b } = useVaultApr(v);
   const apr = b.totalApr;
 
-  const [asset, setAsset] = useState('USDC');
+  const [asset, setAsset] = useState(STABLE);
   const [amount, setAmount] = useState(initialAmount ?? '');
   const [amount1, setAmount1] = useState('');
   const [details, setDetails] = useState(false);
@@ -164,7 +164,7 @@ function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?
 
   const bal = (t: string) => balances[t] ?? 0;
   const payOptions = useMemo(() => {
-    const singles = Array.from(new Set(['USDC', v.token0, v.token1])).map((t) => ({ id: t, label: t, icon: <TokenIcon symbol={t} size={22} /> }));
+    const singles = Array.from(new Set([STABLE, v.token0, v.token1])).map((t) => ({ id: t, label: t, icon: <TokenIcon symbol={t} size={22} /> }));
     return [...singles, { id: DUAL, label: `${v.token0} + ${v.token1}`, icon: <TokenPair a={v.token0} b={v.token1} size={22} /> }];
   }, [v]);
   const isDual = asset === DUAL;
@@ -230,7 +230,7 @@ function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?
       <Field label="You receive">
         <div className="grid gap-1.5 border-t border-line-2 pt-3 num">
           <div className="flex items-baseline justify-between gap-2.5">
-            <span className={cx('display truncate text-[26px] leading-8', preview ? 'text-ink' : 'text-ink-3')}>
+            <span className={cx('display num truncate text-[26px] leading-8', preview ? 'text-ink' : 'text-ink-3')}>
               {preview ? fmtToken(preview.tdlp, 1) : '0'} <span className="ml-0.5 text-sm font-normal text-ink-2">{v.receiptSymbol}</span>
             </span>
             {preview && <span className="text-xs text-ink-3 shrink-0">≈ {fmtUsd(preview.netUsd, { compact: false, cents: true })}</span>}
@@ -299,7 +299,7 @@ function WithdrawForm({ vault: v }: { vault: Vault }) {
   const withdraw = useStore((s) => s.withdraw);
   const pushToast = useStore((s) => s.pushToast);
   const [amount, setAmount] = useState('');
-  const [mode, setMode] = useState<'usdc' | 'both'>('usdc');
+  const [mode, setMode] = useState<'usdg' | 'both'>('usdg');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -338,13 +338,13 @@ function WithdrawForm({ vault: v }: { vault: Vault }) {
       <Field label="Receive">
         <div className="grid gap-1.5 border-t border-line-2 pt-3 num">
           <div className="flex items-center justify-between gap-2.5">
-            <div className="display min-w-0 text-[22px] leading-8 text-ink">
+            <div className="display num min-w-0 text-[22px] leading-8 text-ink">
               {preview ? preview.outputs.map((o) => `${fmtToken(o.amount)} ${o.token}`).join(' + ') : <span className="text-ink-3">0</span>}
             </div>
             <div className="inline-flex shrink-0 rounded-lg border border-line bg-deep p-[3px]">
-              {(['usdc', 'both'] as const).map((k) => (
+              {(['usdg', 'both'] as const).map((k) => (
                 <button key={k} onClick={() => setMode(k)} aria-pressed={mode === k} className={cx('h-7 rounded-sm px-2.5 text-xs', mode === k ? 'bg-aqua text-on-primary' : 'text-ink-2 hover:text-ink')}>
-                  {k === 'usdc' ? 'USDC' : 'Both'}
+                  {k === 'usdg' ? STABLE : 'Both'}
                 </button>
               ))}
             </div>

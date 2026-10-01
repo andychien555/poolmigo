@@ -43,15 +43,16 @@ export function Stat({ label, value, sub, tone = 'default', size = 'md', classNa
  * No panel and no dividers; the rule is the structure.
  * Below md the readings wrap into two columns, so each one carries its own short rule instead.
  */
-export function StatRow({ children, className, cols = 4, packed }: { children: ReactNode; className?: string; cols?: 2 | 3 | 4; /** readings keep their own width and sit together at the start of the rule */ packed?: boolean }) {
+export function StatRow({ children, className, cols = 4, packed, rule = true }: { children: ReactNode; className?: string; cols?: 2 | 3 | 4; /** readings keep their own width and sit together at the start of the rule */ packed?: boolean; /** false: from md up the readings stand alone, with no rule and no ticks */ rule?: boolean }) {
   return (
     <div className={className}>
-      <div className="ruler hidden md:block" aria-hidden />
+      {rule && <div className="ruler hidden md:block" aria-hidden />}
       <div
         className={cx(
           'grid grid-cols-2 gap-x-3.5 gap-y-[18px] md:gap-x-7 md:gap-y-5',
-          '[&>*]:relative [&>*]:border-t [&>*]:border-line-2 [&>*]:pt-2.5 md:[&>*]:border-t-0 md:[&>*]:pt-3',
-          '[&>*]:before:absolute [&>*]:before:left-0 [&>*]:before:-top-px [&>*]:before:h-[7px] [&>*]:before:w-px [&>*]:before:bg-ink-2 md:[&>*]:before:-top-[9px] md:[&>*]:before:h-[13px]',
+          '[&>*]:relative [&>*]:border-t [&>*]:border-line-2 [&>*]:pt-2.5 md:[&>*]:border-t-0',
+          '[&>*]:before:absolute [&>*]:before:left-0 [&>*]:before:-top-px [&>*]:before:h-[7px] [&>*]:before:w-px [&>*]:before:bg-ink-2',
+          rule ? 'md:[&>*]:pt-3 md:[&>*]:before:-top-[9px] md:[&>*]:before:h-[13px]' : 'md:[&>*]:pt-0 md:[&>*]:before:hidden',
           packed
             ? 'md:flex md:flex-wrap md:gap-x-14 md:[&>*]:pr-2'
             : cols === 2 ? 'md:grid-cols-2' : cols === 3 ? 'md:grid-cols-3' : 'md:grid-cols-4',

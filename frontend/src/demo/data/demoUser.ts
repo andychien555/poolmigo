@@ -8,18 +8,18 @@ const DAY = 86_400_000;
  * Cost basis is set so total Net PnL = +$412 (+3.4%).
  */
 export function demoUserState(now = Date.now()): UserState {
-  const tsla = VAULT_BY_ID['tsla-usdc'];
-  const sui = VAULT_BY_ID['sui-tsla'];
-  const tslaValue = 9_800 * tsla.pricePerShare; // ≈ 9,831
-  const suiValue = 2_540 * sui.pricePerShare; // ≈ 2,567
-  const total = tslaValue + suiValue; // ≈ 12,398
+  const nvda = VAULT_BY_ID['nvda-usdg'];
+  const eth = VAULT_BY_ID['eth-usdg'];
+  const nvdaValue = 9_800 * nvda.pricePerShare; // ≈ 9,831
+  const ethValue = 2_540 * eth.pricePerShare; // ≈ 2,567
+  const total = nvdaValue + ethValue; // ≈ 12,398
   const pnl = 412;
   const costTotal = total - pnl;
   return {
-    balances: { USDC: 25_000, TSLAx: 8.2, PMG: 3_400 },
+    balances: { USDG: 25_000, NVDA: 15, PMG: 3_400 },
     positions: {
-      'tsla-usdc': { staked: 9_800, unstaked: 0, costBasis: (costTotal * tslaValue) / total, depositedAt: now - 41 * DAY },
-      'sui-tsla': { staked: 2_540, unstaked: 0, costBasis: (costTotal * suiValue) / total, depositedAt: now - 19 * DAY },
+      'nvda-usdg': { staked: 9_800, unstaked: 0, costBasis: (costTotal * nvdaValue) / total, depositedAt: now - 41 * DAY },
+      'eth-usdg': { staked: 2_540, unstaked: 0, costBasis: (costTotal * ethValue) / total, depositedAt: now - 19 * DAY },
     },
     pendingTide: 1_224,
     pendingUpdatedAt: now,
@@ -47,7 +47,7 @@ export function demoUserState(now = Date.now()): UserState {
 
 export function emptyUserState(now = Date.now()): UserState {
   return {
-    balances: { USDC: 0, TSLAx: 0, PMG: 0 },
+    balances: { USDG: 0, NVDA: 0, PMG: 0 },
     positions: {},
     pendingTide: 0,
     pendingUpdatedAt: now,

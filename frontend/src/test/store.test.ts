@@ -5,7 +5,7 @@ import { PROTOCOL } from '@/demo/data/protocol';
 import { CONSTANTS } from '@/demo/constants';
 import * as m from '@/demo/math';
 
-const tsla = VAULT_BY_ID['tsla-usdc'];
+const nvda = VAULT_BY_ID['nvda-usdg'];
 
 function derived() {
   const s = useStore.getState();
@@ -26,16 +26,16 @@ describe('store — cross-page consistency after actions (checklist §7)', () =>
     expect(deposits).toBeCloseTo(12_398, 0);
   });
 
-  it('deposit 5,000 USDC → balance, position and vault TVL move together', () => {
+  it('deposit 5,000 USDG → balance, position and vault TVL move together', () => {
     const before = derived();
-    const preview = m.zapPreview(tsla, tsla.tvl, 'USDC', 5_000, TOKEN_PRICES);
-    useStore.getState().deposit({ vaultId: tsla.id, preview, stake: true, spend: [{ token: 'USDC', amount: 5_000 }] });
+    const preview = m.zapPreview(nvda, nvda.tvl, 'USDG', 5_000, TOKEN_PRICES);
+    useStore.getState().deposit({ vaultId: nvda.id, preview, stake: true, spend: [{ token: 'USDG', amount: 5_000 }] });
     const after = derived();
-    expect(after.s.user.balances.USDC).toBe(20_000);
-    expect(after.s.user.positions[tsla.id].staked).toBeCloseTo(9_800 + preview.tdlp, 6);
+    expect(after.s.user.balances.USDG).toBe(20_000);
+    expect(after.s.user.positions[nvda.id].staked).toBeCloseTo(9_800 + preview.tdlp, 6);
     expect(after.deposits).toBeCloseTo(before.deposits + preview.netUsd, 4);
-    expect(after.s.user.tvlDelta[tsla.id]).toBeCloseTo(preview.netUsd, 6);
-    const br = m.aprBreakdown(tsla, m.effectiveTvl(tsla, after.s.user.tvlDelta));
+    expect(after.s.user.tvlDelta[nvda.id]).toBeCloseTo(preview.netUsd, 6);
+    const br = m.aprBreakdown(nvda, m.effectiveTvl(nvda, after.s.user.tvlDelta));
     expect(br.totalApr).toBeCloseTo(br.feeApr + br.tideApr, 12);
   });
 
@@ -63,16 +63,16 @@ describe('store — cross-page consistency after actions (checklist §7)', () =>
   });
 
   it('withdraw with staked migoLP unstakes and pays out net of the 0.1% fee; full exit removes the position', () => {
-    const preview = m.withdrawPreview(tsla, 2_000, 'usdc', TOKEN_PRICES);
-    useStore.getState().withdraw({ vaultId: tsla.id, preview });
+    const preview = m.withdrawPreview(nvda, 2_000, 'usdg', TOKEN_PRICES);
+    useStore.getState().withdraw({ vaultId: nvda.id, preview });
     let s = useStore.getState();
-    expect(s.user.positions[tsla.id].staked).toBeCloseTo(7_800, 6);
-    expect(s.user.balances.USDC).toBeCloseTo(25_000 + preview.netUsd, 6);
-    const all = m.withdrawPreview(tsla, 7_800, 'both', TOKEN_PRICES);
-    useStore.getState().withdraw({ vaultId: tsla.id, preview: all });
+    expect(s.user.positions[nvda.id].staked).toBeCloseTo(7_800, 6);
+    expect(s.user.balances.USDG).toBeCloseTo(25_000 + preview.netUsd, 6);
+    const all = m.withdrawPreview(nvda, 7_800, 'both', TOKEN_PRICES);
+    useStore.getState().withdraw({ vaultId: nvda.id, preview: all });
     s = useStore.getState();
-    expect(s.user.positions[tsla.id]).toBeUndefined();
-    expect(s.user.balances.TSLAx).toBeGreaterThan(8.2);
+    expect(s.user.positions[nvda.id]).toBeUndefined();
+    expect(s.user.balances.NVDA).toBeGreaterThan(15);
   });
 
   it('portfolio total = Σ migoLP × pricePerShare; PnL = total − cost basis', () => {

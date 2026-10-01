@@ -42,8 +42,10 @@ export default {
     },
     fontFamily: {
       // `display` is the emphasis face for numbers and UI titles; the serif is for page-level titles.
-      display: ['Geist', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
-      sans: ['Geist', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
+      // "Switzer Figures" holds only figures and their signs (src/index.css), so it leads both stacks:
+      // every figure is set in Switzer, every letter in Geist.
+      display: ['"Switzer Figures"', 'Geist', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
+      sans: ['"Switzer Figures"', 'Geist', '"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
       serif: ['Zodiak', '"Iowan Old Style"', '"Palatino Linotype"', 'Georgia', 'serif'],
       mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
     },

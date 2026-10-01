@@ -2,9 +2,32 @@ import { TOKEN_COLORS } from '@/demo/data/vaults';
 import type { ChainId } from '@/demo/data/chains';
 import { ChainLogo } from './ChainLogo';
 import { cx } from '@/lib/format';
+import eth from '@/assets/tokens/eth.svg';
+import usdg from '@/assets/tokens/usdg.png';
+import nvda from '@/assets/tokens/nvda.svg';
+import spcx from '@/assets/tokens/spcx.svg';
+import spy from '@/assets/tokens/spy.svg';
+import pons from '@/assets/tokens/pons.png';
+import cashcat from '@/assets/tokens/cashcat.png';
 
-/** A token as a square tile: its initial, with the token's own colour as a rule along the bottom edge. */
+/**
+ * Real marks, each one square and full-bleed so it sits in the same square-cut tile as everything
+ * else (a round original has its ground extended to the corners). The three stock tokens share one
+ * official icon, so each shows its company's mark instead. Where each file comes from:
+ * src/assets/tokens/SOURCES.md. A token without a mark falls back to the lettered tile.
+ */
+const TOKEN_ART: Record<string, string> = { ETH: eth, USDG: usdg, NVDA: nvda, SPCX: spcx, SPY: spy, PONS: pons, CASHCAT: cashcat };
+
+/** A token as a square tile: its own mark, or its initial with the token's colour as a rule along the bottom edge. */
 export function TokenIcon({ symbol, size = 22, className }: { symbol: string; size?: number; className?: string }) {
+  const art = TOKEN_ART[symbol];
+  if (art) {
+    return (
+      <span className={cx('relative inline-flex overflow-hidden rounded bg-panel-2 shrink-0 after:absolute after:inset-0 after:rounded after:border after:border-ink/15', className)} style={{ width: size, height: size }} title={symbol}>
+        <img src={art} alt="" width={size} height={size} className="block h-full w-full object-cover" draggable={false} />
+      </span>
+    );
+  }
   const color = TOKEN_COLORS[symbol] ?? '#9C8878';
   const letter = symbol.replace(/x$/, '').slice(0, 1);
   return (
@@ -20,14 +43,14 @@ export function TokenIcon({ symbol, size = 22, className }: { symbol: string; si
 
 export function TokenPair({ a, b, size = 22, chain }: { a: string; b: string; size?: number; chain?: ChainId }) {
   return (
-    <span className="relative inline-flex items-center shrink-0" style={{ width: size * 2 - 6, height: size }}>
-      <TokenIcon symbol={a} size={size} className="relative z-10" />
-      <TokenIcon symbol={b} size={size} className="-ml-1.5" />
+    <span className="relative inline-flex items-center gap-0.5 shrink-0" style={{ width: size * 2 + 2, height: size }}>
+      <TokenIcon symbol={a} size={size} />
+      <TokenIcon symbol={b} size={size} />
       {chain && (
         <ChainLogo
           chain={chain}
-          size={Math.round(size * 0.52)}
-          className="absolute -bottom-[5px] -right-1.5 z-20 ring-[1.5px] ring-deep"
+          size={Math.round(size * 0.46)}
+          className="absolute -bottom-[5px] -right-[7px] z-20 ring-[1.5px] ring-deep"
         />
       )}
     </span>

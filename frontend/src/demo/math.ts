@@ -162,7 +162,7 @@ export function zapPreview(
   const px = prices[inputToken] ?? 0;
   const inputUsd = inputAmount * px;
   const inPair = inputToken === v.token0 || inputToken === v.token1;
-  // Tokens in the pair: swap half. Outside token (e.g. USDC into TSLAx/NVDAx): swap all, half each.
+  // Tokens in the pair: swap half. Outside token (e.g. USDG into SPY/ETH): swap all, half each.
   const swapUsdGross = inPair ? inputUsd / 2 : inputUsd;
   const impact = priceImpact(swapUsdGross, tvl);
   const swapFeeUsd = swapUsdGross * CONSTANTS.SWAP_FEE;
@@ -223,7 +223,7 @@ export function dualPreview(v: Vault, amount0: number, amount1: number, prices: 
   };
 }
 
-export type WithdrawMode = 'usdc' | 'both';
+export type WithdrawMode = 'usdg' | 'both';
 
 export interface WithdrawPreview {
   tdlp: number;
@@ -238,8 +238,8 @@ export function withdrawPreview(v: Vault, tdlp: number, mode: WithdrawMode, pric
   const feeUsd = grossUsd * CONSTANTS.WITHDRAWAL_FEE;
   const netUsd = grossUsd - feeUsd;
   const outputs: WithdrawPreview['outputs'] =
-    mode === 'usdc'
-      ? [{ token: 'USDC', amount: netUsd / prices.USDC, usd: netUsd }]
+    mode === 'usdg'
+      ? [{ token: 'USDG', amount: netUsd / prices.USDG, usd: netUsd }]
       : [
           { token: v.token0, amount: netUsd / 2 / prices[v.token0], usd: netUsd / 2 },
           { token: v.token1, amount: netUsd / 2 / prices[v.token1], usd: netUsd / 2 },

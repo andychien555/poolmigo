@@ -16,7 +16,7 @@ export function AprBreakdown({ vault, compact, className }: Props) {
     <div className={cx('text-sm num', className)}>
       <div className="flex items-baseline justify-between">
         <span className="text-ink-2">Total APR</span>
-        <span className={cx('display font-semibold', compact ? 'text-lg' : 'text-2xl')}>{fmtPct(b.totalApr)}</span>
+        <span className={cx('display num', compact ? 'text-lg' : 'text-2xl')}>{fmtPct(b.totalApr)}</span>
       </div>
       <div className="my-2 border-t border-line" />
       <div className="flex items-center justify-between py-1">

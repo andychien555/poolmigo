@@ -93,8 +93,8 @@ export function WalletButton() {
             </div>
             <div className="divide-y divide-line text-sm">
               <Row token="PMG" amount={balances.PMG ?? 0} usd={(balances.PMG ?? 0) * CONSTANTS.TIDE_PRICE} tide />
-              <Row token="USDC" amount={balances.USDC ?? 0} usd={balances.USDC ?? 0} />
-              <Row token="TSLAx" amount={balances.TSLAx ?? 0} usd={(balances.TSLAx ?? 0) * TOKEN_PRICES.TSLAx} />
+              <Row token="USDG" amount={balances.USDG ?? 0} usd={balances.USDG ?? 0} />
+              <Row token="NVDA" amount={balances.NVDA ?? 0} usd={(balances.NVDA ?? 0) * TOKEN_PRICES.NVDA} />
             </div>
           </div>
 

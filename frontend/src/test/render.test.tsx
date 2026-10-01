@@ -54,15 +54,13 @@ const BASKET_SYMBOL = /^(m[A-Z]+|USDG|WETH)$/;
 afterEach(cleanup);
 
 describe('app renders without a wallet', () => {
-  it('markets page browses and labels the demo table', async () => {
+  it('markets page browses the demo table', async () => {
     renderAt('/');
     expect(await screen.findByRole('heading', { name: 'Vaults' })).toBeDefined();
     // The prototype vaults are still there…
-    expect(screen.getAllByText('TSLAx / USDC').length).toBeGreaterThan(0);
-    // …and they are tagged as demo data.
-    expect(screen.getAllByText('Demo data').length).toBeGreaterThan(0);
-    // The live vault has its own entry point.
-    expect(screen.getAllByText('Live on-chain').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('NVDA / USDG').length).toBeGreaterThan(0);
+    // …and the live vault is reached from the header, not from a card on this page.
+    expect(screen.getAllByRole('link', { name: 'Live vault' }).length).toBeGreaterThan(0);
   });
 
   it('live vault page renders and shows no invented numbers', async () => {

@@ -188,14 +188,14 @@ export function PriceRange({ vault: v, market, className }: Props) {
                 <rect x={st.litLeft ? st.x + STONE_W - 4 : st.x} y={top} width="4" height={STONE_H} fill="#3a2226" opacity=".1" />
                 <rect x={st.x} y={top} width={STONE_W} height="1" fill="#fff8ea" opacity=".6" />
                 <text x={st.centre} y={top - 32} textAnchor="middle" className="fill-ink-3" {...label}>{st.name}</text>
-                <text x={st.centre} y={top - 11} textAnchor="middle" fontSize="16" fontWeight="500" className="fill-ink num">{fmtQuote(st.value)}</text>
+                <text x={st.centre} y={top - 11} textAnchor="middle" fontSize="16" className="fill-ink num">{fmtQuote(st.value)}</text>
               </g>
             ))}
 
             {/* the price reading */}
             {!aside && <rect x={sunX} y={HORIZON - 96} width="1" height={96 - SUN_R - 14} className="fill-sun-core" opacity=".55" />}
             <text x={priceX} y={HORIZON - 132} textAnchor={priceAnchor} className="fill-ink-2" {...label}>PRICE</text>
-            <text x={priceX} y={HORIZON - 106} textAnchor={priceAnchor} fontSize="24" fontWeight="500" className="fill-sun-core num">{priceText}</text>
+            <text x={priceX} y={HORIZON - 106} textAnchor={priceAnchor} fontSize="24" className="fill-sun-core num">{priceText}</text>
 
             {/* the graduated horizon: the price axis */}
             {minor.map((t, i) => <rect key={i} x={t.x} y={HORIZON + 1} width="1" height={t.major ? 10 : 5} className="fill-ink-3" opacity={t.major ? 0.9 : 0.45} />)}

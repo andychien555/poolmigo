@@ -5,17 +5,17 @@ import { PROTOCOL } from '@/demo/data/protocol';
 import { demoUserState } from '@/demo/data/demoUser';
 import * as m from '@/demo/math';
 
-const tsla = VAULT_BY_ID['tsla-usdc'];
-const dog = VAULT_BY_ID['dogtsla-usdc'];
+const nvda = VAULT_BY_ID['nvda-usdg'];
+const cat = VAULT_BY_ID['cashcat-eth'];
 
 describe('anchors — MOCK-DATA-SPEC §3', () => {
-  it('tsla-usdc weekly emissions = 300,000 PMG = $12,600', () => {
-    expect(m.vaultWeeklyEmissions(tsla)).toBe(300_000);
-    expect(m.vaultWeeklyEmissions(tsla) * CONSTANTS.TIDE_PRICE).toBeCloseTo(12_600, 6);
+  it('nvda-usdg weekly emissions = 300,000 PMG = $12,600', () => {
+    expect(m.vaultWeeklyEmissions(nvda)).toBe(300_000);
+    expect(m.vaultWeeklyEmissions(nvda) * CONSTANTS.TIDE_PRICE).toBeCloseTo(12_600, 6);
   });
-  it('tsla-usdc staked TVL = $3.57M, base PMG APR ≈ 18.4%, total ≈ 32.6%', () => {
-    expect(m.stakedTvl(tsla.tvl)).toBeCloseTo(3_570_000, 0);
-    const b = m.aprBreakdown(tsla, tsla.tvl);
+  it('nvda-usdg staked TVL = $3.57M, base PMG APR ≈ 18.4%, total ≈ 32.6%', () => {
+    expect(m.stakedTvl(nvda.tvl)).toBeCloseTo(3_570_000, 0);
+    const b = m.aprBreakdown(nvda, nvda.tvl);
     expect(b.tideApr * 100).toBeCloseTo(18.4, 1);
     expect(b.totalApr * 100).toBeCloseTo(32.6, 1);
   });
@@ -54,49 +54,49 @@ describe('APR consistency — checklist §7', () => {
 });
 
 describe('ranges', () => {
-  it('tsla-usdc in range while market open, defensive when closed', () => {
-    expect(m.rangeStatus(tsla, 'open')).toBe('in');
-    expect(m.rangeStatus(tsla, 'closed')).toBe('defensive');
-    const open = m.rangeGeometry(tsla, 'open');
-    const closed = m.rangeGeometry(tsla, 'closed');
+  it('nvda-usdg in range while market open, defensive when closed', () => {
+    expect(m.rangeStatus(nvda, 'open')).toBe('in');
+    expect(m.rangeStatus(nvda, 'closed')).toBe('defensive');
+    const open = m.rangeGeometry(nvda, 'open');
+    const closed = m.rangeGeometry(nvda, 'closed');
     expect(closed.upper - closed.lower).toBeGreaterThan(open.upper - open.lower);
-    expect(tsla.currentPrice).toBeGreaterThan(tsla.rangeCenter); // slightly upper half
+    expect(nvda.currentPrice).toBeGreaterThan(nvda.rangeCenter); // slightly upper half
   });
-  it('dogtsla-usdc is out of range regardless of market (not Core)', () => {
-    expect(m.rangeStatus(dog, 'open')).toBe('out');
-    expect(m.rangeStatus(dog, 'closed')).toBe('out');
+  it('cashcat-eth is out of range regardless of market (not Core)', () => {
+    expect(m.rangeStatus(cat, 'open')).toBe('out');
+    expect(m.rangeStatus(cat, 'closed')).toBe('out');
   });
   it('turbo vaults never go defensive', () => {
-    expect(m.rangeStatus(VAULT_BY_ID['tsla-nvda'], 'closed')).not.toBe('defensive');
+    expect(m.rangeStatus(VAULT_BY_ID['eth-usdg'], 'closed')).not.toBe('defensive');
   });
 });
 
 describe('zap / withdraw math', () => {
-  it('5,000 USDC into TSLAx/USDC: half stays, ~5.87 TSLAx bought, impact ≈ 0.08%, fee ≈ $3.75', () => {
-    const z = m.zapPreview(tsla, tsla.tvl, 'USDC', 5_000, TOKEN_PRICES);
-    expect(z.legs[0].token).toBe('USDC');
+  it('5,000 USDG into NVDA/USDG: half stays, ~10.79 NVDA bought, impact ≈ 0.08%, fee ≈ $3.75', () => {
+    const z = m.zapPreview(nvda, nvda.tvl, 'USDG', 5_000, TOKEN_PRICES);
+    expect(z.legs[0].token).toBe('USDG');
     expect(z.legs[0].amount).toBe(2_500);
-    expect(z.legs[1].token).toBe('TSLAx');
-    expect(z.legs[1].amount).toBeCloseTo(5.87, 1);
+    expect(z.legs[1].token).toBe('NVDA');
+    expect(z.legs[1].amount).toBeCloseTo(10.79, 2);
     expect(z.priceImpact * 100).toBeCloseTo(0.08, 2);
     expect(z.swapFeeUsd).toBeCloseTo(3.75, 2);
-    expect(z.tdlp).toBeCloseTo(z.netUsd / tsla.pricePerShare, 8);
+    expect(z.tdlp).toBeCloseTo(z.netUsd / nvda.pricePerShare, 8);
     expect(z.netUsd).toBeLessThan(5_000);
     expect(z.netUsd).toBeGreaterThan(4_990);
   });
-  it('USDC into a non-USDC pair swaps everything into two legs', () => {
-    const v = VAULT_BY_ID['tsla-nvda'];
-    const z = m.zapPreview(v, v.tvl, 'USDC', 1_000, TOKEN_PRICES);
-    expect(z.legs.map((l) => l.token)).toEqual(['TSLAx', 'NVDAx']);
+  it('USDG into a non-USDG pair swaps everything into two legs', () => {
+    const v = VAULT_BY_ID['spy-eth'];
+    const z = m.zapPreview(v, v.tvl, 'USDG', 1_000, TOKEN_PRICES);
+    expect(z.legs.map((l) => l.token)).toEqual(['SPY', 'ETH']);
     expect(z.swappedUsd).toBe(1_000);
     expect(z.legs[0].usd).toBeCloseTo(z.legs[1].usd, 8);
   });
   it('withdraw applies 0.1% fee and values by pricePerShare', () => {
-    const w = m.withdrawPreview(tsla, 2_000, 'usdc', TOKEN_PRICES);
+    const w = m.withdrawPreview(nvda, 2_000, 'usdg', TOKEN_PRICES);
     expect(w.grossUsd).toBeCloseTo(2_006.4, 6);
     expect(w.feeUsd).toBeCloseTo(2.0064, 6);
     expect(w.outputs[0].amount).toBeCloseTo(2_004.3936, 4);
-    const both = m.withdrawPreview(tsla, 2_000, 'both', TOKEN_PRICES);
+    const both = m.withdrawPreview(nvda, 2_000, 'both', TOKEN_PRICES);
     expect(both.outputs.reduce((a, o) => a + o.usd, 0)).toBeCloseTo(w.netUsd, 8);
   });
 });
@@ -117,7 +117,7 @@ describe('protocol figures — §4', () => {
 describe('chart series', () => {
   it('NAV series starts at exactly 1.0 and ends at pricePerShare / benchmark', async () => {
     const { navSeries } = await import('@/demo/series');
-    const s = navSeries('tsla-usdc', 1.0032, 0.0032, 30);
+    const s = navSeries('nvda-usdg', 1.0032, 0.0032, 30);
     expect(s[0].tdlp).toBeCloseTo(1, 10);
     expect(s[0].hodl).toBeCloseTo(1, 10);
     expect(s[29].tdlp).toBeCloseTo(1.0032, 10);
@@ -136,8 +136,8 @@ describe('chart series', () => {
 describe('hourly price series', () => {
   it('ends exactly at the current price', async () => {
     const { priceSeriesHourly } = await import('@/demo/series');
-    const s = priceSeriesHourly('tsla-usdc', 420, 425.8, 0.18);
-    expect(s[s.length - 1].price).toBeCloseTo(425.8, 10);
+    const s = priceSeriesHourly('nvda-usdg', 228, 231.15, 0.18);
+    expect(s[s.length - 1].price).toBeCloseTo(231.15, 10);
     expect(s).toHaveLength(30 * 24 + 1);
   });
 });

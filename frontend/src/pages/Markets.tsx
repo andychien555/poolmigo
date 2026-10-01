@@ -5,7 +5,7 @@ import { VAULTS, VAULT_BY_ID, vaultName } from '@/demo/data/vaults';
 import { CHAINS, type ChainId } from '@/demo/data/chains';
 import { ChainFilter } from '@/components/ui/ChainFilter';
 import * as m from '@/demo/math';
-import { cx, fmtPct, fmtRelativeDays, fmtToken, fmtUsd, shortAddress } from '@/lib/format';
+import { cx, fmtPct, fmtToken, fmtUsd, shortAddress } from '@/lib/format';
 import { CONSTANTS, DEMO_ADDRESS } from '@/demo/constants';
 import type { MarketStatus } from '@/lib/market';
 import type { Vault } from '@/lib/types';
@@ -20,8 +20,6 @@ import { DepositModal } from '@/components/deposit/DepositModal';
 import { ClaimModal } from '@/components/rewards/ClaimModal';
 import { Welcome } from '@/components/layout/Welcome';
 import { Sidekick } from '@/components/layout/Sidekick';
-import { LiveVaultTeaser } from '@/components/live/LiveVaultTeaser';
-import { DataLegend, DemoBadge } from '@/components/ui/DataBadge';
 import { SkyScene } from '@/components/brand/SkyScene';
 import { RangeMeter } from '@/components/vault/RangeMeter';
 
@@ -36,17 +34,6 @@ export function Markets() {
   const [params, setParams] = useSearchParams();
   const depositVault = VAULT_BY_ID[params.get('deposit') ?? ''] ?? null;
   const claimOpen = params.get('claim') === '1';
-  const locks = useStore((s) => s.user.locks);
-  const lockedTide = m.lockedTide(locks);
-  const nextUnlock = locks.length ? Math.min(...locks.map((l) => l.unlockAt)) : null;
-  const ready = locks.filter((l) => m.isUnlockable(l, Date.now()));
-  const readyTide = ready.reduce((a, l) => a + l.amount + l.redistributionEarned, 0);
-  const lockLine =
-    lockedTide <= 0
-      ? 'Nothing locked'
-      : ready.length
-        ? `${fmtToken(readyTide, 0)} PMG ready to unlock`
-        : `${fmtToken(lockedTide, 0)} PMG locked · next unlock in ${Math.max(0, Math.ceil(((nextUnlock ?? 0) - Date.now()) / 86_400_000))}d`;
   const rows = useMemo(
     () =>
       VAULTS.filter((v) => chain === 'all' || v.chain === chain)
@@ -91,16 +78,12 @@ export function Markets() {
         </div>
         <div className="wrap relative z-[4] py-6 sm:absolute sm:inset-x-0 sm:bottom-0">
           {showMine ? (
-            <StatRow cols={3} packed>
+            <StatRow cols={2} packed rule={false}>
               <Stat label="Fees earned" value={`+${fmtUsd(totalFees, { compact: false, cents: true })}`} tone="up" />
               <Stat label="PMG rewards" value={`${fmtToken(d.pendingTide, 2)} PMG`} tone="tide" sub={<>≈ {fmtUsd(d.pendingTide * CONSTANTS.TIDE_PRICE, { compact: false, cents: true })}</>} />
-              <div className="flex flex-col gap-1.5 min-w-0">
-                <Stat label={ready.length ? 'Ready to unlock' : 'Locked'} value={`${fmtToken(ready.length ? readyTide : lockedTide, 0)} PMG`} sub={ready.length || lockedTide <= 0 ? undefined : lockLine.split(' · ')[1]} />
-                <Button size="sm" className="self-start" onClick={() => setParams({ claim: '1' })} disabled={d.pendingTide < 0.005}>Claim</Button>
-              </div>
             </StatRow>
           ) : (
-            <StatRow cols={2} packed>
+            <StatRow cols={2} packed rule={false}>
               <Stat label="Total TVL" value={fmtUsd(m.totalTvl(VAULTS, tvlDelta))} />
               <Stat label="Fees earned (24h)" value={fmtUsd(m.dailyFees(VAULTS, tvlDelta), { compact: false })} />
             </StatRow>
@@ -110,13 +93,10 @@ export function Markets() {
 
       {/* The plaza: every vault as an instrument */}
       <div className="wrap pt-[52px] pb-[120px]">
-        <LiveVaultTeaser />
-
-        <div className="mt-12 mb-[22px] flex flex-wrap items-end justify-between gap-x-7 gap-y-[18px]">
+        <div className="mb-[22px] flex flex-wrap items-end justify-between gap-x-7 gap-y-[18px]">
           <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-2">
             <h1 className="title text-[clamp(32px,3.6vw,46px)]">Vaults</h1>
             <span className="text-sm text-ink-3 num">{rows.length} of {VAULTS.length} vaults</span>
-            <DemoBadge className="self-center" />
           </div>
           <div className="flex w-full flex-wrap items-center gap-x-[22px] gap-y-3.5 sm:w-auto">
             <ChainFilter value={chain} onChange={setChain} />
@@ -156,7 +136,6 @@ export function Markets() {
             <li className="border-b border-line py-12 text-center text-ink-3">No vaults match{q ? ` "${q}"` : ''}{chain !== 'all' ? ` on ${CHAINS[chain].name}` : ''}.</li>
           )}
         </ul>
-        <DataLegend className="mt-6" />
       </div>
       <DepositModal vault={depositVault} onClose={() => setParams({})} />
       <ClaimModal open={claimOpen} onClose={() => setParams({})} />
@@ -182,6 +161,8 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
   };
   const label = 'mr-1.5 text-xs font-normal text-ink-3 md:hidden';
   const status = m.rangeStatus(v, market);
+  // Only what needs attention sits under the name
+  const flags = [v.tier === 'Degen' && 'High risk', status === 'out' && 'Out of range'].filter(Boolean);
 
   return (
     <li
@@ -196,12 +177,7 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
         <TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} />
         <div className="min-w-0">
           <div className="font-serif text-[23px] font-light leading-[1.1] text-ink md:whitespace-nowrap">{vaultName(v)}</div>
-          <div className="mt-[3px] text-xs text-ink-3">
-            {CHAINS[v.chain].name}
-            {v.tier === 'Degen' && <span className="text-down"> · High risk</span>}
-            {status === 'out' && <span className="text-down"> · Out of range</span>}
-            {' · '}rebalanced {fmtRelativeDays(v.lastRebalanceDaysAgo)}
-          </div>
+          {flags.length > 0 && <div className="mt-[3px] text-xs text-down">{flags.join(' · ')}</div>}
         </div>
       </div>
       <div className="min-w-0 [grid-area:meter] md:[grid-area:auto]"><RangeMeter vault={v} market={market} /></div>

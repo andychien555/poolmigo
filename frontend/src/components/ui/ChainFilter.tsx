@@ -1,10 +1,12 @@
 import { CHAINS, type ChainId } from '@/demo/data/chains';
 import { cx } from '@/lib/format';
 
-const ORDER: ChainId[] = ['ethereum', 'robinhood', 'arc'];
+// First phase: Robinhood Chain only. Add a second chain here and the filter shows itself again.
+const ORDER: ChainId[] = ['robinhood'];
 
-/** Network filter as a row of text tabs; the chosen one is underlined. */
+/** Network filter as a row of text tabs; the chosen one is underlined. With one chain there is nothing to choose, so it draws nothing. */
 export function ChainFilter({ value, onChange }: { value: ChainId | 'all'; onChange: (v: ChainId | 'all') => void }) {
+  if (ORDER.length < 2) return null;
   const options: Array<{ id: ChainId | 'all'; label: string; isNew?: boolean }> = [
     { id: 'all', label: 'All networks' },
     ...ORDER.map((id) => ({ id, label: CHAINS[id].name, isNew: CHAINS[id].isNew })),
