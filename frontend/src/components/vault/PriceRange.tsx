@@ -1,144 +1,135 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { AreaSeries, BaselineSeries, ColorType, LineSeries, LineStyle, createChart, type IChartApi, type IPriceLine, type ISeriesApi, type UTCTimestamp } from 'lightweight-charts';
+import { useId } from 'react';
 import type { Vault } from '@/lib/types';
 import * as m from '@/demo/math';
 import type { MarketStatus } from '@/lib/market';
-import { priceSeriesHourly } from '@/demo/series';
 import { fmtQuote, fmtRelativeDays } from '@/lib/format';
-
-import { usePalette } from '@/lib/theme';
+import { useElementWidth } from '@/lib/useElementWidth';
 
 interface Props {
   vault: Vault;
   market: MarketStatus;
+  className?: string;
 }
 
-/** Decimal precision for the price scale, from the price magnitude. */
-function precisionFor(p: number): number {
-  if (p >= 1000) return 1;
-  if (p >= 10) return 2;
-  if (p >= 1) return 3;
-  if (p >= 0.01) return 4;
-  return 6;
+const HEIGHT = 300; // drawing height
+const HORIZON = 238; // y of the ground line
+const STONE_W = 18;
+const STONE_H = 158;
+
+/** Round scale marks covering [min, max], about `count` of them. */
+function niceTicks(min: number, max: number, count: number): number[] {
+  const raw = (max - min) / count;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map((k) => k * mag).find((s) => s >= raw) ?? raw;
+  const out: number[] = [];
+  for (let v = Math.ceil(min / step) * step; v <= max + 1e-12; v += step) out.push(v);
+  return out;
 }
 
 /**
- * Price range — a real price chart (TradingView lightweight-charts): drag the
- * price axis to rescale, drag/scroll the time axis to pan and zoom. The LP
- * range is the shaded band with Upper/Lower marked on the axis.
+ * Price range as the instrument itself: a sky, two stones standing on the bounds, the sun at the
+ * current price, and a graduated horizon as the price axis. The stones' inner faces sit exactly
+ * on Lower and Upper, so the gap between them is the range.
  */
-export function PriceRange({ vault: v, market }: Props) {
-  const pal = usePalette();
-  const AQUA = pal.aqua, AMBER = pal.amber, RED = pal.down, INK = pal.ink;
+export function PriceRange({ vault: v, market, className }: Props) {
+  const id = useId();
+  const [host, width] = useElementWidth<HTMLDivElement>();
+  const W = Math.max(320, width);
   const g = m.rangeGeometry(v, market);
-  const inBand = v.currentPrice >= g.lower && v.currentPrice <= g.upper;
-  const tone = g.defensive ? AMBER : AQUA;
-  const priceTone = inBand ? (g.defensive ? AMBER : AQUA) : RED;
-  const data = useMemo(() => priceSeriesHourly(v.id, v.rangeCenter, v.currentPrice, v.rangeWidthPct), [v]);
+  const inRange = v.currentPrice >= g.lower && v.currentPrice <= g.upper;
 
-  const host = useRef<HTMLDivElement>(null);
-  const chart = useRef<IChartApi | null>(null);
-  const price = useRef<ISeriesApi<'Area'> | null>(null);
-  const band = useRef<ISeriesApi<'Baseline'> | null>(null);
-  const last = useRef<ISeriesApi<'Line'> | null>(null);
-  const lines = useRef<IPriceLine[]>([]);
+  // price → x: the scale runs 24% of the range width past each bound
+  const span = g.upper - g.lower, pad = 20;
+  const d0 = g.lower - span * 0.24, d1 = g.upper + span * 0.24;
+  const X = (p: number) => pad + ((p - d0) / (d1 - d0)) * (W - pad * 2);
+  // a price beyond the scale stops at its end, so the sun never leaves the frame
+  const sunX = Math.min(W - pad - 24, Math.max(pad + 24, X(v.currentPrice)));
 
-  // Create the chart once per vault.
-  useEffect(() => {
-    if (!host.current) return;
-    const precision = precisionFor(v.currentPrice);
-    const c = createChart(host.current, {
-      autoSize: true,
-      layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: pal.ink3, fontFamily: 'Rubik, Arial, sans-serif', fontSize: 11, attributionLogo: false },
-      grid: { vertLines: { color: pal.grid }, horzLines: { color: pal.grid } },
-      rightPriceScale: { borderColor: pal.line, scaleMargins: { top: 0.12, bottom: 0.12 } },
-      timeScale: { borderColor: pal.line, timeVisible: true, secondsVisible: false, rightOffset: 4 },
-      crosshair: { horzLine: { color: pal.ink3, labelBackgroundColor: pal.ink2 }, vertLine: { color: pal.ink3, labelBackgroundColor: pal.ink2 } },
-      localization: { priceFormatter: (p: number) => fmtQuote(p) },
-    });
-    const bandSeries = c.addSeries(BaselineSeries, {
-      baseValue: { type: 'price', price: g.lower },
-      topLineColor: 'rgba(0,0,0,0)',
-      bottomLineColor: 'rgba(0,0,0,0)',
-      topFillColor1: 'rgba(0,0,0,0)',
-      topFillColor2: 'rgba(0,0,0,0)',
-      bottomFillColor1: 'rgba(0,0,0,0)',
-      bottomFillColor2: 'rgba(0,0,0,0)',
-      lastValueVisible: false,
-      priceLineVisible: false,
-      crosshairMarkerVisible: false,
-      priceFormat: { type: 'price', precision, minMove: 1 / 10 ** precision },
-    });
-    const priceSeries = c.addSeries(AreaSeries, {
-      lineColor: INK,
-      lineWidth: 2,
-      topColor: 'rgba(0,0,0,0)',
-      bottomColor: 'rgba(0,0,0,0)',
-      lastValueVisible: false,
-      priceLineVisible: false,
-      crosshairMarkerRadius: 4,
-      priceFormat: { type: 'price', precision, minMove: 1 / 10 ** precision },
-    });
-    const lastSeries = c.addSeries(LineSeries, {
-      color: AQUA,
-      lineVisible: false,
-      lastValueVisible: true,
-      priceLineVisible: true,
-      priceLineStyle: LineStyle.Dotted,
-      priceLineWidth: 1,
-      crosshairMarkerVisible: false,
-      priceFormat: { type: 'price', precision, minMove: 1 / 10 ** precision },
-    });
-    const points = data.map((d) => ({ time: Math.floor(d.t / 1000) as UTCTimestamp, value: d.price }));
-    priceSeries.setData(points);
-    lastSeries.setData([points[points.length - 1]]);
-    c.timeScale().setVisibleLogicalRange({ from: points.length - 24 * 10, to: points.length + 4 });
-    chart.current = c;
-    price.current = priceSeries;
-    band.current = bandSeries;
-    last.current = lastSeries;
-    return () => {
-      c.remove();
-      chart.current = null;
-      lines.current = [];
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [v.id, data, pal]);
+  const ticks = niceTicks(d0, d1, Math.max(4, Math.floor(W / 110)));
+  const step = ticks.length > 1 ? ticks[1] - ticks[0] : span;
+  // scale figures carry just enough decimals for the step between them
+  const tickDigits = Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
+  const minor: Array<{ x: number; major: boolean }> = [];
+  for (let t = ticks[0] - step; t <= d1; t += step / 5) {
+    if (t < d0) continue;
+    minor.push({ x: X(t), major: Math.abs(t / step - Math.round(t / step)) < 1e-6 });
+  }
+  let dunes = `M0 ${HORIZON}`;
+  for (let x = 0; x <= W; x += 20) dunes += ` L${x} ${(HORIZON - 5 - 4 * Math.sin(x * 0.013) - 3 * Math.sin(x * 0.031 + 1.2)).toFixed(1)}`;
+  dunes += ` L${W} ${HORIZON} Z`;
 
-  // Apply range band, Upper/Lower price lines and the last-price colour whenever geometry changes.
-  useEffect(() => {
-    const c = chart.current;
-    const p = price.current;
-    const b = band.current;
-    const l = last.current;
-    if (!c || !p || !b || !l) return;
-    const rgba = (hex: string, a: number) => {
-      const n = parseInt(hex.slice(1), 16);
-      return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-    };
-    b.applyOptions({
-      baseValue: { type: 'price', price: g.lower },
-      topFillColor1: rgba(tone, 0.12),
-      topFillColor2: rgba(tone, 0.12),
-      // keep both bounds in view on autoscale; the user can still drag the axis
-      autoscaleInfoProvider: () => ({ priceRange: { minValue: g.lower, maxValue: g.upper } }),
-    });
-    b.setData(data.map((d) => ({ time: Math.floor(d.t / 1000) as UTCTimestamp, value: g.upper })));
-    for (const line of lines.current) p.removePriceLine(line);
-    lines.current = [
-      p.createPriceLine({ price: g.upper, color: tone, lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'Upper' }),
-      p.createPriceLine({ price: g.lower, color: tone, lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'Lower' }),
-    ];
-    l.applyOptions({ color: priceTone, priceLineColor: priceTone });
-  }, [g.lower, g.upper, tone, priceTone, data]);
+  const sky = `${id}-sky`, glow = `${id}-glow`, sun = `${id}-sun`, stone = `${id}-stone`, above = `${id}-above`;
+  const label = { fontSize: 10, letterSpacing: '0.12em' } as const;
+  const figure = { fontWeight: 500, paintOrder: 'stroke', stroke: 'rgb(21 13 16 / 0.7)', strokeWidth: 3, strokeLinejoin: 'round' } as const;
 
   return (
-    <section className="bg-panel border border-line rounded-lg">
-      <header className="flex items-center justify-between px-4 h-11 border-b border-line">
-        <h3 className="display text-sm font-semibold">Price range</h3>
-        <span className="text-xs text-ink-3 num">Last rebalance {fmtRelativeDays(v.lastRebalanceDaysAgo)}</span>
-      </header>
-      <div ref={host} className="h-80 w-full" />
+    <section className={className} aria-label="Price range">
+      <div className="overflow-hidden rounded-lg border border-line-2 bg-deep">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-[11px] text-xs text-ink-3">
+          <h3><b className="text-sm font-medium text-ink">Price range</b> · {v.token1} per {v.token0}</h3>
+          <span className="num">
+            {g.defensive && <span className="text-amber">Widened while the US market is closed · </span>}
+            {!g.defensive && !inRange && <span className="text-down">Out of range · </span>}
+            Last rebalance {fmtRelativeDays(v.lastRebalanceDaysAgo)}
+          </span>
+        </header>
+        <div ref={host}>
+          <svg
+            viewBox={`0 0 ${W} ${HEIGHT}`}
+            className="block h-auto w-full"
+            role="img"
+            aria-label={`Price ${fmtQuote(v.currentPrice)} ${inRange ? 'between' : 'outside'} the lower bound ${fmtQuote(g.lower)} and the upper bound ${fmtQuote(g.upper)}`}
+          >
+            <defs>
+              <linearGradient id={sky} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#140b0f" />
+                <stop offset=".5" stopColor="#35202a" />
+                <stop offset=".86" stopColor="#7d4745" />
+                <stop offset="1" stopColor="#a45d4b" />
+              </linearGradient>
+              <radialGradient id={glow} cx={sunX} cy={HORIZON} r={Math.min(260, W * 0.34)} gradientUnits="userSpaceOnUse">
+                <stop offset="0" stopColor="#ffb066" stopOpacity=".55" />
+                <stop offset="1" stopColor="#ffb066" stopOpacity="0" />
+              </radialGradient>
+              <radialGradient id={sun}>
+                <stop offset=".15" stopColor="#fff0cc" />
+                <stop offset="1" stopColor="#ff9a4a" />
+              </radialGradient>
+              <linearGradient id={stone} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#eadbc9" />
+                <stop offset="1" stopColor="#b3917e" />
+              </linearGradient>
+              <clipPath id={above}><rect x="0" y="0" width={W} height={HORIZON} /></clipPath>
+            </defs>
+
+            <rect x="0" y="0" width={W} height={HORIZON} fill={`url(#${sky})`} />
+            <rect x="0" y="0" width={W} height={HORIZON} fill={`url(#${glow})`} />
+            <path d={dunes} fill="#5b3438" opacity=".8" />
+            {/* the price: the sun, partly set */}
+            <g clipPath={`url(#${above})`}><circle cx={sunX} cy={HORIZON - 2} r="24" fill={`url(#${sun})`} /></g>
+            {/* the bounds: inner faces sit exactly on Lower and Upper, lit from the sun's side */}
+            <rect x={X(g.lower) - STONE_W} y={HORIZON - STONE_H} width={STONE_W} height={STONE_H} fill={`url(#${stone})`} />
+            <rect x={X(g.lower) - 2} y={HORIZON - STONE_H} width="2" height={STONE_H} fill="#ffd9a0" opacity=".55" />
+            <rect x={X(g.upper)} y={HORIZON - STONE_H} width={STONE_W} height={STONE_H} fill={`url(#${stone})`} />
+            <rect x={X(g.upper)} y={HORIZON - STONE_H} width="2" height={STONE_H} fill="#ffd9a0" opacity=".55" />
+            {/* the range, lit on the horizon */}
+            <rect x={X(g.lower)} y={HORIZON - 3} width={X(g.upper) - X(g.lower)} height="3" className="fill-sun" opacity={inRange ? 0.55 : 0.2} />
+
+            <text x={X(g.lower) - STONE_W / 2} y={HORIZON - STONE_H - 31} textAnchor="middle" className="fill-ink-2" {...label}>LOWER</text>
+            <text x={X(g.lower) - STONE_W / 2} y={HORIZON - STONE_H - 10} textAnchor="middle" fontSize="15" className="fill-ink num" {...figure}>{fmtQuote(g.lower)}</text>
+            <text x={X(g.upper) + STONE_W / 2} y={HORIZON - STONE_H - 31} textAnchor="middle" className="fill-ink-2" {...label}>UPPER</text>
+            <text x={X(g.upper) + STONE_W / 2} y={HORIZON - STONE_H - 10} textAnchor="middle" fontSize="15" className="fill-ink num" {...figure}>{fmtQuote(g.upper)}</text>
+            <text x={sunX} y={HORIZON - 72} textAnchor="middle" className="fill-ink-2" {...label}>PRICE</text>
+            <text x={sunX} y={HORIZON - 44} textAnchor="middle" fontSize="22" className="fill-sun-core num" {...figure}>{fmtQuote(v.currentPrice)}</text>
+
+            {/* the graduated horizon: the price axis */}
+            <rect x="0" y={HORIZON} width={W} height={HEIGHT - HORIZON} fill="#1b1115" />
+            <rect x="0" y={HORIZON} width={W} height="1" className="fill-line-2" />
+            {minor.map((t, i) => <rect key={i} x={t.x} y={HORIZON + 1} width="1" height={t.major ? 10 : 5} className="fill-ink-3" opacity={t.major ? 0.9 : 0.5} />)}
+            {ticks.map((t) => <text key={t} x={X(t)} y={HORIZON + 28} textAnchor="middle" fontSize="11" className="fill-ink-3 num">{t.toFixed(tickDigits)}</text>)}
+          </svg>
+        </div>
+      </div>
     </section>
   );
 }

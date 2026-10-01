@@ -10,7 +10,6 @@ import { cx, fmtPct, fmtToken, fmtUsd } from '@/lib/format';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { TokenIcon, TokenPair } from '@/components/ui/TokenIcon';
-import { VaultSelect } from './VaultSelect';
 import { useConnectWallet } from '@/chain/useConnectWallet';
 
 const TX_DELAY = 1500;
@@ -19,59 +18,49 @@ const DUAL = '__dual__';
 
 interface Props {
   vault: Vault;
-  onVaultChange: (v: Vault) => void;
   initialAmount?: string;
+  /** Name the vault and link to its page. On for the overlay; off on the vault page, which already says so. */
   showVaultLink?: boolean;
 }
 
-export function DepositCard({ vault: v, onVaultChange, initialAmount, showVaultLink = true }: Props) {
+export function DepositCard({ vault: v, initialAmount, showVaultLink = true }: Props) {
   const [tab, setTab] = useState<Tab>('deposit');
-  const [pick, setPick] = useState(false);
 
   return (
-    <div className="w-full max-w-[440px] mx-auto">
-      <div className="bg-panel border border-line rounded-lg p-4 space-y-3 shadow-pop">
-        <div className="flex items-center justify-between">
-          <div className="inline-flex rounded bg-deep p-0.5 gap-0.5">
-            {(['deposit', 'withdraw'] as Tab[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={cx('h-8 px-3 rounded text-sm font-medium transition-colors', tab === t ? 'bg-panel-2 text-ink' : 'text-ink-3 hover:text-ink-2')}
-              >
-                {t === 'deposit' ? 'Deposit' : 'Withdraw'}
-              </button>
-            ))}
-          </div>
-          {showVaultLink && <Link to={`/vault/${v.id}`} className="text-xs text-ink-3 hover:text-ink-2">View vault →</Link>}
+    <div className="w-full max-w-[440px] mx-auto lg:max-w-none">
+      <div className="grid gap-4 rounded-lg border border-line-2 bg-panel px-[18px] pb-[18px]">
+        <div className="-mx-[18px] grid grid-cols-2 border-b border-line-2" role="tablist">
+          {(['deposit', 'withdraw'] as Tab[]).map((t) => (
+            <button
+              key={t}
+              role="tab"
+              aria-selected={tab === t}
+              onClick={() => setTab(t)}
+              className={cx(
+                'relative py-[13px] text-base transition-colors',
+                tab === t ? 'text-ink after:absolute after:inset-x-[18px] after:-bottom-px after:h-0.5 after:bg-ink' : 'text-ink-3 hover:text-ink-2',
+              )}
+            >
+              {t === 'deposit' ? 'Deposit' : 'Withdraw'}
+            </button>
+          ))}
         </div>
 
-
-        {tab === 'deposit' ? (
-          <DepositForm key={v.id} vault={v} onPick={() => setPick(true)} initialAmount={initialAmount} />
-        ) : (
-          <WithdrawForm key={v.id} vault={v} onPick={() => setPick(true)} />
+        {showVaultLink && (
+          <div className="flex items-center gap-3">
+            <TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} />
+            <span className="min-w-0 flex-1 font-serif text-xl font-light leading-tight text-ink">{vaultName(v)}</span>
+            <Link to={`/vault/${v.id}`} className="shrink-0 text-xs text-ink-3 hover:text-ink">View vault →</Link>
+          </div>
         )}
+
+        {tab === 'deposit' ? <DepositForm key={v.id} vault={v} initialAmount={initialAmount} /> : <WithdrawForm key={v.id} vault={v} />}
       </div>
-      <VaultSelect open={pick} onClose={() => setPick(false)} onSelect={onVaultChange} selectedId={v.id} />
     </div>
   );
 }
 
 // ───────────────────────── shared bits ─────────────────────────
-
-function VaultPill({ vault: v, onPick, apr }: { vault: Vault; onPick: () => void; apr: number }) {
-  return (
-    <button onClick={onPick} className="w-full flex items-center gap-3 rounded-md bg-deep border border-line hover:border-line-2 px-3 h-14 text-left transition-colors">
-      <TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} />
-      <span className="flex-1 min-w-0">
-        <span className="block text-sm font-medium text-ink">{vaultName(v)}</span>
-        <span className="block text-xs num text-ink-2">{fmtPct(apr)} APR</span>
-      </span>
-      <Chevron />
-    </button>
-  );
-}
 
 function Chevron({ className }: { className?: string }) {
   return (
@@ -84,7 +73,7 @@ function Chevron({ className }: { className?: string }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-xs text-ink-3 mb-1.5">{label}</div>
+      <div className="eyebrow mb-2">{label}</div>
       {children}
     </div>
   );
@@ -98,8 +87,8 @@ function AmountBox({
   balance?: number; connected: boolean; usd?: number; autoFocus?: boolean; error?: boolean;
 }) {
   return (
-    <div className={cx('rounded-md bg-deep border px-3 pt-2.5 pb-2', error ? 'border-down/60' : 'border-line focus-within:border-line-2')}>
-      <div className="flex items-center gap-2">
+    <div className={cx('grid gap-1.5 rounded border bg-deep pb-2.5 pl-3.5 pr-3 pt-3', error ? 'border-down/60' : 'border-line-2 focus-within:border-sun')}>
+      <div className="flex items-center gap-2.5">
         <input
           type="number"
           inputMode="decimal"
@@ -109,19 +98,19 @@ function AmountBox({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="0"
-          className="flex-1 min-w-0 bg-transparent display text-3xl num text-ink placeholder:text-ink-3 outline-none"
+          className="w-0 min-w-0 flex-1 bg-transparent display text-[30px] leading-[1.15] num text-ink placeholder:text-ink-3 outline-none focus-visible:outline-none"
         />
-        <span className="h-9 pl-2 pr-3 rounded-full bg-panel-2 border border-line inline-flex items-center gap-1.5 text-sm font-medium">
+        <span className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded border border-line-2 pl-[5px] pr-2.5 text-sm font-medium">
           {tokenIcon}
           {tokenLabel}
         </span>
       </div>
-      <div className="flex items-center justify-between mt-1 text-xs num">
+      <div className="flex items-center justify-between gap-2 text-xs num">
         <span className="text-ink-3">{usd !== undefined && usd > 0 ? `≈ ${fmtUsd(usd, { compact: false, cents: true })}` : ''}</span>
         {connected && balance !== undefined && (
           <span className="text-ink-3">
             Balance {fmtToken(balance)}
-            <button onClick={() => onChange(String(balance))} className="ml-1.5 text-aqua font-medium hover:brightness-110">Max</button>
+            <button onClick={() => onChange(String(balance))} className="ml-1.5 font-bold text-ink hover:text-sun-core">Max</button>
           </span>
         )}
       </div>
@@ -139,8 +128,8 @@ function PayWith({ options, value, onChange }: { options: Array<{ id: string; la
           onClick={() => onChange(o.id)}
           aria-pressed={value === o.id}
           className={cx(
-            'h-9 pl-1.5 pr-3 rounded-full border text-sm font-medium inline-flex items-center gap-1.5 transition-colors',
-            value === o.id ? 'border-aqua bg-aqua/10 text-ink' : 'border-line bg-panel text-ink-2 hover:border-line-2',
+            'inline-flex h-9 items-center gap-2 rounded border pl-[5px] pr-[11px] text-sm font-medium transition-colors',
+            value === o.id ? 'border-ink bg-panel-2 text-ink' : 'border-line-2 text-ink-2 hover:border-ink-3',
           )}
         >
           {o.icon}
@@ -153,7 +142,7 @@ function PayWith({ options, value, onChange }: { options: Array<{ id: string; la
 
 // ───────────────────────── Deposit ─────────────────────────
 
-function DepositForm({ vault: v, onPick, initialAmount }: { vault: Vault; onPick: () => void; initialAmount?: string }) {
+function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?: string }) {
   const connected = useStore((s) => s.connected);
   const { connectWallet: connect, isPending: connecting } = useConnectWallet();
   const balances = useStore((s) => s.user.balances);
@@ -222,11 +211,7 @@ function DepositForm({ vault: v, onPick, initialAmount }: { vault: Vault; onPick
   else cta = { label: isDual ? `Deposit ${v.token0} + ${v.token1}` : `Deposit ${fmtToken(amt)} ${asset}`, disabled: false };
 
   return (
-    <div className="space-y-3">
-      <Field label="Vault">
-        <VaultPill vault={v} onPick={onPick} apr={apr} />
-      </Field>
-
+    <div className="grid gap-4">
       <Field label="Pay with">
         <PayWith options={payOptions} value={asset} onChange={(id) => { setAsset(id); setAmount(''); setAmount1(''); }} />
       </Field>
@@ -243,24 +228,24 @@ function DepositForm({ vault: v, onPick, initialAmount }: { vault: Vault; onPick
       </Field>
 
       <Field label="You receive">
-        <div className="rounded-md bg-deep border border-line px-3 py-2.5 num">
-          <div className="flex items-baseline justify-between gap-3">
-            <span className={cx('display text-2xl font-semibold truncate', preview ? 'text-ink' : 'text-ink-3')}>
-              {preview ? fmtToken(preview.tdlp, 1) : '0'} <span className="text-sm font-normal text-ink-2">{v.receiptSymbol}</span>
+        <div className="grid gap-1.5 border-t border-line-2 pt-3 num">
+          <div className="flex items-baseline justify-between gap-2.5">
+            <span className={cx('display truncate text-[26px] leading-8', preview ? 'text-ink' : 'text-ink-3')}>
+              {preview ? fmtToken(preview.tdlp, 1) : '0'} <span className="ml-0.5 text-sm font-normal text-ink-2">{v.receiptSymbol}</span>
             </span>
             {preview && <span className="text-xs text-ink-3 shrink-0">≈ {fmtUsd(preview.netUsd, { compact: false, cents: true })}</span>}
           </div>
-          <div className="flex items-center justify-between mt-1.5 text-xs">
-            <span className={preview ? 'text-up' : 'text-ink-3'}>{preview ? `Earning ~${fmtUsd(monthly, { compact: false, cents: monthly < 100 })} / month` : 'Earning'}</span>
-            <span className="text-ink-2">at {fmtPct(apr)} APR</span>
+          <div className="flex items-center justify-between gap-2.5 text-xs text-ink-3">
+            <span className={preview ? 'text-up' : undefined}>{preview ? `Earning ~${fmtUsd(monthly, { compact: false, cents: monthly < 100 })} / month` : 'Earning'}</span>
+            <span>at {fmtPct(apr)} APR</span>
           </div>
         </div>
       </Field>
 
-      <Button block size="lg" onClick={onSubmit} disabled={cta.disabled} loading={busy || connecting}>{cta.label}</Button>
+      <Button block onClick={onSubmit} disabled={cta.disabled} loading={busy || connecting}>{cta.label}</Button>
 
       <div className="text-xs num">
-        <button onClick={() => setDetails(!details)} className="w-full flex items-center justify-between text-ink-3 hover:text-ink-2">
+        <button onClick={() => setDetails(!details)} aria-expanded={details} className="w-full flex items-center justify-between gap-2.5 py-0.5 text-left text-ink-3 hover:text-ink-2">
           <span>
             1 {v.receiptSymbol} = ${v.pricePerShare.toFixed(4)}
             {preview && !isDual && <> · {fmtPct(preview.priceImpact, 2)} impact</>}
@@ -268,7 +253,7 @@ function DepositForm({ vault: v, onPick, initialAmount }: { vault: Vault; onPick
           <Chevron className={cx('transition-transform', details && 'rotate-180')} />
         </button>
         {details && (
-          <dl className="mt-2 space-y-1.5 text-ink-2 animate-fade-in">
+          <dl className="mt-1.5 grid animate-fade-in">
             {preview && !isDual && (
               <>
                 <Row k="Auto-swap" v={preview.legs.map((l) => `${fmtToken(l.amount)} ${l.token}`).join(' + ')} />
@@ -281,7 +266,7 @@ function DepositForm({ vault: v, onPick, initialAmount }: { vault: Vault; onPick
             <Row k="Lock-up" v="None · redeem anytime" />
           </dl>
         )}
-        <p className="mt-2 text-2xs text-ink-3 leading-relaxed">LP positions can lose value and may underperform holding the assets. Review the vault strategy, fees and risks before depositing.</p>
+        <p className="mt-3 text-xs leading-normal text-ink-3">LP positions can lose value and may underperform holding the assets. Review the vault strategy, fees and risks before depositing.</p>
       </div>
 
       <Modal
@@ -297,7 +282,7 @@ function DepositForm({ vault: v, onPick, initialAmount }: { vault: Vault; onPick
       >
         <p>Degen vaults run narrow, high-frequency ranges on volatile pairs. Higher fees, higher impermanent loss risk. Net value can underperform holding.</p>
         <label className="mt-4 flex items-start gap-2.5 cursor-pointer text-ink">
-          <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 accent-[#244742]" />
+          <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 accent-sun" />
           <span className="text-sm">I understand this vault can lose value versus holding the underlying tokens.</span>
         </label>
       </Modal>
@@ -307,13 +292,12 @@ function DepositForm({ vault: v, onPick, initialAmount }: { vault: Vault; onPick
 
 // ───────────────────────── Withdraw ─────────────────────────
 
-function WithdrawForm({ vault: v, onPick }: { vault: Vault; onPick: () => void }) {
+function WithdrawForm({ vault: v }: { vault: Vault }) {
   const connected = useStore((s) => s.connected);
   const { connectWallet: connect, isPending: connecting } = useConnectWallet();
   const position = useStore((s) => s.user.positions[v.id]);
   const withdraw = useStore((s) => s.withdraw);
   const pushToast = useStore((s) => s.pushToast);
-  const { breakdown: b } = useVaultApr(v);
   const [amount, setAmount] = useState('');
   const [mode, setMode] = useState<'usdc' | 'both'>('usdc');
   const [busy, setBusy] = useState(false);
@@ -347,40 +331,37 @@ function WithdrawForm({ vault: v, onPick }: { vault: Vault; onPick: () => void }
   else cta = { label: 'Withdraw', disabled: false };
 
   return (
-    <div className="space-y-3">
-      <Field label="Vault">
-        <VaultPill vault={v} onPick={onPick} apr={b.totalApr} />
-      </Field>
+    <div className="grid gap-4">
       <Field label="Amount">
         <AmountBox value={amount} onChange={setAmount} tokenLabel={v.receiptSymbol} tokenIcon={<TokenPair a={v.token0} b={v.token1} size={18} />} balance={connected ? total : undefined} connected={connected} usd={amt * v.pricePerShare} error={insufficient} />
       </Field>
       <Field label="Receive">
-        <div className="rounded-md bg-deep border border-line px-3 py-2.5 num">
-          <div className="flex items-center justify-between">
-            <div className="display text-2xl font-semibold text-ink">
+        <div className="grid gap-1.5 border-t border-line-2 pt-3 num">
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="display min-w-0 text-[22px] leading-8 text-ink">
               {preview ? preview.outputs.map((o) => `${fmtToken(o.amount)} ${o.token}`).join(' + ') : <span className="text-ink-3">0</span>}
             </div>
-            <div className="inline-flex rounded bg-panel-2 p-0.5 gap-0.5">
+            <div className="inline-flex shrink-0 rounded-lg border border-line bg-deep p-[3px]">
               {(['usdc', 'both'] as const).map((k) => (
-                <button key={k} onClick={() => setMode(k)} className={cx('h-7 px-2 rounded text-xs font-medium', mode === k ? 'bg-panel text-ink' : 'text-ink-3')}>
+                <button key={k} onClick={() => setMode(k)} aria-pressed={mode === k} className={cx('h-7 rounded-sm px-2.5 text-xs', mode === k ? 'bg-aqua text-on-primary' : 'text-ink-2 hover:text-ink')}>
                   {k === 'usdc' ? 'USDC' : 'Both'}
                 </button>
               ))}
             </div>
           </div>
-          <div className="text-xs text-ink-3 mt-1">{preview ? `${fmtUsd(preview.netUsd, { compact: false, cents: true })} after ${fmtPct(CONSTANTS.WITHDRAWAL_FEE)} fee` : 'No lock-up. Redeem anytime.'}</div>
+          <div className="text-xs text-ink-3">{preview ? `${fmtUsd(preview.netUsd, { compact: false, cents: true })} after ${fmtPct(CONSTANTS.WITHDRAWAL_FEE)} fee` : 'No lock-up. Redeem anytime.'}</div>
         </div>
       </Field>
-      <Button block size="lg" variant="secondary" onClick={submit} disabled={cta.disabled} loading={busy || connecting}>{cta.label}</Button>
+      <Button block variant="secondary" onClick={submit} disabled={cta.disabled} loading={busy || connecting}>{cta.label}</Button>
     </div>
   );
 }
 
 function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div className="flex justify-between gap-3">
+    <div className="flex justify-between gap-2.5 py-[5px]">
       <dt className="text-ink-3">{k}</dt>
-      <dd className="text-ink-2 text-right">{v}</dd>
+      <dd className="text-right text-ink">{v}</dd>
     </div>
   );
 }
