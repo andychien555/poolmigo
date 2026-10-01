@@ -1,5 +1,3 @@
-import { useStore } from '@/store/useStore';
-
 export type Theme = 'light' | 'dark';
 
 export interface Palette {
@@ -7,17 +5,13 @@ export interface Palette {
   aqua: string; up: string; down: string; amber: string; apricot: string; glass: string;
 }
 
-const LIGHT: Palette = {
-  ink: '#302823', ink2: '#625D57', ink3: '#8F8981', line: '#DDD9D1', grid: '#F1ECE3', panel: '#FFFFFF', panel2: '#F6EFE4',
-  aqua: '#244742', up: '#28614F', down: '#A33832', amber: '#8B5A13', apricot: '#F3A66E', glass: '#7BB8B2',
-};
-const DARK: Palette = {
-  ink: '#F4EEE5', ink2: '#C3B9AD', ink3: '#8F8981', line: '#3B332C', grid: '#2D2621', panel: '#231E1A', panel2: '#2D2621',
-  aqua: '#7BB8B2', up: '#74C69D', down: '#E8857D', amber: '#E3A94E', apricot: '#F3A66E', glass: '#7BB8B2',
+// Dusk is dark only, so there is one palette. Keep it in step with src/index.css.
+const DUSK: Palette = {
+  ink: '#EFE3D1', ink2: '#C4B19D', ink3: '#9C8878', line: '#49403E', grid: '#2F2727', panel: '#2A1B20', panel2: '#36242A',
+  aqua: '#EFE3D1', up: '#92D6A6', down: '#FF8A8F', amber: '#E0B07A', apricot: '#FFAE3D', glass: '#B36D5F',
 };
 
 /** Hex palette for chart libraries that can't read CSS variables. */
 export function usePalette(): Palette {
-  const theme = useStore((s) => s.theme);
-  return theme === 'dark' ? DARK : LIGHT;
+  return DUSK;
 }

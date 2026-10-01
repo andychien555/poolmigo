@@ -2,49 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Poolmigo palette as RGB triplets so Tailwind opacity modifiers work. */
-:root {
-  color-scheme: light;
-  --c-deep: 255 248 239;      /* cream #FFF8EF */
-  --c-panel: 255 255 255;
-  --c-panel-2: 246 239 228;   /* #F6EFE4 */
-  --c-line: 221 217 209;      /* #DDD9D1 */
-  --c-line-2: 201 195 185;    /* #C9C3B9 */
-  --c-ink: 48 40 35;          /* #302823 */
-  --c-ink-2: 98 93 87;        /* #625D57 */
-  --c-ink-3: 143 137 129;     /* #8F8981 */
-  --c-aqua: 36 71 66;         /* deep teal #244742 */
-  --c-aqua-dim: 63 107 101;
-  --c-up: 40 97 79;           /* #28614F */
-  --c-down: 163 56 50;        /* #A33832 */
-  --c-amber: 139 90 19;       /* #8B5A13 */
-  --c-apricot: 243 166 110;   /* #F3A66E */
-  --c-glass: 123 184 178;     /* #7BB8B2 */
-  --c-tide: 154 90 34;        /* PMG numbers — apricot darkened for text */
-  --c-on-primary: 255 248 239;
-  --c-on-accent: 48 40 35;
-  --c-shadow: 48 40 35;
-}
-.dark {
+/*
+ * Dusk palette as RGB triplets so Tailwind opacity modifiers work.
+ * Dark only: :root and .dark carry the same values, so the theme class is harmless either way.
+ * Token names are the ones the components already use; the comments say what each means in Dusk.
+ */
+:root, .dark {
   color-scheme: dark;
-  --c-deep: 26 22 19;         /* warm near-black */
-  --c-panel: 35 30 26;
-  --c-panel-2: 45 38 33;
-  --c-line: 59 51 44;
-  --c-line-2: 75 66 58;
-  --c-ink: 244 238 229;
-  --c-ink-2: 195 185 173;
-  --c-ink-3: 143 137 129;
-  --c-aqua: 123 184 178;      /* sea glass carries actions on dark */
-  --c-aqua-dim: 95 156 150;
-  --c-up: 116 198 157;
-  --c-down: 232 133 125;
-  --c-amber: 227 169 78;
-  --c-apricot: 243 166 110;
-  --c-glass: 123 184 178;
-  --c-tide: 243 166 110;
-  --c-on-primary: 26 22 19;
-  --c-on-accent: 26 22 19;
+  --c-deep: 21 13 16;         /* night #150D10 — the page, and wells inside panels */
+  --c-dusk: 31 20 24;         /* dusk #1F1418 — sheets */
+  --c-panel: 42 27 32;        /* raised #2A1B20 — cards */
+  --c-panel-2: 54 36 42;      /* high #36242A — hover, selected */
+  --c-line: 47 39 39;         /* sand at 12% on night */
+  --c-line-2: 73 64 62;       /* sand at 24% on night */
+  --c-ink: 239 227 209;       /* sand #EFE3D1 */
+  --c-ink-2: 196 177 157;     /* sand 2 #C4B19D */
+  --c-ink-3: 156 136 120;     /* sand 3 #9C8878 */
+  --c-aqua: 239 227 209;      /* primary action = sand (there is no second accent) */
+  --c-aqua-dim: 255 246 232;  /* primary hover */
+  --c-up: 146 214 166;        /* gain #92D6A6 */
+  --c-down: 255 138 143;      /* loss #FF8A8F */
+  --c-amber: 224 176 122;     /* caution: a duller tan, so it is never mistaken for the sun */
+  --c-apricot: 255 174 61;    /* rewards action = sun */
+  --c-glass: 179 109 95;      /* rose #B36D5F */
+  --c-tide: 255 174 61;       /* reward numbers = sun */
+  --c-sun: 255 174 61;        /* sun #FFAE3D — the price, and nothing structural */
+  --c-sun-core: 255 227 163;  /* sun core #FFE3A3 */
+  --c-on-primary: 21 13 16;
+  --c-on-accent: 42 22 6;     /* sun ink #2A1606 */
   --c-shadow: 0 0 0;
 }
 
@@ -60,17 +45,48 @@
   input[type='number']::-webkit-outer-spin-button,
   input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type='number'] { -moz-appearance: textfield; }
-  button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid rgb(var(--c-aqua)); outline-offset: 2px; }
+  button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid rgb(var(--c-sun)); outline-offset: 3px; }
   ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-thumb { background: rgb(var(--c-line)); border-radius: 6px; }
+  ::-webkit-scrollbar-thumb { background: rgb(var(--c-line-2)); border-radius: 2px; }
   ::-webkit-scrollbar-track { background: transparent; }
 }
 
 @layer utilities {
   .num { font-variant-numeric: tabular-nums; }
-  .display { @apply font-display font-bold; letter-spacing: -0.01em; }
+  .display { @apply font-display font-medium; letter-spacing: -0.01em; }
+  /* Page-level titles: the display serif, light, never bold */
+  .title { @apply font-serif font-light; letter-spacing: -0.015em; line-height: 1; }
+  .title em { font-style: italic; }
+  /* Small caps label that names a reading */
+  .eyebrow { @apply text-2xs font-medium uppercase tracking-label text-ink-3; }
+  /* Page container: one gutter for the header, every page and the footer */
+  .wrap { width: 100%; max-width: 1280px; margin-inline: auto; padding-inline: clamp(16px, 4vw, 56px); }
+  .wordmark { @apply font-serif font-light uppercase; font-size: 14px; line-height: 1; letter-spacing: 0.24em; padding-left: 0.24em; white-space: nowrap; }
+  /* Keeps text readable over the scene: dark from the left (where the text is) and from the ground up */
+  .sky-shade {
+    background:
+      linear-gradient(90deg, rgb(21 13 16 / 0.86) 0%, rgb(21 13 16 / 0.5) 36%, rgb(21 13 16 / 0) 60%),
+      linear-gradient(0deg, rgb(21 13 16 / 0.96) 0%, rgb(21 13 16 / 0.6) 22%, rgb(21 13 16 / 0) 42%);
+  }
+  @media (max-width: 640px) {
+    .sky-shade { background: linear-gradient(0deg, rgb(21 13 16) 0%, rgb(21 13 16 / 0.72) 24%, rgb(21 13 16 / 0) 62%); }
+  }
+  /* A fill gauge drawn as marks on a scale, not as a rounded bar */
+  .gauge { position: relative; display: block; height: 6px; background: repeating-linear-gradient(90deg, rgb(var(--c-panel-2)) 0 5px, transparent 5px 7px); }
+  .gauge > i { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(90deg, rgb(var(--c-ink-2)) 0 5px, transparent 5px 7px); }
+  /* Hatching: the part that is given up */
+  .hatch { background: repeating-linear-gradient(135deg, rgb(var(--c-ink-3)) 0 2px, transparent 2px 6px); }
+  /* An engraved scale: the rule that readings sit on */
+  .ruler {
+    height: 9px; border-top: 1px solid rgb(var(--c-line-2));
+    background: repeating-linear-gradient(90deg, rgb(var(--c-line-2)) 0 1px, transparent 1px 12px) top left / 100% 5px no-repeat;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
 input[type='range'] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: rgb(var(--c-line)); outline: none; }
-input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: rgb(var(--c-aqua)); border: 2px solid rgb(var(--c-deep)); cursor: pointer; }
-input[type='range']::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: rgb(var(--c-aqua)); border: 2px solid rgb(var(--c-deep)); cursor: pointer; }
+input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 2px; background: rgb(var(--c-aqua)); border: 2px solid rgb(var(--c-deep)); cursor: pointer; }
+input[type='range']::-moz-range-thumb { width: 16px; height: 16px; border-radius: 2px; background: rgb(var(--c-aqua)); border: 2px solid rgb(var(--c-deep)); cursor: pointer; }
