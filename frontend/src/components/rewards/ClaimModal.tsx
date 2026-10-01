@@ -12,7 +12,7 @@ import { LocksList } from './LocksList';
 const TX_DELAY = 1500;
 type Choice = 'now' | 'lock';
 
-/** Claim pending PMG: now at 50%, or lock 90 days for 100%. */
+/** Claim pending PMG: now at 50%, or lock 90 days for 100%. A sheet from the right, over the page it was opened from. */
 export function ClaimModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   useEffect(() => {
     if (!open) return;
@@ -22,13 +22,16 @@ export function ClaimModal({ open, onClose }: { open: boolean; onClose: () => vo
   }, [open, onClose]);
   if (!open) return null;
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 overflow-y-auto" role="dialog" aria-modal>
-      <div className="absolute inset-0 bg-ink/40" onClick={onClose} />
-      <div className="relative w-full max-w-[440px] animate-fade-in space-y-3">
-        <button onClick={onClose} className="absolute -top-8 right-0 text-xs text-ink-3 hover:text-ink" aria-label="Close">Close ✕</button>
+    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal aria-label="Rewards">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-[4px]" onClick={onClose} />
+      <aside className="relative grid h-full w-[min(500px,100vw)] content-start gap-7 overflow-y-auto border-l border-line-2 bg-dusk px-[18px] pb-24 pt-[22px] shadow-[-30px_0_80px_rgb(0_0_0/0.5)] animate-slide-in sm:px-[26px]">
+        <div className="flex items-center justify-between gap-3">
+          <p className="eyebrow">Rewards</p>
+          <button onClick={onClose} className="grid h-8 w-8 shrink-0 place-items-center rounded border border-line text-ink-2 hover:border-line-2 hover:text-ink" aria-label="Close">✕</button>
+        </div>
         <Claim onDone={onClose} />
         <LocksList />
-      </div>
+      </aside>
     </div>,
     document.body,
   );
@@ -45,6 +48,7 @@ function Claim({ onDone }: { onDone: () => void }) {
   const pool = PROTOCOL.redistribution.fromForfeits + forfeitsAdded + PROTOCOL.redistribution.fromBuybacks;
   const split = m.claimSplit(d.pendingTide);
   const empty = d.pendingTide < 0.005;
+  const unlockDate = fmtDate(Date.now() + CONSTANTS.LOCK_DAYS * 86_400_000);
 
   const submit = async () => {
     setBusy(true);
@@ -61,33 +65,67 @@ function Claim({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <section className="bg-panel border border-line rounded-lg p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="display text-sm font-semibold">Pending rewards</h2>
-        <span className="text-xs text-ink-3 num">PMG ${CONSTANTS.TIDE_PRICE.toFixed(3)}</span>
-      </div>
-      <div className="display num text-3xl font-semibold text-tide leading-none">
-        {fmtToken(d.pendingTide, 2)} <span className="text-lg">PMG</span>
-        <span className="text-sm text-ink-2 font-normal ml-2">≈ {fmtUsd(d.pendingTide * CONSTANTS.TIDE_PRICE, { compact: false, cents: true })}</span>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Option selected={choice === 'now'} onSelect={() => setChoice('now')} title="Claim now" amount={split.instant} note="50% · rest goes to lockers" />
-        <Option selected={choice === 'lock'} onSelect={() => setChoice('lock')} title="Lock 90 days" amount={split.locked} note="100% + share of forfeits" good />
-      </div>
-      <Button block size="lg" variant="tide" onClick={submit} disabled={empty} loading={busy}>
-        {busy ? 'Confirming…' : empty ? 'Nothing to claim yet' : choice === 'now' ? `Claim ${fmtToken(split.instant, 1)} PMG` : `Lock ${fmtToken(split.locked, 1)} PMG`}
-      </Button>
-      <div className="text-2xs text-ink-3 num">Lockers share this week's pool of {fmtInt(pool)} PMG from forfeits and buybacks.</div>
-    </section>
+    <>
+      <section className="grid gap-2">
+        <h2 className="text-sm text-ink-3">Pending rewards</h2>
+        <div className="display num text-[46px] leading-none tracking-[-0.015em] text-tide">
+          {fmtToken(d.pendingTide, 2)} <span className="text-xl">PMG</span>
+        </div>
+        <p className="text-sm text-ink-2 num">≈ {fmtUsd(d.pendingTide * CONSTANTS.TIDE_PRICE, { compact: false, cents: true })} · PMG ${CONSTANTS.TIDE_PRICE.toFixed(3)}</p>
+      </section>
+
+      <section>
+        <h3 className="eyebrow mb-3">How to receive it</h3>
+        <div className="grid gap-2.5" role="group" aria-label="Claim option">
+          <Option
+            selected={choice === 'now'}
+            onSelect={() => setChoice('now')}
+            disabled={empty}
+            title="Claim now"
+            amount={split.instant}
+            note={`You receive ${Math.round(CONSTANTS.INSTANT_CLAIM_RATIO * 100)}% today. The other ${fmtToken(split.forfeited, 1)} goes to lockers.`}
+            bar={<><i className="block h-full bg-ink" style={{ width: `${CONSTANTS.INSTANT_CLAIM_RATIO * 100}%` }} /><i className="hatch block h-full flex-1" /></>}
+          />
+          <Option
+            selected={choice === 'lock'}
+            onSelect={() => setChoice('lock')}
+            disabled={empty}
+            title={`Lock ${CONSTANTS.LOCK_DAYS} days`}
+            amount={split.locked}
+            note={`100% after ${CONSTANTS.LOCK_DAYS} days, plus a share of forfeits. Unlocks ${unlockDate}.`}
+            bar={<><i className="block h-full flex-1 bg-ink" /><i className="block h-full w-3.5 shrink-0 bg-sun" /></>}
+          />
+        </div>
+      </section>
+
+      <section className="grid gap-3">
+        <Button block variant="tide" onClick={submit} disabled={empty} loading={busy}>
+          {busy ? 'Confirming…' : empty ? 'Nothing to claim yet' : choice === 'now' ? `Claim ${fmtToken(split.instant, 1)} PMG` : `Lock ${fmtToken(split.locked, 1)} PMG`}
+        </Button>
+        <p className="text-xs text-ink-3 num">Lockers share this week's pool of {fmtInt(pool)} PMG from forfeits and buybacks.</p>
+      </section>
+    </>
   );
 }
 
-function Option({ selected, onSelect, title, amount, note, good }: { selected: boolean; onSelect: () => void; title: string; amount: number; note: string; good?: boolean }) {
+/** One way to receive the rewards. The bar shows what is kept, what is given up (hatched) and what is added (sun). */
+function Option({ selected, onSelect, disabled, title, amount, note, bar }: { selected: boolean; onSelect: () => void; disabled: boolean; title: string; amount: number; note: string; bar: React.ReactNode }) {
   return (
-    <button onClick={onSelect} aria-pressed={selected} className={cx('text-left rounded-md border px-3 py-2.5 transition-colors', selected ? 'border-tide bg-tide/[0.07]' : 'border-line hover:border-line-2 bg-deep')}>
-      <div className="text-xs text-ink-2">{title}</div>
-      <div className={cx('display num text-xl font-semibold mt-0.5', selected ? 'text-tide' : 'text-ink')}>{fmtToken(amount, 1)} <span className="text-xs font-normal">PMG</span></div>
-      <div className={cx('text-2xs mt-1', good ? 'text-up' : 'text-ink-3')}>{note}</div>
+    <button
+      onClick={onSelect}
+      aria-pressed={selected}
+      disabled={disabled}
+      className={cx(
+        'grid w-full gap-2.5 rounded border px-4 py-3.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+        selected ? 'border-sun bg-sun/[0.05]' : 'border-line-2 hover:border-ink-3',
+      )}
+    >
+      <span className="flex items-baseline justify-between gap-2.5">
+        <span className="text-base font-medium text-ink">{title}</span>
+        <span className="display num text-xl text-ink">{fmtToken(amount, 1)}</span>
+      </span>
+      <span className="flex h-2.5 gap-0.5" aria-hidden>{bar}</span>
+      <span className={cx('text-xs', selected ? 'text-ink-2' : 'text-ink-3')}>{note}</span>
     </button>
   );
 }

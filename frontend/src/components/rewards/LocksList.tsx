@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import * as m from '@/demo/math';
-import { cx, fmtDate, fmtToken } from '@/lib/format';
+import { fmtDate, fmtToken } from '@/lib/format';
+import type { Lock } from '@/lib/types';
 import { useStore } from '@/store/useStore';
 import { Button } from '@/components/ui/Button';
 
-/** Every lock as its own row with a countdown to unlock. Lives inside the claim modal. */
+const DAY = 86_400_000;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Every lock: all of them on one date scale with today marked, then each as its own row. Lives inside the claim sheet. */
 export function LocksList() {
   const locks = useStore((s) => s.user.locks);
   const unlock = useStore((s) => s.unlock);
@@ -13,6 +17,7 @@ export function LocksList() {
   const now = Date.now();
   if (locks.length === 0) return null;
   const total = m.lockedTide(locks);
+  const sorted = [...locks].sort((a, b) => a.unlockAt - b.unlockAt);
 
   const doUnlock = async (id: string, amount: number) => {
     setBusy(id);
@@ -23,39 +28,69 @@ export function LocksList() {
   };
 
   return (
-    <section className="bg-panel border border-line rounded-lg p-4">
-      <div className="flex items-center justify-between">
-        <h2 className="display text-sm font-semibold">Locked PMG</h2>
-        <span className="text-xs num text-tide">{fmtToken(total, 0)} PMG</span>
-      </div>
-      <ul className="divide-y divide-line mt-1">
-        {[...locks].sort((a, b) => a.unlockAt - b.unlockAt).map((l) => {
+    <section>
+      <h3 className="eyebrow mb-3 flex justify-between gap-2.5">
+        Locked PMG
+        <span className="num text-sm normal-case tracking-normal text-tide">{fmtToken(total, 0)} PMG</span>
+      </h3>
+      <Timeline locks={sorted} now={now} />
+      <ul className="mt-2">
+        {sorted.map((l) => {
           const ready = m.isUnlockable(l, now);
-          const left = m.lockDaysLeft(l, now);
           return (
-            <li key={l.id} className="py-3 text-sm num">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-ink font-medium">
-                  {fmtToken(l.amount, 1)} PMG
-                  {l.redistributionEarned > 0 && <span className="text-2xs text-up ml-2">+{fmtToken(l.redistributionEarned, 1)} earned</span>}
-                </span>
-                {ready ? (
-                  <Button size="sm" variant="tide" onClick={() => doUnlock(l.id, l.amount)} loading={busy === l.id}>Unlock</Button>
-                ) : (
-                  <span className="text-xs text-ink-3">{left}d left</span>
-                )}
+            <li key={l.id} className="flex items-center justify-between gap-3 border-t border-line py-3 num">
+              <div className="min-w-0">
+                <span className="font-medium text-ink">{fmtToken(l.amount, 1)} PMG</span>
+                {l.redistributionEarned > 0 && <span className="ml-1.5 text-xs text-up">+{fmtToken(l.redistributionEarned, 1)} earned</span>}
+                <small className="mt-0.5 block text-xs text-ink-3">
+                  Locked {fmtDate(l.lockedAt)} · {ready ? <span className="text-up">ready to unlock</span> : <>unlocks {fmtDate(l.unlockAt)} · {m.lockDaysLeft(l, now)}d left</>}
+                </small>
               </div>
-              <div className="mt-2 h-1 rounded-full bg-line overflow-hidden">
-                <div className={cx('h-full rounded-full', ready ? 'bg-up' : 'bg-tide')} style={{ width: `${m.lockProgress(l, now) * 100}%` }} />
-              </div>
-              <div className="mt-1.5 flex justify-between text-2xs text-ink-3">
-                <span>Locked {fmtDate(l.lockedAt)}</span>
-                <span className={ready ? 'text-up' : ''}>{ready ? 'Ready to unlock' : `Unlocks ${fmtDate(l.unlockAt)}`}</span>
-              </div>
+              {ready && <Button size="sm" onClick={() => doUnlock(l.id, l.amount)} loading={busy === l.id}>Unlock</Button>}
             </li>
           );
         })}
       </ul>
     </section>
+  );
+}
+
+/** Locks as bars on a month scale: the part already served is solid, the rest is faint, today is the sun-coloured line. */
+function Timeline({ locks, now }: { locks: Lock[]; now: number }) {
+  const W = 448, ROW = 22, TOP = 26;
+  const H = TOP + locks.length * ROW + 30;
+  const first = new Date(Math.min(now, ...locks.map((l) => l.lockedAt)));
+  const last = new Date(Math.max(now, ...locks.map((l) => l.unlockAt)));
+  const d0 = Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), 1);
+  const d1 = Date.UTC(last.getUTCFullYear(), last.getUTCMonth() + 1, 1);
+  const X = (t: number) => 4 + ((t - d0) / (d1 - d0)) * (W - 8);
+  const months: number[] = [];
+  for (let t = d0; t <= d1; ) {
+    months.push(t);
+    const d = new Date(t);
+    t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1);
+  }
+  const every = Math.ceil((months.length - 1) / 7); // label at most seven months
+  const xNow = X(now);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={`Locked rewards on a timeline from ${fmtDate(d0)} to ${fmtDate(d1 - DAY)}`}>
+      {months.map((t, i) => (
+        <g key={t}>
+          <rect x={X(t)} y={TOP - 6} width="1" height={H - TOP - 18} className="fill-line" />
+          {i < months.length - 1 && i % every === 0 && <text x={X(t) + 4} y={H - 6} fontSize="10.5" className="fill-ink-3">{MONTHS[new Date(t).getUTCMonth()]}</text>}
+        </g>
+      ))}
+      {locks.map((l, i) => {
+        const y = TOP + i * ROW, x0 = X(l.lockedAt), x1 = X(l.unlockAt), served = Math.min(xNow, x1);
+        return (
+          <g key={l.id}>
+            <rect x={x0} y={y} width={x1 - x0} height="8" className="fill-ink" opacity=".22" />
+            <rect x={x0} y={y} width={Math.max(0, served - x0)} height="8" className={m.isUnlockable(l, now) ? 'fill-up' : 'fill-ink'} />
+          </g>
+        );
+      })}
+      <rect x={xNow} y="4" width="1" height={H - 22} className="fill-sun" />
+      <text x={xNow + 5 > W - 40 ? xNow - 5 : xNow + 5} y="13" textAnchor={xNow + 5 > W - 40 ? 'end' : 'start'} fontSize="10.5" className="fill-sun">Today</text>
+    </svg>
   );
 }
