@@ -22,7 +22,7 @@ import { Welcome } from '@/components/layout/Welcome';
 import { Sidekick } from '@/components/layout/Sidekick';
 import { LiveVaultTeaser } from '@/components/live/LiveVaultTeaser';
 import { DataLegend, DemoBadge } from '@/components/ui/DataBadge';
-import { Scene } from '@/components/brand/Scene';
+import { SkyScene } from '@/components/brand/SkyScene';
 import { RangeMeter } from '@/components/vault/RangeMeter';
 
 
@@ -73,7 +73,7 @@ export function Markets() {
       {/* The sky: who you are here and what you hold, over the scene */}
       <section className={cx('relative overflow-hidden border-b border-line-2', d.connected ? 'sm:h-[clamp(420px,54vh,490px)]' : 'sm:h-[clamp(470px,64vh,580px)]')}>
         {/* On phones the scene is a band across the top; from sm up it fills the section */}
-        <Scene className="absolute inset-x-0 top-0 h-[300px] w-full sm:h-full" />
+        <SkyScene className="absolute inset-x-0 top-0 h-[300px] w-full sm:h-full" />
         <div className="sky-shade absolute inset-x-0 top-0 z-[2] h-[300px] pointer-events-none sm:h-full" />
         <div className="wrap relative z-[4] grid justify-items-start gap-[18px] pt-[230px] sm:pt-[clamp(40px,7vh,72px)]">
           {d.connected ? (

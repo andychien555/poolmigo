@@ -235,8 +235,10 @@ chart are circles; ranges, controls, cards and token tiles are square-cut. The r
 
 The motif: two stones mark a range's bounds, the sun marks the price, a graduated scale is the price axis. It appears
 as the mark (`components/brand/Mark.tsx`), the range meter on each vault row (`components/vault/RangeMeter.tsx`), the
-price range on the vault page (`components/vault/PriceRange.tsx`) and the scene behind the Earn page
-(`components/brand/Scene.tsx`). Readings sit on an engraved rule (`StatRow`).
+price range on the vault page (`components/vault/PriceRange.tsx`) and the scene behind the Earn page. That scene is
+alive (`components/brand/SkyScene.tsx`): the sun drifts and the stones slide to re-centre on it when it leaves the
+gap. It is a three.js scene (`duskScene.ts`) loaded on demand, so three.js stays out of the main bundle; the still
+drawing in `Scene.tsx` shows first and remains when WebGL is unavailable. Readings sit on an engraved rule (`StatRow`).
 
 Type: Geist (UI and numerals, tabular; emphasis at 500) and Geist Mono via Google Fonts; Zodiak (page titles, vault
 names; light, never bold) from the Fontshare CDN. Zodiak's licence does not allow its font files in a public repository,
