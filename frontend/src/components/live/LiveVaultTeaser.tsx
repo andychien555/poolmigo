@@ -17,7 +17,7 @@ export function LiveVaultTeaser() {
   return (
     <section className="bg-panel border border-line rounded-lg p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 min-w-0">
           <h2 className="display text-sm font-semibold">{vault.entry?.label ?? vault.name ?? 'Poolmigo vault'}</h2>
           <LiveBadge />
           <span className="text-2xs text-ink-3 num truncate">
