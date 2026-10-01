@@ -11,10 +11,11 @@ interface Props {
   className?: string;
 }
 
-const HEIGHT = 300; // drawing height
-const HORIZON = 238; // y of the ground line
-const STONE_W = 18;
-const STONE_H = 158;
+const HEIGHT = 330; // drawing height
+const HORIZON = 262; // y of the ground line
+const STONE_W = 20;
+const STONE_H = 172;
+const SUN_R = 30;
 
 /** Round scale marks covering [min, max], about `count` of them. */
 function niceTicks(min: number, max: number, count: number): number[] {
@@ -43,7 +44,7 @@ export function PriceRange({ vault: v, market, className }: Props) {
   const d0 = g.lower - span * 0.24, d1 = g.upper + span * 0.24;
   const X = (p: number) => pad + ((p - d0) / (d1 - d0)) * (W - pad * 2);
   // a price beyond the scale stops at its end, so the sun never leaves the frame
-  const sunX = Math.min(W - pad - 24, Math.max(pad + 24, X(v.currentPrice)));
+  const sunX = Math.min(W - pad - SUN_R, Math.max(pad + SUN_R, X(v.currentPrice)));
 
   const ticks = niceTicks(d0, d1, Math.max(4, Math.floor(W / 110)));
   const step = ticks.length > 1 ? ticks[1] - ticks[0] : span;
@@ -54,13 +55,44 @@ export function PriceRange({ vault: v, market, className }: Props) {
     if (t < d0) continue;
     minor.push({ x: X(t), major: Math.abs(t / step - Math.round(t / step)) < 1e-6 });
   }
-  let dunes = `M0 ${HORIZON}`;
-  for (let x = 0; x <= W; x += 20) dunes += ` L${x} ${(HORIZON - 5 - 4 * Math.sin(x * 0.013) - 3 * Math.sin(x * 0.031 + 1.2)).toFixed(1)}`;
-  dunes += ` L${W} ${HORIZON} Z`;
+  // Two ridges of dunes: a paler one far off, a darker one nearer. The sun sets behind both.
+  const ridge = (base: number, a1: number, f1: number, a2: number, f2: number, phase: number) => {
+    let d = `M0 ${HORIZON}`;
+    for (let x = 0; x <= W; x += 12) d += ` L${x} ${(HORIZON - base - a1 * Math.sin(x * f1 + phase) - a2 * Math.sin(x * f2 + phase * 2.1)).toFixed(1)}`;
+    return `${d} L${W} ${HORIZON} Z`;
+  };
+  const farDunes = ridge(11, 5, 0.0085, 2.5, 0.021, 0.6);
+  const nearDunes = ridge(5, 3.5, 0.013, 2, 0.031, 1.2);
 
-  const sky = `${id}-sky`, glow = `${id}-glow`, sun = `${id}-sun`, stone = `${id}-stone`, above = `${id}-above`;
-  const label = { fontSize: 10, letterSpacing: '0.12em' } as const;
-  const figure = { fontWeight: 500, paintOrder: 'stroke', stroke: 'rgb(21 13 16 / 0.7)', strokeWidth: 3, strokeLinejoin: 'round' } as const;
+  const stones = [
+    { x: X(g.lower) - STONE_W, bound: X(g.lower), name: 'LOWER', value: g.lower },
+    { x: X(g.upper), bound: X(g.upper), name: 'UPPER', value: g.upper },
+  ].map((st) => {
+    const centre = st.x + STONE_W / 2;
+    // the face turned to the sun is lit; the shadow falls away from it across the ground
+    const litLeft = sunX < centre;
+    const lean = (centre - sunX) * 0.42;
+    return { ...st, centre, litLeft, shadow: `M${st.x} ${HORIZON} H${st.x + STONE_W} L${st.x + STONE_W + lean * 1.12} ${HEIGHT} H${st.x + lean} Z` };
+  });
+  const top = HORIZON - STONE_H;
+
+  // The price figure sits above the sun in the darker sky, joined to it by a hairline.
+  // Near a stone it steps aside so it never lies across the stone.
+  const priceText = fmtQuote(v.currentPrice);
+  const half = (priceText.length * 13.5) / 2 + 8; // about half the figure's width at 24px, plus air
+  let priceX = Math.min(W - half, Math.max(half, sunX));
+  let priceAnchor: 'start' | 'middle' | 'end' = 'middle';
+  let aside = false;
+  for (const st of stones) {
+    if (sunX > st.x - half && sunX < st.x + STONE_W + half) {
+      aside = true;
+      if (sunX >= st.centre) { priceX = st.x + STONE_W + 12; priceAnchor = 'start'; } else { priceX = st.x - 12; priceAnchor = 'end'; }
+    }
+  }
+
+  const sky = `${id}-sky`, glow = `${id}-glow`, bloom = `${id}-bloom`, sun = `${id}-sun`, stone = `${id}-stone`, lit = `${id}-lit`;
+  const ground = `${id}-ground`, cast = `${id}-cast`, lane = `${id}-lane`, above = `${id}-above`;
+  const label = { fontSize: 10, letterSpacing: '0.14em' } as const;
 
   return (
     <section className={className} aria-label="Price range">
@@ -82,51 +114,92 @@ export function PriceRange({ vault: v, market, className }: Props) {
           >
             <defs>
               <linearGradient id={sky} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#140b0f" />
-                <stop offset=".5" stopColor="#35202a" />
-                <stop offset=".86" stopColor="#7d4745" />
-                <stop offset="1" stopColor="#a45d4b" />
+                <stop offset="0" stopColor="#120a0e" />
+                <stop offset=".34" stopColor="#22141b" />
+                <stop offset=".62" stopColor="#47282f" />
+                <stop offset=".86" stopColor="#84504a" />
+                <stop offset="1" stopColor="#b26a4e" />
               </linearGradient>
-              <radialGradient id={glow} cx={sunX} cy={HORIZON} r={Math.min(260, W * 0.34)} gradientUnits="userSpaceOnUse">
-                <stop offset="0" stopColor="#ffb066" stopOpacity=".55" />
-                <stop offset="1" stopColor="#ffb066" stopOpacity="0" />
+              {/* a wide, slow falloff: no edge to the light */}
+              <radialGradient id={glow} cx={sunX} cy={HORIZON} r={Math.max(280, W * 0.5)} gradientUnits="userSpaceOnUse">
+                <stop offset="0" stopColor="#ff9d5c" stopOpacity=".46" />
+                <stop offset=".18" stopColor="#ff9d5c" stopOpacity=".3" />
+                <stop offset=".42" stopColor="#ff9d5c" stopOpacity=".13" />
+                <stop offset=".7" stopColor="#ff9d5c" stopOpacity=".04" />
+                <stop offset="1" stopColor="#ff9d5c" stopOpacity="0" />
+              </radialGradient>
+              <radialGradient id={bloom} cx={sunX} cy={HORIZON - 6} r={SUN_R * 3.2} gradientUnits="userSpaceOnUse">
+                <stop offset="0" stopColor="#ffd9a0" stopOpacity=".55" />
+                <stop offset=".35" stopColor="#ffb877" stopOpacity=".22" />
+                <stop offset="1" stopColor="#ffb877" stopOpacity="0" />
               </radialGradient>
               <radialGradient id={sun}>
-                <stop offset=".15" stopColor="#fff0cc" />
+                <stop offset="0" stopColor="#fff6e0" />
+                <stop offset=".5" stopColor="#ffd592" />
                 <stop offset="1" stopColor="#ff9a4a" />
               </radialGradient>
               <linearGradient id={stone} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#eadbc9" />
-                <stop offset="1" stopColor="#b3917e" />
+                <stop offset="0" stopColor="#f1e5d6" />
+                <stop offset=".55" stopColor="#cdb09c" />
+                <stop offset="1" stopColor="#9a7868" />
+              </linearGradient>
+              <linearGradient id={lit} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#fff0d4" />
+                <stop offset="1" stopColor="#ffb877" />
+              </linearGradient>
+              <linearGradient id={ground} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#2a181c" />
+                <stop offset="1" stopColor="#150d10" />
+              </linearGradient>
+              <linearGradient id={cast} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#0b0608" stopOpacity=".42" />
+                <stop offset="1" stopColor="#0b0608" stopOpacity="0" />
+              </linearGradient>
+              <linearGradient id={lane} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#ffae3d" stopOpacity={inRange ? 0.24 : 0.08} />
+                <stop offset="1" stopColor="#ffae3d" stopOpacity="0" />
               </linearGradient>
               <clipPath id={above}><rect x="0" y="0" width={W} height={HORIZON} /></clipPath>
             </defs>
 
+            {/* sky */}
             <rect x="0" y="0" width={W} height={HORIZON} fill={`url(#${sky})`} />
             <rect x="0" y="0" width={W} height={HORIZON} fill={`url(#${glow})`} />
-            <path d={dunes} fill="#5b3438" opacity=".8" />
-            {/* the price: the sun, partly set */}
-            <g clipPath={`url(#${above})`}><circle cx={sunX} cy={HORIZON - 2} r="24" fill={`url(#${sun})`} /></g>
-            {/* the bounds: inner faces sit exactly on Lower and Upper, lit from the sun's side */}
-            <rect x={X(g.lower) - STONE_W} y={HORIZON - STONE_H} width={STONE_W} height={STONE_H} fill={`url(#${stone})`} />
-            <rect x={X(g.lower) - 2} y={HORIZON - STONE_H} width="2" height={STONE_H} fill="#ffd9a0" opacity=".55" />
-            <rect x={X(g.upper)} y={HORIZON - STONE_H} width={STONE_W} height={STONE_H} fill={`url(#${stone})`} />
-            <rect x={X(g.upper)} y={HORIZON - STONE_H} width="2" height={STONE_H} fill="#ffd9a0" opacity=".55" />
-            {/* the range, lit on the horizon */}
-            <rect x={X(g.lower)} y={HORIZON - 3} width={X(g.upper) - X(g.lower)} height="3" className="fill-sun" opacity={inRange ? 0.55 : 0.2} />
+            <g clipPath={`url(#${above})`}>
+              <circle cx={sunX} cy={HORIZON - 6} r={SUN_R * 3.2} fill={`url(#${bloom})`} />
+              {/* the price: the sun, setting behind the dunes */}
+              <circle cx={sunX} cy={HORIZON - 6} r={SUN_R} fill={`url(#${sun})`} />
+            </g>
+            <path d={farDunes} fill="#7a4a47" opacity=".7" />
+            <path d={nearDunes} fill="#4f2e33" />
 
-            <text x={X(g.lower) - STONE_W / 2} y={HORIZON - STONE_H - 31} textAnchor="middle" className="fill-ink-2" {...label}>LOWER</text>
-            <text x={X(g.lower) - STONE_W / 2} y={HORIZON - STONE_H - 10} textAnchor="middle" fontSize="15" className="fill-ink num" {...figure}>{fmtQuote(g.lower)}</text>
-            <text x={X(g.upper) + STONE_W / 2} y={HORIZON - STONE_H - 31} textAnchor="middle" className="fill-ink-2" {...label}>UPPER</text>
-            <text x={X(g.upper) + STONE_W / 2} y={HORIZON - STONE_H - 10} textAnchor="middle" fontSize="15" className="fill-ink num" {...figure}>{fmtQuote(g.upper)}</text>
-            <text x={sunX} y={HORIZON - 72} textAnchor="middle" className="fill-ink-2" {...label}>PRICE</text>
-            <text x={sunX} y={HORIZON - 44} textAnchor="middle" fontSize="22" className="fill-sun-core num" {...figure}>{fmtQuote(v.currentPrice)}</text>
+            {/* ground: the lit lane between the stones is where the position earns */}
+            <rect x="0" y={HORIZON} width={W} height={HEIGHT - HORIZON} fill={`url(#${ground})`} />
+            <rect x={X(g.lower)} y={HORIZON} width={X(g.upper) - X(g.lower)} height="34" fill={`url(#${lane})`} />
+            {stones.map((st) => <path key={st.name} d={st.shadow} fill={`url(#${cast})`} />)}
+            <rect x="0" y={HORIZON} width={W} height="1" className="fill-line-2" />
+            <rect x={X(g.lower)} y={HORIZON - 1} width={X(g.upper) - X(g.lower)} height="2" className="fill-sun" opacity={inRange ? 0.75 : 0.25} />
+
+            {/* the bounds: inner faces sit exactly on Lower and Upper */}
+            {stones.map((st) => (
+              <g key={st.name}>
+                <rect x={st.x} y={top} width={STONE_W} height={STONE_H} fill={`url(#${stone})`} />
+                <rect x={st.litLeft ? st.x : st.x + STONE_W - 3} y={top} width="3" height={STONE_H} fill={`url(#${lit})`} opacity=".85" />
+                <rect x={st.litLeft ? st.x + STONE_W - 4 : st.x} y={top} width="4" height={STONE_H} fill="#3a2226" opacity=".1" />
+                <rect x={st.x} y={top} width={STONE_W} height="1" fill="#fff8ea" opacity=".6" />
+                <text x={st.centre} y={top - 32} textAnchor="middle" className="fill-ink-3" {...label}>{st.name}</text>
+                <text x={st.centre} y={top - 11} textAnchor="middle" fontSize="16" fontWeight="500" className="fill-ink num">{fmtQuote(st.value)}</text>
+              </g>
+            ))}
+
+            {/* the price reading */}
+            {!aside && <rect x={sunX} y={HORIZON - 96} width="1" height={96 - SUN_R - 14} className="fill-sun-core" opacity=".55" />}
+            <text x={priceX} y={HORIZON - 132} textAnchor={priceAnchor} className="fill-ink-2" {...label}>PRICE</text>
+            <text x={priceX} y={HORIZON - 106} textAnchor={priceAnchor} fontSize="24" fontWeight="500" className="fill-sun-core num">{priceText}</text>
 
             {/* the graduated horizon: the price axis */}
-            <rect x="0" y={HORIZON} width={W} height={HEIGHT - HORIZON} fill="#1b1115" />
-            <rect x="0" y={HORIZON} width={W} height="1" className="fill-line-2" />
-            {minor.map((t, i) => <rect key={i} x={t.x} y={HORIZON + 1} width="1" height={t.major ? 10 : 5} className="fill-ink-3" opacity={t.major ? 0.9 : 0.5} />)}
-            {ticks.map((t) => <text key={t} x={X(t)} y={HORIZON + 28} textAnchor="middle" fontSize="11" className="fill-ink-3 num">{t.toFixed(tickDigits)}</text>)}
+            {minor.map((t, i) => <rect key={i} x={t.x} y={HORIZON + 1} width="1" height={t.major ? 10 : 5} className="fill-ink-3" opacity={t.major ? 0.9 : 0.45} />)}
+            {ticks.map((t) => <text key={t} x={X(t)} y={HORIZON + 30} textAnchor="middle" fontSize="11" className="fill-ink-3 num">{t.toFixed(tickDigits)}</text>)}
           </svg>
         </div>
       </div>
