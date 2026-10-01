@@ -50,11 +50,11 @@ export function WalletButton() {
       <button
         onClick={() => setOpen(!open)}
         className={cx(
-          'h-9 px-3 rounded-md border bg-panel text-xs num text-ink inline-flex items-center gap-2',
+          'h-9 px-3 rounded border bg-transparent font-mono text-xs text-ink inline-flex items-center gap-2.5',
           wrongChain ? 'border-amber/60 hover:border-amber' : 'border-line-2 hover:border-ink-3',
         )}
       >
-        <span className={cx('h-4 w-4 rounded-full', address ? 'bg-gradient-to-br from-glass to-apricot' : 'bg-line-2')} />
+        <span className={cx('h-2 w-2', address ? 'bg-up' : 'bg-ink-3')} />
         {shortAddress(shown)}
         {wrongChain && <span className="text-amber">!</span>}
       </button>

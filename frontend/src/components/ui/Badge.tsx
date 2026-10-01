@@ -3,9 +3,9 @@ import { cx } from '@/lib/format';
 import type { RangeStatus, Tier } from '@/lib/types';
 
 const tierStyles: Record<Tier, string> = {
-  Core: 'border-aqua/60 text-aqua',
-  Turbo: 'border-glass text-aqua',
-  Degen: 'border-amber/60 text-amber',
+  Core: 'border-line-2 text-ink-2',
+  Turbo: 'border-line-2 text-ink',
+  Degen: 'border-down/45 text-down',
 };
 
 export function TierBadge({ tier, className }: { tier: Tier; className?: string }) {
@@ -23,7 +23,7 @@ export function TierBadge({ tier, className }: { tier: Tier; className?: string 
 }
 
 const statusMeta: Record<RangeStatus, { label: string; dot: string; text: string }> = {
-  in: { label: 'In range', dot: 'bg-aqua', text: 'text-ink-2' },
+  in: { label: 'In range', dot: 'bg-up', text: 'text-ink-2' },
   out: { label: 'Out of range', dot: 'bg-down', text: 'text-down' },
   defensive: { label: 'Defensive', dot: 'bg-amber', text: 'text-amber' },
 };

@@ -62,6 +62,7 @@ export function Analytics() {
   ];
 
   return (
+    <div className="wrap py-6">
     <div className="space-y-6 max-w-[1080px] mx-auto">
       <section className="bg-panel border border-line rounded-lg p-5 md:p-6 space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -106,6 +107,7 @@ export function Analytics() {
         <Stat label="Lock rate" value={fmtPct(PROTOCOL.lockRate, 0)} />
         <Stat label="Market cap" value={fmtUsd(m.circulatingMarketCap(PROTOCOL.circulatingTide))} />
       </StatRow>
+    </div>
     </div>
   );
 }

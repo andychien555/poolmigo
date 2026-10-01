@@ -26,7 +26,7 @@ export function Tooltip({ content, children, side = 'top', align = 'center', cla
         <span
           role="tooltip"
           className={cx(
-            'absolute z-40 rounded-md bg-ink text-deep px-2.5 py-1.5 text-xs leading-snug animate-fade-in shadow-lg',
+            'absolute z-40 rounded-sm bg-ink text-deep px-2.5 py-1.5 text-xs font-medium leading-snug animate-fade-in',
             wide ? 'w-72' : 'w-max max-w-[260px]',
             side === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
             align === 'center' && 'left-1/2 -translate-x-1/2',
@@ -44,7 +44,7 @@ export function Tooltip({ content, children, side = 'top', align = 'center', cla
 export function InfoDot({ tip, wide }: { tip: ReactNode; wide?: boolean }) {
   return (
     <Tooltip content={tip} wide={wide}>
-      <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full border border-ink-3 text-[9px] leading-none text-ink-3 cursor-help">
+      <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-sm border border-ink-3 text-[9px] leading-none text-ink-3 cursor-help">
         i
       </span>
     </Tooltip>

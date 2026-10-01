@@ -45,7 +45,7 @@ export function LiveVault() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="wrap py-6 space-y-6">
       <header className="flex flex-wrap items-center gap-3">
         <Link to="/" className="text-xs text-ink-3 hover:text-ink-2 mr-1">← Earn</Link>
         <h1 className="display text-2xl font-semibold">{vault.entry?.label ?? vault.name ?? 'Poolmigo vault'}</h1>

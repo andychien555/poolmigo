@@ -5,6 +5,7 @@ import { ToastHost } from '@/components/ui/Toast';
 import { usePendingTicker } from '@/store/selectors';
 import { useStore } from '@/store/useStore';
 import { useWalletBridge } from '@/chain/useConnectWallet';
+import { BRAND } from '@/lib/brand';
 
 export function Layout() {
   usePendingTicker();
@@ -31,13 +32,14 @@ export function Layout() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 mx-auto w-full max-w-[1280px] px-4 md:px-6 py-6">
+      {/* Pages set their own width (class "wrap"), so a page can run a band edge to edge. */}
+      <main className="flex-1 w-full">
         <Outlet />
       </main>
       <footer className="border-t border-line">
-        <div className="mx-auto max-w-[1280px] px-4 md:px-6 min-h-12 py-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-2xs text-ink-3">
-          <span className="flex items-center gap-2">
-            Poolmigo · <Link to="/live" className="text-up hover:underline">Live vault</Link> reads the deployed contract;
+        <div className="wrap py-[22px] flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-xs text-ink-3">
+          <span>
+            {BRAND.name} · <Link to="/live" className="text-up hover:underline">Live vault</Link> reads the deployed contract;
             everything else is prototype demo data.
           </span>
           <span>LP positions can lose value and may underperform holding the assets.</span>

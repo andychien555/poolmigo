@@ -14,17 +14,17 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-aqua text-on-primary hover:bg-aqua-dim disabled:bg-line disabled:text-ink-3',
-  tide: 'bg-apricot text-on-accent hover:brightness-105 disabled:bg-line disabled:text-ink-3',
-  secondary: 'bg-panel text-ink border border-line-2 hover:border-ink-3 disabled:text-ink-3 disabled:hover:border-line-2',
-  ghost: 'bg-transparent text-ink-2 hover:text-ink hover:bg-panel-2 disabled:text-ink-3',
+  primary: 'bg-aqua text-on-primary border border-aqua hover:bg-aqua-dim hover:border-aqua-dim disabled:bg-panel-2 disabled:border-line-2 disabled:text-ink-3',
+  tide: 'bg-apricot text-on-accent border border-apricot hover:bg-sun-core hover:border-sun-core disabled:bg-panel-2 disabled:border-line-2 disabled:text-ink-3',
+  secondary: 'bg-transparent text-ink border border-line-2 hover:border-ink-2 disabled:text-ink-3 disabled:hover:border-line-2',
+  ghost: 'bg-transparent text-ink-2 border border-transparent hover:text-ink hover:bg-panel-2 disabled:text-ink-3',
   danger: 'bg-transparent text-down border border-down/40 hover:bg-down/10',
 };
 
 const sizes: Record<Size, string> = {
-  sm: 'h-9 px-3 text-xs',
-  md: 'h-10 px-4 text-sm',
-  lg: 'h-11 px-5 text-md',
+  sm: 'h-9 px-3 text-sm',
+  md: 'h-11 px-[18px] text-base',
+  lg: 'h-12 px-5 text-md',
 };
 
 export function Button({ variant = 'primary', size = 'md', loading, block, className, children, disabled, ...rest }: Props) {
@@ -33,14 +33,14 @@ export function Button({ variant = 'primary', size = 'md', loading, block, class
       {...rest}
       disabled={disabled || loading}
       className={cx(
-        'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors duration-150 select-none whitespace-nowrap disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center gap-3 rounded font-medium transition-colors duration-300 ease-dusk select-none whitespace-nowrap disabled:cursor-not-allowed',
         variants[variant],
         sizes[size],
         block && 'w-full',
         className,
       )}
     >
-      {loading && <Spinner className="h-4 w-4" />}
+      {loading && <Spinner className="h-4 w-[26px]" />}
       <span className={cx(loading && 'opacity-80')}>{children}</span>
     </button>
   );

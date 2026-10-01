@@ -12,7 +12,7 @@ export function DemoBadge({ className, label = 'Demo data' }: { className?: stri
     <Tooltip content="Prototype figure — invented, not read from any chain." wide>
       <span
         className={cx(
-          'inline-flex items-center gap-1 h-5 px-1.5 rounded border border-amber/45 bg-amber/10 text-2xs font-medium leading-none text-amber whitespace-nowrap cursor-help',
+          'inline-flex items-center gap-1.5 h-[22px] px-2 rounded border border-dashed border-amber/55 text-[10.5px] font-medium uppercase tracking-[0.1em] leading-none text-amber whitespace-nowrap cursor-help',
           className,
         )}
       >
@@ -30,7 +30,7 @@ export function LiveBadge({ className, label = 'Live on-chain' }: { className?: 
     <Tooltip content="Read from the deployed Poolmigo vault over RPC." wide>
       <span
         className={cx(
-          'inline-flex items-center gap-1.5 h-5 px-1.5 rounded border border-up/45 bg-up/10 text-2xs font-medium leading-none text-up whitespace-nowrap cursor-help',
+          'inline-flex items-center gap-1.5 h-[22px] px-2 rounded border border-up/35 text-[10.5px] font-medium uppercase tracking-[0.1em] leading-none text-up whitespace-nowrap cursor-help',
           className,
         )}
       >

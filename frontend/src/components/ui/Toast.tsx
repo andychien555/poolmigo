@@ -11,14 +11,13 @@ export function ToastHost() {
           key={t.id}
           role="status"
           className={cx(
-            'animate-fade-in bg-panel border rounded-lg shadow-pop px-3.5 py-3 flex items-start gap-3',
-            t.tone === 'tide' ? 'border-tide/50' : t.tone === 'up' ? 'border-up/50' : t.tone === 'amber' ? 'border-amber/50' : 'border-aqua/50',
+            'animate-fade-in bg-panel border border-line-2 rounded-lg shadow-pop px-4 py-3.5 flex items-start gap-3',
           )}
         >
           <span
             className={cx(
-              'mt-1 h-2 w-2 rounded-full shrink-0',
-              t.tone === 'tide' ? 'bg-tide' : t.tone === 'up' ? 'bg-up' : t.tone === 'amber' ? 'bg-amber' : 'bg-aqua',
+              'mt-1.5 h-2 w-2 shrink-0',
+              t.tone === 'tide' ? 'bg-tide' : t.tone === 'up' ? 'bg-up' : t.tone === 'amber' ? 'bg-amber' : 'bg-ink',
             )}
           />
           <div className="flex-1 min-w-0">
