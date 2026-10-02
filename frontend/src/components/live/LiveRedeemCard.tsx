@@ -107,7 +107,7 @@ function BasketRedeemCard({ vault, user, modeSwitch }: { vault: LiveVault; user:
       pushToast({
         title: 'Redeem confirmed',
         detail: `Burned ${formatAmountSignificant(shares, vault.decimals)} ${vault.receipt.symbol} from ${vault.entry?.label ?? 'the vault'} on ${chainLabel(vault.chainId)}`,
-        tone: 'up',
+        tone: 'success',
       });
     } catch (err) {
       setError(describeChainError(err, errCtx));
@@ -129,15 +129,15 @@ function BasketRedeemCard({ vault, user, modeSwitch }: { vault: LiveVault; user:
   else cta = { label: 'Redeem in kind', disabled: false, onClick: () => void submit() };
 
   return (
-    <section className="bg-panel border border-line rounded-lg p-4 space-y-3">
+    <section className="bg-background-elevated border border-stroke-weak rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="display text-sm font-semibold">Redeem</h3>
-        <span className="text-2xs text-ink-3">Always available · never blocked by a position</span>
+        <span className="text-2xs text-weaker">Always available · never blocked by a position</span>
       </div>
 
       {modeSwitch}
 
-      <div className="rounded-md bg-deep border border-line px-3 pt-2.5 pb-2">
+      <div className="rounded-md bg-fill-recessed border border-stroke-weak px-3 pt-2.5 pb-2">
         <div className="flex items-center gap-2">
           <input
             inputMode="decimal"
@@ -147,19 +147,19 @@ function BasketRedeemCard({ vault, user, modeSwitch }: { vault: LiveVault; user:
             onChange={(e) => { setValue(e.target.value); setReceived(null); }}
             placeholder="0"
             aria-label={`${vault.receipt.symbol} amount to redeem`}
-            className="flex-1 min-w-0 bg-transparent display text-2xl num text-ink placeholder:text-ink-3 outline-none"
+            className="flex-1 min-w-0 bg-transparent display text-2xl num text-strong placeholder:text-weaker outline-none"
           />
-          <span className="h-9 px-3 rounded-full bg-panel-2 border border-line inline-flex items-center text-sm font-medium whitespace-nowrap">
+          <span className="h-9 px-3 rounded-full bg-fill-weak border border-stroke-weak inline-flex items-center text-sm font-medium whitespace-nowrap">
             {vault.receipt.symbol}
           </span>
         </div>
         <div className="flex items-center justify-between gap-2 mt-1 text-xs num">
-          <span className={parseError || tooMany ? 'text-down' : 'text-ink-3'}>{parseError ?? (tooMany ? 'More than you hold' : '')}</span>
-          <span className="text-ink-3 whitespace-nowrap">
+          <span className={parseError || tooMany ? 'text-error' : 'text-weaker'}>{parseError ?? (tooMany ? 'More than you hold' : '')}</span>
+          <span className="text-weaker whitespace-nowrap">
             Balance {formatAmountSignificant(user.shares, vault.decimals)}
             <button
               onClick={() => setValue(toExactString(user.shares, vault.decimals))}
-              className="ml-1.5 text-aqua font-medium hover:brightness-110"
+              className="ml-1.5 text-strong font-medium hover:brightness-110"
             >
               Max
             </button>
@@ -167,8 +167,8 @@ function BasketRedeemCard({ vault, user, modeSwitch }: { vault: LiveVault; user:
         </div>
       </div>
 
-      <div className="rounded-md bg-deep border border-line px-3 py-2">
-        <div className="text-xs text-ink-3 mb-1">You receive</div>
+      <div className="rounded-md bg-fill-recessed border border-stroke-weak px-3 py-2">
+        <div className="text-xs text-weaker mb-1">You receive</div>
         <TokenAmountList tokens={vault.tokens} amounts={preview.owed ?? vault.tokens.map(() => 0n)} digits={6} />
       </div>
 
@@ -185,7 +185,7 @@ function BasketRedeemCard({ vault, user, modeSwitch }: { vault: LiveVault; user:
         {busy ? 'Redeeming…' : cta.label}
       </Button>
 
-      <p className="text-2xs text-ink-3 leading-relaxed">
+      <p className="text-2xs text-weaker leading-relaxed">
         Each adapter delivers <span className="num">floor(sharesWad / 1e18)</span> of what it holds straight to your wallet
         (sharesWad = floor(your shares × 1e18 / total supply)); the vault sends your exact slice of its idle balances.
         Adapter-side rounding leaves a few raw units behind for the remaining holders — a documented dust convention; the
@@ -255,7 +255,7 @@ function ZapRedeemCard({ vault, user, route, modeSwitch }: { vault: LiveVault; u
       });
       await waitForReceipt(vault.chainId, hash);
       refetchAllowance();
-      pushToast({ title: `${vault.receipt.symbol} approved`, detail: 'The zap may now pull these shares.', tone: 'up' });
+      pushToast({ title: `${vault.receipt.symbol} approved`, detail: 'The zap may now pull these shares.', tone: 'success' });
     } catch (err) {
       setError(describeZapError(err, errCtx));
     } finally {
@@ -287,7 +287,7 @@ function ZapRedeemCard({ vault, user, route, modeSwitch }: { vault: LiveVault; u
       pushToast({
         title: 'Zap redeem confirmed',
         detail: `Burned ${formatAmountSignificant(shares, vault.decimals)} ${vault.receipt.symbol} for ${formatAmount(amountOut, token.decimals, 6)} ${token.symbol} from ${vault.entry?.label ?? 'the vault'} on ${chainLabel(vault.chainId)}`,
-        tone: 'up',
+        tone: 'success',
       });
     } catch (err) {
       setError(describeZapError(err, errCtx));
@@ -312,10 +312,10 @@ function ZapRedeemCard({ vault, user, route, modeSwitch }: { vault: LiveVault; u
   else cta = { label: `Redeem to ${token.symbol}`, disabled: false, onClick: () => void submit() };
 
   return (
-    <section className="bg-panel border border-line rounded-lg p-4 space-y-3">
+    <section className="bg-background-elevated border border-stroke-weak rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="display text-sm font-semibold">Redeem to {token.symbol} only</h3>
-        <span className="text-2xs text-ink-3">Redeems in kind · the zap sells the rest into {token.symbol}</span>
+        <span className="text-2xs text-weaker">Redeems in kind · the zap sells the rest into {token.symbol}</span>
       </div>
 
       {modeSwitch}
@@ -328,7 +328,7 @@ function ZapRedeemCard({ vault, user, route, modeSwitch }: { vault: LiveVault; u
         ]}
       />
 
-      <div className={cx('rounded-md bg-deep border px-3 pt-2.5 pb-2', parsed && !parsed.ok ? 'border-down/60' : 'border-line')}>
+      <div className={cx('rounded-md bg-fill-recessed border px-3 pt-2.5 pb-2', parsed && !parsed.ok ? 'border-stroke-error/60' : 'border-stroke-weak')}>
         <div className="flex items-center gap-2">
           <input
             inputMode="decimal"
@@ -338,19 +338,19 @@ function ZapRedeemCard({ vault, user, route, modeSwitch }: { vault: LiveVault; u
             onChange={(e) => { setValue(e.target.value); setReceived(null); }}
             placeholder="0"
             aria-label={`${vault.receipt.symbol} amount to redeem to ${token.symbol}`}
-            className="flex-1 min-w-0 bg-transparent display text-2xl num text-ink placeholder:text-ink-3 outline-none"
+            className="flex-1 min-w-0 bg-transparent display text-2xl num text-strong placeholder:text-weaker outline-none"
           />
-          <span className="h-9 px-3 rounded-full bg-panel-2 border border-line inline-flex items-center text-sm font-medium whitespace-nowrap">
+          <span className="h-9 px-3 rounded-full bg-fill-weak border border-stroke-weak inline-flex items-center text-sm font-medium whitespace-nowrap">
             {vault.receipt.symbol}
           </span>
         </div>
         <div className="flex items-center justify-between gap-2 mt-1 text-xs num">
-          <span className={parsed && !parsed.ok ? 'text-down' : 'text-ink-3'}>{parsed && !parsed.ok ? parsed.error : ''}</span>
-          <span className="text-ink-3 whitespace-nowrap">
+          <span className={parsed && !parsed.ok ? 'text-error' : 'text-weaker'}>{parsed && !parsed.ok ? parsed.error : ''}</span>
+          <span className="text-weaker whitespace-nowrap">
             Balance {formatAmountSignificant(user.shares, vault.decimals)}
             <button
               onClick={() => setValue(toExactString(user.shares, vault.decimals))}
-              className="ml-1.5 text-aqua font-medium hover:brightness-110"
+              className="ml-1.5 text-strong font-medium hover:brightness-110"
             >
               Max
             </button>
@@ -358,42 +358,42 @@ function ZapRedeemCard({ vault, user, route, modeSwitch }: { vault: LiveVault; u
         </div>
       </div>
 
-      <div className="rounded-md bg-deep border border-line px-3 py-2.5 space-y-2">
+      <div className="rounded-md bg-fill-recessed border border-stroke-weak px-3 py-2.5 space-y-2">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-xs text-ink-3">You receive (est.)</span>
-          <span className="display num text-xl font-semibold text-ink">
+          <span className="text-xs text-weaker">You receive (est.)</span>
+          <span className="display num text-xl font-semibold text-strong">
             {preview.amountOut !== undefined ? formatAmount(preview.amountOut, token.decimals, 6) : '0'}{' '}
-            <span className="text-sm font-normal text-ink-2">{token.symbol}</span>
+            <span className="text-sm font-normal text-weak">{token.symbol}</span>
           </span>
         </div>
         {passThrough.length > 0 && (
-          <div className="text-2xs text-ink-3 num">
+          <div className="text-2xs text-weaker num">
             Plus in kind (no route / dust): {passThrough.map((x) => `${formatAmount(x.amount, x.t.decimals, 6)} ${x.t.symbol}`).join(' + ')}
           </div>
         )}
         <div className="flex items-center justify-between gap-3 text-xs num">
-          <label className="flex items-center gap-2 text-ink-3">
+          <label className="flex items-center gap-2 text-weaker">
             Slippage tolerance
-            <span className="inline-flex items-center rounded border border-line bg-panel px-1.5 h-7">
+            <span className="inline-flex items-center rounded border border-stroke-weak bg-background-elevated px-1.5 h-7">
               <input
                 inputMode="decimal"
                 value={slippage}
                 onChange={(e) => setSlippage(e.target.value)}
                 aria-label="Zap redeem slippage tolerance in percent"
-                className="w-12 bg-transparent outline-none text-right text-ink"
+                className="w-12 bg-transparent outline-none text-right text-strong"
               />
-              <span className="text-ink-3 ml-0.5">%</span>
+              <span className="text-weaker ml-0.5">%</span>
             </span>
           </label>
-          <span className={cx('text-right', slip.ok ? 'text-ink-2' : 'text-down')}>
+          <span className={cx('text-right', slip.ok ? 'text-weak' : 'text-error')}>
             {slip.ok ? <>min {formatAmount(minOut, token.decimals, 6)} {token.symbol}</> : slip.error}
           </span>
         </div>
         {slip.ok && slip.clamped && (
-          <div className="text-2xs text-amber">Capped at the route limit of {ZAP_MAX_SLIPPAGE_BPS / 100}%.</div>
+          <div className="text-2xs text-warning">Capped at the route limit of {ZAP_MAX_SLIPPAGE_BPS / 100}%.</div>
         )}
         {slip.ok && slip.bps === 0 && (
-          <div className="text-2xs text-ink-3">0% — the minimum is the preview exactly; the swap leg uses the route’s own cap.</div>
+          <div className="text-2xs text-weaker">0% — the minimum is the preview exactly; the swap leg uses the route’s own cap.</div>
         )}
       </div>
 
@@ -409,7 +409,7 @@ function ZapRedeemCard({ vault, user, route, modeSwitch }: { vault: LiveVault; u
         {step === 'approving' ? `Approving ${vault.receipt.symbol}…` : step === 'redeeming' ? 'Redeeming…' : cta.label}
       </Button>
 
-      <p className="text-2xs text-ink-3 leading-relaxed">
+      <p className="text-2xs text-weaker leading-relaxed">
         The vault redeems your exact in-kind slice first (no ratio feedback); the zap then sells each other basket token in one
         swap on its route pool (UniversalRouter, TWAP-guarded, your tolerance at most {ZAP_MAX_SLIPPAGE_BPS / 100}%). Your minimum
         bounds the total {token.symbol} delivered; nothing stays in the zap.

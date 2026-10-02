@@ -27,8 +27,8 @@ export function VaultDetail() {
   const market = useMarketStatus();
   if (!v) {
     return (
-      <div className="text-sm text-ink-3">
-        Vault not found. <Link to="/" className="text-aqua">Back to markets</Link>
+      <div className="text-sm text-weaker">
+        Vault not found. <Link to="/" className="text-strong">Back to markets</Link>
       </div>
     );
   }
@@ -46,22 +46,22 @@ function VaultView({ vaultId, market }: { vaultId: string; market: 'open' | 'clo
     <div className="wrap pt-[26px] pb-[120px]">
       <div className="grid items-start gap-x-10 gap-y-[30px] lg:grid-cols-[minmax(0,1fr)_384px]">
         <header className="grid gap-3.5 lg:col-start-1">
-          <Link to="/" className="justify-self-start text-sm text-ink-3 hover:text-ink">← All vaults</Link>
+          <Link to="/" className="justify-self-start text-sm text-weaker hover:text-strong">← All vaults</Link>
           <div className="flex flex-wrap items-center gap-[18px]">
             <TokenPair a={v.token0} b={v.token1} size={36} chain={v.chain} />
             <h1 className="title font-thin text-[clamp(44px,5.4vw,74px)]">{vaultName(v)}</h1>
           </div>
-          <p className="-mt-0.5 mb-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-sm text-ink-2">
+          <p className="-mt-0.5 mb-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-sm text-weak">
             {CHAINS[v.chain].name}
             <DemoBadge label="Demo vault" />
-            <Link to="/live" className="text-xs text-up hover:underline">See the live on-chain vault →</Link>
+            <Link to="/live" className="text-xs text-success hover:underline">See the live on-chain vault →</Link>
           </p>
           <StatRow cols={3} packed>
             <Stat label="TVL" value={fmtUsd(tvl)} />
             <div className="cursor-help" onMouseEnter={() => setAprHover(true)} onMouseLeave={() => setAprHover(false)}>
               <Stat label="APR" value={<BoostedApr value={fmtPct(b.totalApr)} />} />
               {aprHover && (
-                <div className="absolute left-0 top-full mt-1 z-40 w-72 bg-panel-2 border border-line-2 rounded-md shadow-pop p-3 animate-fade-in">
+                <div className="absolute left-0 top-full mt-1 z-40 w-72 bg-background-popover border border-stroke-strong rounded-md shadow-pop p-3 animate-fade-in">
                   <AprBreakdown vault={v} compact />
                 </div>
               )}
@@ -93,15 +93,15 @@ function YourPosition({ vault: v, tvl, onClaim }: { vault: Vault; tvl: number; o
   const fees = m.feesEarned(value, v.feeApr7d, p.depositedAt, Date.now());
   const b = m.aprBreakdown(v, tvl);
   return (
-    <section className="grid gap-3 rounded-lg border border-line-2 bg-panel px-[18px] pb-[18px] pt-4">
+    <section className="grid gap-3 rounded-lg border border-stroke-strong bg-background-elevated px-[18px] pb-[18px] pt-4">
       <h2 className="eyebrow">Your position</h2>
       <Tooltip content={`${fmtToken(m.positionTdlp(p), 1)} ${v.receiptSymbol} · deposited ${fmtDate(p.depositedAt)}`} align="start" side="bottom" wide>
         <div className="display num cursor-help text-[34px] leading-none tracking-[-0.015em]">{fmtUsd(value, { compact: false, cents: true })}</div>
       </Tooltip>
       <dl className="num text-sm">
-        <Row label="Fees earned" value={`+${fmtUsd(fees, { compact: false, cents: true })}`} tone="text-up" tip="Fees compound into your migoLP automatically. Nothing to claim." />
+        <Row label="Fees earned" value={`+${fmtUsd(fees, { compact: false, cents: true })}`} tone="text-success" tip="Fees compound into your migoLP automatically. Nothing to claim." />
         <Row label="Your APR" value={fmtPct(b.totalApr)} tip={`${fmtPct(b.feeApr)} from fees + ${fmtPct(b.tideApr)} in PMG`} />
-        <Row label="PMG rewards" value={`${fmtToken(d.pendingTide, 1)} PMG`} tone="text-tide" tip={`≈ ${fmtUsd(d.pendingTide * CONSTANTS.TIDE_PRICE, { compact: false, cents: true })} across all your vaults`} />
+        <Row label="PMG rewards" value={`${fmtToken(d.pendingTide, 1)} PMG`} tone="text-accent" tip={`≈ ${fmtUsd(d.pendingTide * CONSTANTS.TIDE_PRICE, { compact: false, cents: true })} across all your vaults`} />
       </dl>
       <Button block onClick={onClaim} disabled={d.pendingTide < 0.005}>
         {d.pendingTide < 0.005 ? 'No rewards to claim yet' : `Claim ${fmtToken(d.pendingTide, 1)} PMG`}
@@ -113,9 +113,9 @@ function YourPosition({ vault: v, tvl, onClaim }: { vault: Vault; tvl: number; o
 function Row({ label, value, tone, tip }: { label: string; value: string; tone?: string; tip: string }) {
   return (
     <Tooltip content={tip} align="start" side="bottom" wide className="flex w-full">
-      <div className="flex w-full cursor-help justify-between gap-2.5 border-t border-line py-[7px]">
-        <dt className="text-ink-3">{label}</dt>
-        <dd className={cx(tone ?? 'text-ink')}>{value}</dd>
+      <div className="flex w-full cursor-help justify-between gap-2.5 border-t border-stroke-weak py-[7px]">
+        <dt className="text-weaker">{label}</dt>
+        <dd className={cx(tone ?? 'text-strong')}>{value}</dd>
       </div>
     </Tooltip>
   );

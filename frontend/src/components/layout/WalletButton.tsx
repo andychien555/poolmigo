@@ -50,27 +50,27 @@ export function WalletButton() {
       <button
         onClick={() => setOpen(!open)}
         className={cx(
-          'h-9 px-3 rounded border bg-transparent font-mono text-xs text-ink inline-flex items-center gap-2.5',
-          wrongChain ? 'border-amber/60 hover:border-amber' : 'border-line-2 hover:border-ink-3',
+          'h-9 px-3 rounded border bg-transparent font-mono text-xs text-strong inline-flex items-center gap-2.5',
+          wrongChain ? 'border-stroke-warning/60 hover:border-stroke-warning' : 'border-stroke-strong hover:border-stroke-stronger',
         )}
       >
-        <span className={cx('h-2 w-2', address ? 'bg-up' : 'bg-ink-3')} />
+        <span className={cx('h-2 w-2', address ? 'bg-success' : 'bg-weaker')} />
         {shortAddress(shown)}
-        {wrongChain && <span className="text-amber">!</span>}
+        {wrongChain && <span className="text-warning">!</span>}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-panel-2 border border-line-2 rounded-md shadow-pop p-3 animate-fade-in z-40">
-          <div className="text-2xs text-ink-3 mb-2 num break-all">{shown}</div>
+        <div className="absolute right-0 top-full mt-2 w-72 bg-background-popover border border-stroke-strong rounded-md shadow-pop p-3 animate-fade-in z-40">
+          <div className="text-2xs text-weaker mb-2 num break-all">{shown}</div>
 
           {address ? (
-            <div className="mb-3 rounded border border-line bg-panel px-2.5 py-2">
+            <div className="mb-3 rounded border border-stroke-weak bg-background-elevated px-2.5 py-2">
               <div className="flex items-center justify-between gap-2 text-xs">
-                <span className="text-ink-3">Wallet</span>
-                <span className="text-ink">{walletName ?? 'Browser wallet'}</span>
+                <span className="text-weaker">Wallet</span>
+                <span className="text-strong">{walletName ?? 'Browser wallet'}</span>
               </div>
               <div className="flex items-center justify-between gap-2 text-xs mt-1">
-                <span className="text-ink-3">Network</span>
-                <span className={cx('num', wrongChain ? 'text-amber' : 'text-ink')}>{chainLabel(chainId)}</span>
+                <span className="text-weaker">Network</span>
+                <span className={cx('num', wrongChain ? 'text-warning' : 'text-strong')}>{chainLabel(chainId)}</span>
               </div>
               {wrongChain && (
                 <Button size="sm" block className="mt-2" loading={switching} onClick={() => void switchTo(target.id).catch(() => {})}>
@@ -79,19 +79,19 @@ export function WalletButton() {
               )}
             </div>
           ) : (
-            <div className="mb-3 rounded border border-amber/40 bg-amber/10 px-2.5 py-2 text-2xs text-amber leading-snug">
+            <div className="mb-3 rounded border border-stroke-warning/40 bg-fill-warning/10 px-2.5 py-2 text-2xs text-warning leading-snug">
               Demo wallet — no chain connection. Connect a browser wallet to use the live vault.
             </div>
           )}
 
           {address && <LiveBalances account={address} />}
 
-          <div className="mt-3 pt-2 border-t border-line">
+          <div className="mt-3 pt-2 border-t border-stroke-weak">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-2xs text-ink-3">Prototype balances</span>
+              <span className="text-2xs text-weaker">Prototype balances</span>
               <DemoBadge />
             </div>
-            <div className="divide-y divide-line text-sm">
+            <div className="divide-y divide-stroke-weak text-sm">
               <Row token="PMG" amount={balances.PMG ?? 0} usd={(balances.PMG ?? 0) * CONSTANTS.TIDE_PRICE} tide />
               <Row token="USDG" amount={balances.USDG ?? 0} usd={balances.USDG ?? 0} />
               <Row token="NVDA" amount={balances.NVDA ?? 0} usd={(balances.NVDA ?? 0) * TOKEN_PRICES.NVDA} />
@@ -114,15 +114,15 @@ function LiveBalances({ account }: { account: `0x${string}` }) {
   if (!vault.hasDeployment || vault.error || vault.tokens.length === 0) return null;
   return (
     <div>
-      <div className="text-2xs text-ink-3 mb-1 truncate">Live vault balances · {vault.entry?.label}</div>
-      <div className="divide-y divide-line text-sm">
+      <div className="text-2xs text-weaker mb-1 truncate">Live vault balances · {vault.entry?.label}</div>
+      <div className="divide-y divide-stroke-weak text-sm">
         <div className="flex items-center justify-between py-2">
-          <span className="text-ink-2">{vault.receipt.symbol}</span>
+          <span className="text-weak">{vault.receipt.symbol}</span>
           <span className="num font-medium">{formatAmountSignificant(user.shares, vault.decimals)}</span>
         </div>
         {vault.tokens.map((t, i) => (
           <div key={t.address} className="flex items-center justify-between py-2">
-            <span className="text-ink-2">{t.symbol}</span>
+            <span className="text-weak">{t.symbol}</span>
             <span className="num font-medium">{formatAmount(user.balances[i] ?? 0n, t.decimals, 4)}</span>
           </div>
         ))}
@@ -134,13 +134,13 @@ function LiveBalances({ account }: { account: `0x${string}` }) {
 function Row({ token, amount, usd, tide }: { token: string; amount: number; usd: number; tide?: boolean }) {
   return (
     <div className="flex items-center justify-between py-2">
-      <span className="inline-flex items-center gap-2 text-ink-2">
+      <span className="inline-flex items-center gap-2 text-weak">
         <TokenIcon symbol={token} size={18} />
         {token}
       </span>
       <span className="text-right">
-        <span className={tide ? 'text-tide num font-medium' : 'num font-medium'}>{fmtToken(amount)}</span>
-        <span className="block text-2xs text-ink-3 num">{fmtUsd(usd, { compact: false, cents: true })}</span>
+        <span className={tide ? 'text-accent num font-medium' : 'num font-medium'}>{fmtToken(amount)}</span>
+        <span className="block text-2xs text-weaker num">{fmtUsd(usd, { compact: false, cents: true })}</span>
       </span>
     </div>
   );

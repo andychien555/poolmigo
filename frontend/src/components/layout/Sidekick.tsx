@@ -10,15 +10,15 @@ export function Sidekick({ onClaim }: { onClaim: () => void }) {
   const locks = useStore((s) => s.user.locks);
   const now = Date.now();
   const ready = locks.filter((l) => m.isUnlockable(l, now)).reduce((a, l) => a + l.amount + l.redistributionEarned, 0);
-  const link = 'text-sun underline underline-offset-[3px] hover:text-sun-core';
+  const link = 'text-accent underline underline-offset-[3px] hover:text-accent-bright';
   let line: React.ReactNode;
-  if (ready > 0) line = <>You have <b className="font-medium text-ink">{fmtToken(ready, 0)} PMG</b> ready to unlock. <button onClick={onClaim} className={link}>View</button></>;
-  else if (d.pendingTide >= 1) line = <><b className="font-medium text-ink">{fmtToken(d.pendingTide, 0)} PMG</b> is waiting for you. <button onClick={onClaim} className={link}>Claim or lock it</button></>;
+  if (ready > 0) line = <>You have <b className="font-medium text-strong">{fmtToken(ready, 0)} PMG</b> ready to unlock. <button onClick={onClaim} className={link}>View</button></>;
+  else if (d.pendingTide >= 1) line = <><b className="font-medium text-strong">{fmtToken(d.pendingTide, 0)} PMG</b> is waiting for you. <button onClick={onClaim} className={link}>Claim or lock it</button></>;
   else if (d.hasPositions) line = <>Your vaults are rebalancing and compounding on their own. Nothing to do.</>;
   else line = <>Pick a vault below to start. Deposit one asset and the vault does the rest.</>;
   return (
-    <p className="inline-flex items-center gap-2.5 rounded border border-line-2 bg-deep/55 py-[7px] pl-2 pr-3 text-sm text-ink-2">
-      <Mark size={20} className="text-ink" />
+    <p className="inline-flex items-center gap-2.5 rounded border border-stroke-strong bg-background-base/55 py-[7px] pl-2 pr-3 text-sm text-weak">
+      <Mark size={20} className="text-strong" />
       <span>{line}</span>
     </p>
   );

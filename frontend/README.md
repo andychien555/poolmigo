@@ -21,6 +21,16 @@ pnpm sync:shared  # regenerate src/config/generated.ts from ../shared
 pnpm e2e:local    # viem end-to-end against the local chain (see below)
 ```
 
+## Design system
+
+Colour comes in two layers, declared once in `src/lib/tokens.ts`: primitives (the palette) and semantic
+tokens (roles). Only the semantic names become Tailwind utilities, so components write `text-strong`,
+`bg-fill-weak`, `border-stroke-weak` and cannot reach a raw colour.
+
+- **Gallery:** http://localhost:5173/design-system — tokens and base components, rendered live. It is
+  not linked from the header.
+- **Reference:** [`docs/design-system.md`](docs/design-system.md) — token tables and usage rules.
+
 ## Running against the local chain
 
 The live page reads the deployed demo stack. From the repo root:

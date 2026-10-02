@@ -2,10 +2,10 @@ import type { ReactNode } from 'react';
 import { cx } from '@/lib/format';
 
 const tones = {
-  ok: 'border-up/40 bg-up/10 text-up',
-  warn: 'border-amber/40 bg-amber/10 text-amber',
-  error: 'border-down/40 bg-down/10 text-down',
-  info: 'border-line-2 bg-deep text-ink-2',
+  ok: 'border-stroke-success/40 bg-fill-success/10 text-success',
+  warn: 'border-stroke-warning/40 bg-fill-warning/10 text-warning',
+  error: 'border-stroke-error/40 bg-fill-error/10 text-error',
+  info: 'border-stroke-strong bg-fill-recessed text-weak',
 } as const;
 
 /** Inline transaction/preview feedback. Errors are decoded contract errors, never raw hex. */

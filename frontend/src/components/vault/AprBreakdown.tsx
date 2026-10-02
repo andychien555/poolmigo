@@ -15,20 +15,20 @@ export function AprBreakdown({ vault, compact, className }: Props) {
   return (
     <div className={cx('text-sm num', className)}>
       <div className="flex items-baseline justify-between">
-        <span className="text-ink-2">Total APR</span>
+        <span className="text-weak">Total APR</span>
         <span className={cx('display num', compact ? 'text-lg' : 'text-2xl')}>{fmtPct(b.totalApr)}</span>
       </div>
-      <div className="my-2 border-t border-line" />
+      <div className="my-2 border-t border-stroke-weak" />
       <div className="flex items-center justify-between py-1">
-        <span className="text-ink-2">Fee APR (7d avg)</span>
-        <span className="font-medium text-ink">{fmtPct(b.feeApr)}</span>
+        <span className="text-weak">Fee APR (7d avg)</span>
+        <span className="font-medium text-strong">{fmtPct(b.feeApr)}</span>
       </div>
       <div className="flex items-center justify-between py-1">
-        <span className="text-ink-2 inline-flex items-center gap-1.5">
+        <span className="text-weak inline-flex items-center gap-1.5">
           PMG rewards APR
           <InfoDot tip="Paid in PMG. Claim 50% instantly or lock 90 days for the full amount." />
         </span>
-        <span className="font-medium text-tide">{fmtPct(b.tideApr)}</span>
+        <span className="font-medium text-accent">{fmtPct(b.tideApr)}</span>
       </div>
     </div>
   );

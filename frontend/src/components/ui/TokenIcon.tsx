@@ -23,16 +23,16 @@ export function TokenIcon({ symbol, size = 22, className }: { symbol: string; si
   const art = TOKEN_ART[symbol];
   if (art) {
     return (
-      <span className={cx('relative inline-flex overflow-hidden rounded bg-panel-2 shrink-0 after:absolute after:inset-0 after:rounded after:border after:border-ink/15', className)} style={{ width: size, height: size }} title={symbol}>
+      <span className={cx('relative inline-flex overflow-hidden rounded bg-fill-weak shrink-0 after:absolute after:inset-0 after:rounded after:border after:border-strong/15', className)} style={{ width: size, height: size }} title={symbol}>
         <img src={art} alt="" width={size} height={size} className="block h-full w-full object-cover" draggable={false} />
       </span>
     );
   }
-  const color = TOKEN_COLORS[symbol] ?? '#9C8878';
+  const color = TOKEN_COLORS[symbol] ?? 'rgb(var(--color-weaker))';
   const letter = symbol.replace(/x$/, '').slice(0, 1);
   return (
     <span
-      className={cx('inline-flex items-center justify-center rounded bg-panel-2 border border-line-2 font-display font-bold text-ink shrink-0', className)}
+      className={cx('inline-flex items-center justify-center rounded bg-fill-weak border border-stroke-strong font-display font-bold text-strong shrink-0', className)}
       style={{ width: size, height: size, fontSize: Math.max(9, Math.round(size * 0.4)), boxShadow: `inset 0 -2px 0 ${color}` }}
       title={symbol}
     >
@@ -50,7 +50,7 @@ export function TokenPair({ a, b, size = 22, chain }: { a: string; b: string; si
         <ChainLogo
           chain={chain}
           size={Math.round(size * 0.46)}
-          className="absolute -bottom-[5px] -right-[7px] z-20 ring-[1.5px] ring-deep"
+          className="absolute -bottom-[5px] -right-[7px] z-20 ring-[1.5px] ring-background-base"
         />
       )}
     </span>

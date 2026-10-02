@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cx } from '@/lib/format';
 import { Spinner } from './Spinner';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'tide';
+type Variant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -14,11 +14,11 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-aqua text-on-primary border border-aqua hover:bg-aqua-dim hover:border-aqua-dim disabled:bg-panel-2 disabled:border-line-2 disabled:text-ink-3',
-  tide: 'bg-apricot text-on-accent border border-apricot hover:bg-sun-core hover:border-sun-core disabled:bg-panel-2 disabled:border-line-2 disabled:text-ink-3',
-  secondary: 'bg-transparent text-ink border border-line-2 hover:border-ink-2 disabled:text-ink-3 disabled:hover:border-line-2',
-  ghost: 'bg-transparent text-ink-2 border border-transparent hover:text-ink hover:bg-panel-2 disabled:text-ink-3',
-  danger: 'bg-transparent text-down border border-down/40 hover:bg-down/10',
+  primary: 'bg-fill-primary text-inverse-strong border border-stroke-primary hover:bg-fill-primary-hover hover:border-stroke-primary-hover disabled:bg-fill-disabled disabled:border-stroke-strong disabled:text-disabled',
+  accent: 'bg-fill-accent text-on-accent border border-stroke-accent hover:bg-fill-accent-hover hover:border-stroke-accent-hover disabled:bg-fill-disabled disabled:border-stroke-strong disabled:text-disabled',
+  secondary: 'bg-transparent text-strong border border-stroke-strong hover:border-stroke-strongest disabled:text-disabled disabled:hover:border-stroke-strong',
+  ghost: 'bg-transparent text-weak border border-transparent hover:text-strong hover:bg-fill-hover disabled:text-disabled',
+  danger: 'bg-transparent text-error border border-stroke-error/40 hover:bg-fill-error/10',
 };
 
 const sizes: Record<Size, string> = {

@@ -1,14 +1,19 @@
+import { tokenHex } from './tokens';
+
 export type Theme = 'light' | 'dark';
 
+/** Colours a chart library needs as plain hex. Keys are the semantic token names, camel-cased. */
 export interface Palette {
-  ink: string; ink2: string; ink3: string; line: string; grid: string; panel: string; panel2: string;
-  aqua: string; up: string; down: string; amber: string; apricot: string; glass: string;
+  strong: string; weak: string; weaker: string; strokeWeak: string; strokeStrong: string; fillHover: string;
+  success: string; error: string; warning: string; accent: string; chartSecondary: string;
 }
 
-// Dusk is dark only, so there is one palette. Keep it in step with src/index.css.
+// Dusk is dark only, so there is one palette. It is read from lib/tokens.ts, never typed in by hand.
 const DUSK: Palette = {
-  ink: '#EFE3D1', ink2: '#C4B19D', ink3: '#9C8878', line: '#49403E', grid: '#2F2727', panel: '#2A1B20', panel2: '#36242A',
-  aqua: '#EFE3D1', up: '#92D6A6', down: '#FF8A8F', amber: '#E0B07A', apricot: '#FFAE3D', glass: '#B36D5F',
+  strong: tokenHex('strong'), weak: tokenHex('weak'), weaker: tokenHex('weaker'),
+  strokeWeak: tokenHex('stroke-weak'), strokeStrong: tokenHex('stroke-strong'), fillHover: tokenHex('fill-hover'),
+  success: tokenHex('success'), error: tokenHex('error'), warning: tokenHex('warning'),
+  accent: tokenHex('accent'), chartSecondary: tokenHex('chart-secondary'),
 };
 
 /** Hex palette for chart libraries that can't read CSS variables. */

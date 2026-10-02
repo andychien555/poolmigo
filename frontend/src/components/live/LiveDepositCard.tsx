@@ -164,7 +164,7 @@ function BasketDepositCard({ vault, user, modeSwitch }: { vault: LiveVault; user
       });
       await waitForReceipt(vault.chainId, hash);
       user.refetch();
-      pushToast({ title: `${symbolOf(token)} approved`, detail: 'The vault may now pull this token.', tone: 'up' });
+      pushToast({ title: `${symbolOf(token)} approved`, detail: 'The vault may now pull this token.', tone: 'success' });
     } catch (err) {
       setError(describeChainError(err, errCtx));
     } finally {
@@ -195,7 +195,7 @@ function BasketDepositCard({ vault, user, modeSwitch }: { vault: LiveVault; user
       pushToast({
         title: 'Deposit confirmed',
         detail: `Minted ${formatAmountSignificant(shares, vault.decimals)} ${vault.receipt.symbol} from ${vault.entry?.label ?? 'the vault'} on ${chainLabel(vault.chainId)}`,
-        tone: 'up',
+        tone: 'success',
       });
     } catch (err) {
       setError(describeChainError(err, errCtx));
@@ -227,10 +227,10 @@ function BasketDepositCard({ vault, user, modeSwitch }: { vault: LiveVault; user
   const previewError = preview.error ? describeChainError(preview.error, errCtx) : null;
 
   return (
-    <section className="bg-panel border border-line rounded-lg p-4 space-y-3">
+    <section className="bg-background-elevated border border-stroke-weak rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="display text-sm font-semibold">Deposit in kind</h3>
-        <span className="text-2xs text-ink-3">Offers are maximums · only what is required is pulled</span>
+        <span className="text-2xs text-weaker">Offers are maximums · only what is required is pulled</span>
       </div>
 
       {modeSwitch}
@@ -261,29 +261,29 @@ function BasketDepositCard({ vault, user, modeSwitch }: { vault: LiveVault; user
         ))}
       </div>
 
-      <div className="rounded-md bg-deep border border-line px-3 py-2.5 space-y-2">
+      <div className="rounded-md bg-fill-recessed border border-stroke-weak px-3 py-2.5 space-y-2">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-xs text-ink-3">You receive</span>
-          <span className="display num text-xl font-semibold text-ink">
+          <span className="text-xs text-weaker">You receive</span>
+          <span className="display num text-xl font-semibold text-strong">
             {preview.shares !== undefined ? formatAmountSignificant(preview.shares, vault.decimals) : '0'}{' '}
-            <span className="text-sm font-normal text-ink-2">{vault.receipt.symbol}</span>
+            <span className="text-sm font-normal text-weak">{vault.receipt.symbol}</span>
           </span>
         </div>
         <div className="flex items-center justify-between gap-3 text-xs num">
-          <label className="flex items-center gap-2 text-ink-3">
+          <label className="flex items-center gap-2 text-weaker">
             Slippage tolerance
-            <span className="inline-flex items-center rounded border border-line bg-panel px-1.5 h-7">
+            <span className="inline-flex items-center rounded border border-stroke-weak bg-background-elevated px-1.5 h-7">
               <input
                 inputMode="decimal"
                 value={slippage}
                 onChange={(e) => setSlippage(e.target.value)}
                 aria-label="Slippage tolerance in percent"
-                className="w-12 bg-transparent outline-none text-right text-ink"
+                className="w-12 bg-transparent outline-none text-right text-strong"
               />
-              <span className="text-ink-3 ml-0.5">%</span>
+              <span className="text-weaker ml-0.5">%</span>
             </span>
           </label>
-          <span className={cx('text-right', slip.ok ? 'text-ink-2' : 'text-down')}>
+          <span className={cx('text-right', slip.ok ? 'text-weak' : 'text-error')}>
             {slip.ok ? (
               <>minShares {formatAmountSignificant(minShares, vault.decimals)}</>
             ) : (
@@ -311,7 +311,7 @@ function BasketDepositCard({ vault, user, modeSwitch }: { vault: LiveVault; user
         {step === 'approving' ? `Approving ${pendingToken ? symbolOf(pendingToken) : ''}…` : step === 'depositing' ? 'Depositing…' : cta.label}
       </Button>
 
-      <p className="text-2xs text-ink-3 leading-relaxed">
+      <p className="text-2xs text-weaker leading-relaxed">
         Shares are the minimum binding ratio across the basket: <span className="num">min(offered × supply / total)</span>. Anything
         offered above the required amount is never pulled — no refund transfer needed.
       </p>
@@ -379,7 +379,7 @@ function ZapDepositCard({ vault, user, route, modeSwitch }: { vault: LiveVault; 
       });
       await waitForReceipt(vault.chainId, hash);
       refetchAllowance();
-      pushToast({ title: `${token.symbol} approved`, detail: 'The zap may now pull this amount.', tone: 'up' });
+      pushToast({ title: `${token.symbol} approved`, detail: 'The zap may now pull this amount.', tone: 'success' });
     } catch (err) {
       setError(describeZapError(err, errCtx));
     } finally {
@@ -415,7 +415,7 @@ function ZapDepositCard({ vault, user, route, modeSwitch }: { vault: LiveVault; 
       pushToast({
         title: 'Zap deposit confirmed',
         detail: `Minted ${formatAmountSignificant(shares, vault.decimals)} ${vault.receipt.symbol} from ${formatAmount(amountIn, token.decimals, 6)} ${token.symbol} into ${vault.entry?.label ?? 'the vault'} on ${chainLabel(vault.chainId)}`,
-        tone: 'up',
+        tone: 'success',
       });
     } catch (err) {
       setError(describeZapError(err, errCtx));
@@ -445,10 +445,10 @@ function ZapDepositCard({ vault, user, route, modeSwitch }: { vault: LiveVault; 
     .filter((x) => x.i !== route.index && x.amount > 0n);
 
   return (
-    <section className="bg-panel border border-line rounded-lg p-4 space-y-3">
+    <section className="bg-background-elevated border border-stroke-weak rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="display text-sm font-semibold">Deposit with {token.symbol} only</h3>
-        <span className="text-2xs text-ink-3">The zap swaps the shortfall · deposits in kind · refunds dust</span>
+        <span className="text-2xs text-weaker">The zap swaps the shortfall · deposits in kind · refunds dust</span>
       </div>
 
       {modeSwitch}
@@ -471,44 +471,44 @@ function ZapDepositCard({ vault, user, route, modeSwitch }: { vault: LiveVault; 
         autoFocus
       />
 
-      <div className="rounded-md bg-deep border border-line px-3 py-2.5 space-y-2">
+      <div className="rounded-md bg-fill-recessed border border-stroke-weak px-3 py-2.5 space-y-2">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-xs text-ink-3">You receive (est.)</span>
-          <span className="display num text-xl font-semibold text-ink">
+          <span className="text-xs text-weaker">You receive (est.)</span>
+          <span className="display num text-xl font-semibold text-strong">
             {preview.shares !== undefined ? formatAmountSignificant(preview.shares, vault.decimals) : '0'}{' '}
-            <span className="text-sm font-normal text-ink-2">{vault.receipt.symbol}</span>
+            <span className="text-sm font-normal text-weak">{vault.receipt.symbol}</span>
           </span>
         </div>
         {kept !== undefined && bought.length > 0 && (
-          <div className="text-2xs text-ink-3 num">
+          <div className="text-2xs text-weaker num">
             Deposits ≈ {formatAmount(kept, token.decimals, 6)} {token.symbol} +{' '}
             {bought.map((x) => `${formatAmount(x.amount, x.t.decimals, 6)} ${x.t.symbol}`).join(' + ')} in kind (swaps ≈{' '}
             {formatAmount(amountIn - kept, token.decimals, 6)} {token.symbol})
           </div>
         )}
         <div className="flex items-center justify-between gap-3 text-xs num">
-          <label className="flex items-center gap-2 text-ink-3">
+          <label className="flex items-center gap-2 text-weaker">
             Slippage tolerance
-            <span className="inline-flex items-center rounded border border-line bg-panel px-1.5 h-7">
+            <span className="inline-flex items-center rounded border border-stroke-weak bg-background-elevated px-1.5 h-7">
               <input
                 inputMode="decimal"
                 value={slippage}
                 onChange={(e) => setSlippage(e.target.value)}
                 aria-label="Zap slippage tolerance in percent"
-                className="w-12 bg-transparent outline-none text-right text-ink"
+                className="w-12 bg-transparent outline-none text-right text-strong"
               />
-              <span className="text-ink-3 ml-0.5">%</span>
+              <span className="text-weaker ml-0.5">%</span>
             </span>
           </label>
-          <span className={cx('text-right', slip.ok ? 'text-ink-2' : 'text-down')}>
+          <span className={cx('text-right', slip.ok ? 'text-weak' : 'text-error')}>
             {slip.ok ? <>minShares {formatAmountSignificant(minShares, vault.decimals)}</> : slip.error}
           </span>
         </div>
         {slip.ok && slip.clamped && (
-          <div className="text-2xs text-amber">Capped at the route limit of {ZAP_MAX_SLIPPAGE_BPS / 100}%.</div>
+          <div className="text-2xs text-warning">Capped at the route limit of {ZAP_MAX_SLIPPAGE_BPS / 100}%.</div>
         )}
         {slip.ok && slip.bps === 0 && (
-          <div className="text-2xs text-ink-3">0% — minShares is the preview exactly; the swap leg uses the route’s own cap.</div>
+          <div className="text-2xs text-weaker">0% — minShares is the preview exactly; the swap leg uses the route’s own cap.</div>
         )}
       </div>
 
@@ -532,7 +532,7 @@ function ZapDepositCard({ vault, user, route, modeSwitch }: { vault: LiveVault; 
         {step === 'approving' ? `Approving ${token.symbol}…` : step === 'zapping' ? 'Zapping…' : cta.label}
       </Button>
 
-      <p className="text-2xs text-ink-3 leading-relaxed">
+      <p className="text-2xs text-weaker leading-relaxed">
         The zap buys the other basket tokens in the vault’s current ratio on the route pool (UniversalRouter, TWAP-guarded, your
         tolerance at most {ZAP_MAX_SLIPPAGE_BPS / 100}%), then makes the normal in-kind deposit — the vault itself never swaps.
         Leftovers come back to your wallet; no allowance is left standing.

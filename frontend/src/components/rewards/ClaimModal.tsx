@@ -23,11 +23,11 @@ export function ClaimModal({ open, onClose }: { open: boolean; onClose: () => vo
   if (!open) return null;
   return createPortal(
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal aria-label="Rewards">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-[4px]" onClick={onClose} />
-      <aside className="relative grid h-full w-[min(500px,100vw)] content-start gap-7 overflow-y-auto border-l border-line-2 bg-dusk px-[18px] pb-24 pt-[22px] shadow-[-30px_0_80px_rgb(0_0_0/0.5)] animate-slide-in sm:px-[26px]">
+      <div className="absolute inset-0 bg-fill-overlay backdrop-blur-[4px]" onClick={onClose} />
+      <aside className="relative grid h-full w-[min(500px,100vw)] content-start gap-7 overflow-y-auto border-l border-stroke-strong bg-background-sheet px-[18px] pb-24 pt-[22px] shadow-sheet animate-slide-in sm:px-[26px]">
         <div className="flex items-center justify-between gap-3">
           <p className="eyebrow">Rewards</p>
-          <button onClick={onClose} className="grid h-8 w-8 shrink-0 place-items-center rounded border border-line text-ink-2 hover:border-line-2 hover:text-ink" aria-label="Close">✕</button>
+          <button onClick={onClose} className="grid h-8 w-8 shrink-0 place-items-center rounded border border-stroke-weak text-weak hover:border-stroke-strong hover:text-strong" aria-label="Close">✕</button>
         </div>
         <Claim onDone={onClose} />
         <LocksList />
@@ -55,10 +55,10 @@ function Claim({ onDone }: { onDone: () => void }) {
     await new Promise((r) => setTimeout(r, TX_DELAY));
     if (choice === 'now') {
       const got = claimInstant();
-      pushToast({ title: 'Claim confirmed', detail: `${fmtToken(got, 1)} PMG sent to your wallet`, tone: 'up' });
+      pushToast({ title: 'Claim confirmed', detail: `${fmtToken(got, 1)} PMG sent to your wallet`, tone: 'success' });
     } else {
       const lock = claimLock();
-      if (lock) pushToast({ title: 'Lock confirmed', detail: `${fmtToken(lock.amount, 1)} PMG unlocks ${fmtDate(lock.unlockAt)}`, tone: 'up' });
+      if (lock) pushToast({ title: 'Lock confirmed', detail: `${fmtToken(lock.amount, 1)} PMG unlocks ${fmtDate(lock.unlockAt)}`, tone: 'success' });
     }
     setBusy(false);
     onDone();
@@ -67,11 +67,11 @@ function Claim({ onDone }: { onDone: () => void }) {
   return (
     <>
       <section className="grid gap-2">
-        <h2 className="text-sm text-ink-3">Pending rewards</h2>
-        <div className="display num text-[46px] leading-none tracking-[-0.015em] text-tide">
+        <h2 className="text-sm text-weaker">Pending rewards</h2>
+        <div className="display num text-[46px] leading-none tracking-[-0.015em] text-accent">
           {fmtToken(d.pendingTide, 2)} <span className="text-xl">PMG</span>
         </div>
-        <p className="text-sm text-ink-2 num">≈ {fmtUsd(d.pendingTide * CONSTANTS.TIDE_PRICE, { compact: false, cents: true })} · PMG ${CONSTANTS.TIDE_PRICE.toFixed(3)}</p>
+        <p className="text-sm text-weak num">≈ {fmtUsd(d.pendingTide * CONSTANTS.TIDE_PRICE, { compact: false, cents: true })} · PMG ${CONSTANTS.TIDE_PRICE.toFixed(3)}</p>
       </section>
 
       <section>
@@ -84,7 +84,7 @@ function Claim({ onDone }: { onDone: () => void }) {
             title="Claim now"
             amount={split.instant}
             note={`You receive ${Math.round(CONSTANTS.INSTANT_CLAIM_RATIO * 100)}% today. The other ${fmtToken(split.forfeited, 1)} goes to lockers.`}
-            bar={<><i className="block h-full bg-ink" style={{ width: `${CONSTANTS.INSTANT_CLAIM_RATIO * 100}%` }} /><i className="hatch block h-full flex-1" /></>}
+            bar={<><i className="block h-full bg-strong" style={{ width: `${CONSTANTS.INSTANT_CLAIM_RATIO * 100}%` }} /><i className="hatch block h-full flex-1" /></>}
           />
           <Option
             selected={choice === 'lock'}
@@ -93,16 +93,16 @@ function Claim({ onDone }: { onDone: () => void }) {
             title={`Lock ${CONSTANTS.LOCK_DAYS} days`}
             amount={split.locked}
             note={`100% after ${CONSTANTS.LOCK_DAYS} days, plus a share of forfeits. Unlocks ${unlockDate}.`}
-            bar={<><i className="block h-full flex-1 bg-ink" /><i className="block h-full w-3.5 shrink-0 bg-sun" /></>}
+            bar={<><i className="block h-full flex-1 bg-strong" /><i className="block h-full w-3.5 shrink-0 bg-accent" /></>}
           />
         </div>
       </section>
 
       <section className="grid gap-3">
-        <Button block variant="tide" onClick={submit} disabled={empty} loading={busy}>
+        <Button block variant="accent" onClick={submit} disabled={empty} loading={busy}>
           {busy ? 'Confirming…' : empty ? 'Nothing to claim yet' : choice === 'now' ? `Claim ${fmtToken(split.instant, 1)} PMG` : `Lock ${fmtToken(split.locked, 1)} PMG`}
         </Button>
-        <p className="text-xs text-ink-3 num">Lockers share this week's pool of {fmtInt(pool)} PMG from forfeits and buybacks.</p>
+        <p className="text-xs text-weaker num">Lockers share this week's pool of {fmtInt(pool)} PMG from forfeits and buybacks.</p>
       </section>
     </>
   );
@@ -117,15 +117,15 @@ function Option({ selected, onSelect, disabled, title, amount, note, bar }: { se
       disabled={disabled}
       className={cx(
         'grid w-full gap-2.5 rounded border px-4 py-3.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-        selected ? 'border-sun bg-sun/[0.05]' : 'border-line-2 hover:border-ink-3',
+        selected ? 'border-stroke-accent bg-fill-accent/[0.05]' : 'border-stroke-strong hover:border-stroke-stronger',
       )}
     >
       <span className="flex items-baseline justify-between gap-2.5">
-        <span className="text-base font-medium text-ink">{title}</span>
-        <span className="display num text-xl text-ink">{fmtToken(amount, 1)}</span>
+        <span className="text-base font-medium text-strong">{title}</span>
+        <span className="display num text-xl text-strong">{fmtToken(amount, 1)}</span>
       </span>
       <span className="flex h-2.5 gap-0.5" aria-hidden>{bar}</span>
-      <span className={cx('text-xs', selected ? 'text-ink-2' : 'text-ink-3')}>{note}</span>
+      <span className={cx('text-xs', selected ? 'text-weak' : 'text-weaker')}>{note}</span>
     </button>
   );
 }

@@ -43,7 +43,7 @@ export function SkyScene({ className, offset = -6 }: { className?: string; offse
   }, [offset]);
 
   return (
-    <div className={cx('overflow-hidden bg-dusk', className)} aria-hidden>
+    <div className={cx('overflow-hidden bg-background-sheet', className)} aria-hidden>
       <Scene className={cx('absolute inset-0 h-full w-full transition-opacity duration-700', live && 'opacity-0')} />
       <div
         ref={host}

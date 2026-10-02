@@ -60,7 +60,7 @@ export function LocalDevPanel({ vault, user }: { vault: LiveVault; user: UserBas
       pushToast({
         title: `Minted ${symbol}`,
         detail: `Test tokens for ${vault.entry?.label ?? 'the vault'} sent to your wallet (local chain only).`,
-        tone: 'up',
+        tone: 'success',
       });
     } catch (err) {
       setError(describeChainError(err));
@@ -94,7 +94,7 @@ export function LocalDevPanel({ vault, user }: { vault: LiveVault; user: UserBas
       pushToast({
         title: 'Wallet funded',
         detail: `${faucetDetail} sent to your wallet, gas topped up to 1 ETH (local fork only).`,
-        tone: 'up',
+        tone: 'success',
       });
     } catch (err) {
       setError(describeChainError(err));
@@ -112,30 +112,30 @@ export function LocalDevPanel({ vault, user }: { vault: LiveVault; user: UserBas
     <Card
       title="Local dev tools"
       action={
-        <span className="text-2xs text-amber">
+        <span className="text-2xs text-warning">
           {mintable ? 'Local chain only · MockToken.mint is public here' : 'Local fork · real tokens, no minting'}
         </span>
       }
     >
       <dl className="text-2xs num grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 mb-3">
-        <dt className="text-ink-3">Network</dt>
-        <dd className="text-ink-2">
+        <dt className="text-weaker">Network</dt>
+        <dd className="text-weak">
           {chainLabel(deployment.chainId)} · chain id {deployment.chainId}
         </dd>
         {fork && (
           <>
-            <dt className="text-ink-3">Stack</dt>
-            <dd className="text-ink-2">Anvil fork of Robinhood Chain · real Uniswap pools</dd>
+            <dt className="text-weaker">Stack</dt>
+            <dd className="text-weak">Anvil fork of Robinhood Chain · real Uniswap pools</dd>
           </>
         )}
-        <dt className="text-ink-3">RPC</dt>
-        <dd className="text-ink-2 break-all">{resolveLocalRpcUrl(deployment.rpcUrl, deployment.local === true)}</dd>
-        <dt className="text-ink-3">Vault</dt>
-        <dd className="text-ink-2" title={entry.vault}>
+        <dt className="text-weaker">RPC</dt>
+        <dd className="text-weak break-all">{resolveLocalRpcUrl(deployment.rpcUrl, deployment.local === true)}</dd>
+        <dt className="text-weaker">Vault</dt>
+        <dd className="text-weak" title={entry.vault}>
           {entry.key} · {shortHex(entry.vault)} · {vault.receipt.symbol}
         </dd>
-        <dt className="text-ink-3">Keeper</dt>
-        <dd className="text-ink-2" title={entry.keeper}>{shortHex(entry.keeper)}</dd>
+        <dt className="text-weaker">Keeper</dt>
+        <dd className="text-weak" title={entry.keeper}>{shortHex(entry.keeper)}</dd>
       </dl>
 
       {mintable ? (
@@ -143,13 +143,13 @@ export function LocalDevPanel({ vault, user }: { vault: LiveVault; user: UserBas
           <div className="space-y-2">
             {vault.tokens.map((t) => (
               <div key={t.address} className="flex items-center gap-2">
-                <span className="text-xs text-ink-2 w-20 shrink-0">{t.symbol}</span>
+                <span className="text-xs text-weak w-20 shrink-0">{t.symbol}</span>
                 <input
                   inputMode="decimal"
                   value={amounts[t.address] ?? DEFAULT_MINT}
                   onChange={(e) => setAmounts((s) => ({ ...s, [t.address]: e.target.value }))}
                   aria-label={`Amount of ${t.symbol} to mint`}
-                  className="h-9 flex-1 min-w-0 rounded-md bg-deep border border-line px-2.5 text-sm num text-ink outline-none focus:border-line-2"
+                  className="h-9 flex-1 min-w-0 rounded-md bg-fill-recessed border border-stroke-weak px-2.5 text-sm num text-strong outline-none focus:border-stroke-strong"
                 />
                 <Button
                   size="sm"
@@ -163,7 +163,7 @@ export function LocalDevPanel({ vault, user }: { vault: LiveVault; user: UserBas
               </div>
             ))}
           </div>
-          {!address && <p className="mt-2 text-2xs text-ink-3">Connect a wallet on the local chain to mint.</p>}
+          {!address && <p className="mt-2 text-2xs text-weaker">Connect a wallet on the local chain to mint.</p>}
           {error && <div className="mt-2"><Message tone="error">{error}</Message></div>}
         </>
       ) : (
@@ -177,14 +177,14 @@ export function LocalDevPanel({ vault, user }: { vault: LiveVault; user: UserBas
           >
             {address ? 'Fund my wallet' : 'Connect wallet'}
           </Button>
-          <p className="mt-2 text-2xs text-ink-3">
+          <p className="mt-2 text-2xs text-weaker">
             No minting on this stack: it is an Anvil fork and the basket comes straight from the pool. The
             button tops your wallet up to 1 ETH for gas and sends {faucetDetail} — every token by an
             anvil-impersonated call from the pool (transfer for a real token, mint for a mock), local node
             only, no wallet prompts.
           </p>
           {!address && demoWallet && (
-            <p className="mt-2 text-2xs text-ink-3">
+            <p className="mt-2 text-2xs text-weaker">
               The demo wallet is read-only: it cannot fund or sign. Connect a browser wallet to fund it.
             </p>
           )}

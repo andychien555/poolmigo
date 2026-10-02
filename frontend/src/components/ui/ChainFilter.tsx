@@ -20,11 +20,11 @@ export function ChainFilter({ value, onChange }: { value: ChainId | 'all'; onCha
           aria-pressed={value === o.id}
           className={cx(
             'relative inline-flex items-baseline gap-1.5 px-2.5 py-2 transition-colors',
-            value === o.id ? 'text-ink after:absolute after:inset-x-2.5 after:bottom-0 after:h-px after:bg-ink' : 'text-ink-3 hover:text-ink',
+            value === o.id ? 'text-strong after:absolute after:inset-x-2.5 after:bottom-0 after:h-px after:bg-strong' : 'text-weaker hover:text-strong',
           )}
         >
           {o.label}
-          {o.isNew && <span className="text-[9.5px] uppercase tracking-[0.1em] text-sun">New</span>}
+          {o.isNew && <span className="text-[9.5px] uppercase tracking-[0.1em] text-accent">New</span>}
         </button>
       ))}
     </div>

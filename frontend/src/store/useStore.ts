@@ -11,7 +11,7 @@ export interface Toast {
   id: string;
   title: string;
   detail?: string;
-  tone?: 'default' | 'tide' | 'up' | 'amber';
+  tone?: 'default' | 'accent' | 'success' | 'warning';
 }
 
 export type MarketOverride = 'auto' | 'open' | 'closed';

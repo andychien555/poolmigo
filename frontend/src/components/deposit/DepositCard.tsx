@@ -28,8 +28,8 @@ export function DepositCard({ vault: v, initialAmount, showVaultLink = true }: P
 
   return (
     <div className="w-full max-w-[440px] mx-auto lg:max-w-none">
-      <div className="grid gap-4 rounded-lg border border-line-2 bg-panel px-[18px] pb-[18px]">
-        <div className="-mx-[18px] grid grid-cols-2 border-b border-line-2" role="tablist">
+      <div className="grid gap-4 rounded-lg border border-stroke-strong bg-background-elevated px-[18px] pb-[18px]">
+        <div className="-mx-[18px] grid grid-cols-2 border-b border-stroke-strong" role="tablist">
           {(['deposit', 'withdraw'] as Tab[]).map((t) => (
             <button
               key={t}
@@ -38,7 +38,7 @@ export function DepositCard({ vault: v, initialAmount, showVaultLink = true }: P
               onClick={() => setTab(t)}
               className={cx(
                 'relative py-[13px] text-base transition-colors',
-                tab === t ? 'text-ink after:absolute after:inset-x-[18px] after:-bottom-px after:h-0.5 after:bg-ink' : 'text-ink-3 hover:text-ink-2',
+                tab === t ? 'text-strong after:absolute after:inset-x-[18px] after:-bottom-px after:h-0.5 after:bg-strong' : 'text-weaker hover:text-weak',
               )}
             >
               {t === 'deposit' ? 'Deposit' : 'Withdraw'}
@@ -49,8 +49,8 @@ export function DepositCard({ vault: v, initialAmount, showVaultLink = true }: P
         {showVaultLink && (
           <div className="flex items-center gap-3">
             <TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} />
-            <span className="min-w-0 flex-1 font-serif text-xl font-light leading-tight text-ink">{vaultName(v)}</span>
-            <Link to={`/vault/${v.id}`} className="shrink-0 text-xs text-ink-3 hover:text-ink">View vault →</Link>
+            <span className="min-w-0 flex-1 font-serif text-xl font-light leading-tight text-strong">{vaultName(v)}</span>
+            <Link to={`/vault/${v.id}`} className="shrink-0 text-xs text-weaker hover:text-strong">View vault →</Link>
           </div>
         )}
 
@@ -64,7 +64,7 @@ export function DepositCard({ vault: v, initialAmount, showVaultLink = true }: P
 
 function Chevron({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 16 16" className={cx('h-4 w-4 text-ink-3 shrink-0', className)} fill="none" aria-hidden>
+    <svg viewBox="0 0 16 16" className={cx('h-4 w-4 text-weaker shrink-0', className)} fill="none" aria-hidden>
       <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -87,7 +87,7 @@ function AmountBox({
   balance?: number; connected: boolean; usd?: number; autoFocus?: boolean; error?: boolean;
 }) {
   return (
-    <div className={cx('grid gap-1.5 rounded border bg-deep pb-2.5 pl-3.5 pr-3 pt-3', error ? 'border-down/60' : 'border-line-2 focus-within:border-sun')}>
+    <div className={cx('grid gap-1.5 rounded border bg-fill-recessed pb-2.5 pl-3.5 pr-3 pt-3', error ? 'border-stroke-error/60' : 'border-stroke-strong focus-within:border-stroke-focused')}>
       <div className="flex items-center gap-2.5">
         <input
           type="number"
@@ -98,19 +98,19 @@ function AmountBox({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="0"
-          className="w-0 min-w-0 flex-1 bg-transparent display text-[30px] leading-[1.15] num text-ink placeholder:text-ink-3 outline-none focus-visible:outline-none"
+          className="w-0 min-w-0 flex-1 bg-transparent display text-[30px] leading-[1.15] num text-strong placeholder:text-weaker outline-none focus-visible:outline-none"
         />
-        <span className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded border border-line-2 pl-[5px] pr-2.5 text-sm font-medium">
+        <span className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded border border-stroke-strong pl-[5px] pr-2.5 text-sm font-medium">
           {tokenIcon}
           {tokenLabel}
         </span>
       </div>
       <div className="flex items-center justify-between gap-2 text-xs num">
-        <span className="text-ink-3">{usd !== undefined && usd > 0 ? `≈ ${fmtUsd(usd, { compact: false, cents: true })}` : ''}</span>
+        <span className="text-weaker">{usd !== undefined && usd > 0 ? `≈ ${fmtUsd(usd, { compact: false, cents: true })}` : ''}</span>
         {connected && balance !== undefined && (
-          <span className="text-ink-3">
+          <span className="text-weaker">
             Balance {fmtToken(balance)}
-            <button onClick={() => onChange(String(balance))} className="ml-1.5 font-bold text-ink hover:text-sun-core">Max</button>
+            <button onClick={() => onChange(String(balance))} className="ml-1.5 font-bold text-strong hover:text-accent-bright">Max</button>
           </span>
         )}
       </div>
@@ -137,7 +137,7 @@ function TokenChoice({ options, value, onChange }: { options: Array<{ id: string
           aria-pressed={value === o.id}
           className={cx(
             'inline-flex h-9 items-center gap-2 rounded border pl-[5px] pr-[11px] text-sm font-medium transition-colors',
-            value === o.id ? 'border-ink bg-panel-2 text-ink' : 'border-line-2 text-ink-2 hover:border-ink-3',
+            value === o.id ? 'border-stroke-selected bg-fill-selected text-strong' : 'border-stroke-strong text-weak hover:border-stroke-stronger',
           )}
         >
           {o.icon}
@@ -197,7 +197,7 @@ function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?
     setDone(true);
     setTimeout(() => setDone(false), 2200);
     const what = isDual ? `${fmtToken(amt)} ${v.token0} + ${fmtToken(amt1)} ${v.token1}` : `${fmtToken(amt)} ${asset}`;
-    pushToast({ title: 'Deposit confirmed', detail: `${what} into ${vaultName(v)} · earning ${fmtPct(apr)} APR`, tone: 'up' });
+    pushToast({ title: 'Deposit confirmed', detail: `${what} into ${vaultName(v)} · earning ${fmtPct(apr)} APR`, tone: 'success' });
   };
 
   const onSubmit = () => {
@@ -233,15 +233,15 @@ function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?
       </Field>
 
       <Field label="You receive">
-        <div className="grid gap-1.5 border-t border-line-2 pt-3 num">
+        <div className="grid gap-1.5 border-t border-stroke-strong pt-3 num">
           <div className="flex items-baseline justify-between gap-2.5">
-            <span className={cx('display num truncate text-[26px] leading-8', preview ? 'text-ink' : 'text-ink-3')}>
-              {preview ? fmtToken(preview.tdlp, 1) : '0'} <span className="ml-0.5 text-sm font-normal text-ink-2">{v.receiptSymbol}</span>
+            <span className={cx('display num truncate text-[26px] leading-8', preview ? 'text-strong' : 'text-weaker')}>
+              {preview ? fmtToken(preview.tdlp, 1) : '0'} <span className="ml-0.5 text-sm font-normal text-weak">{v.receiptSymbol}</span>
             </span>
-            {preview && <span className="text-xs text-ink-3 shrink-0">≈ {fmtUsd(preview.netUsd, { compact: false, cents: true })}</span>}
+            {preview && <span className="text-xs text-weaker shrink-0">≈ {fmtUsd(preview.netUsd, { compact: false, cents: true })}</span>}
           </div>
-          <div className="flex items-center justify-between gap-2.5 text-xs text-ink-3">
-            <span className={preview ? 'text-up' : undefined}>{preview ? `Earning ~${fmtUsd(monthly, { compact: false, cents: monthly < 100 })} / month` : 'Earning'}</span>
+          <div className="flex items-center justify-between gap-2.5 text-xs text-weaker">
+            <span className={preview ? 'text-success' : undefined}>{preview ? `Earning ~${fmtUsd(monthly, { compact: false, cents: monthly < 100 })} / month` : 'Earning'}</span>
             <span>at {fmtPct(apr)} APR</span>
           </div>
         </div>
@@ -250,7 +250,7 @@ function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?
       <Button block onClick={onSubmit} disabled={cta.disabled} loading={busy || connecting}>{cta.label}</Button>
 
       <div className="text-xs num">
-        <button onClick={() => setDetails(!details)} aria-expanded={details} className="w-full flex items-center justify-between gap-2.5 py-0.5 text-left text-ink-3 hover:text-ink-2">
+        <button onClick={() => setDetails(!details)} aria-expanded={details} className="w-full flex items-center justify-between gap-2.5 py-0.5 text-left text-weaker hover:text-weak">
           <span>
             1 {v.receiptSymbol} = ${v.pricePerShare.toFixed(4)}
             {preview && !isDual && <> · {fmtPct(preview.priceImpact, 2)} impact</>}
@@ -271,7 +271,7 @@ function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?
             <Row k="Lock-up" v="None · redeem anytime" />
           </dl>
         )}
-        <p className="mt-3 text-xs leading-normal text-ink-3">LP positions can lose value and may underperform holding the assets. Review the vault strategy, fees and risks before depositing.</p>
+        <p className="mt-3 text-xs leading-normal text-weaker">LP positions can lose value and may underperform holding the assets. Review the vault strategy, fees and risks before depositing.</p>
       </div>
 
       <Modal
@@ -286,8 +286,8 @@ function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?
         }
       >
         <p>Degen vaults run narrow, high-frequency ranges on volatile pairs. Higher fees, higher impermanent loss risk. Net value can underperform holding.</p>
-        <label className="mt-4 flex items-start gap-2.5 cursor-pointer text-ink">
-          <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 accent-sun" />
+        <label className="mt-4 flex items-start gap-2.5 cursor-pointer text-strong">
+          <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 accent-fill-accent" />
           <span className="text-sm">I understand this vault can lose value versus holding the underlying tokens.</span>
         </label>
       </Modal>
@@ -324,7 +324,7 @@ function WithdrawForm({ vault: v }: { vault: Vault }) {
     setAmount('');
     setDone(true);
     setTimeout(() => setDone(false), 2200);
-    pushToast({ title: 'Withdrawal confirmed', detail: `Received ${preview.outputs.map((o) => `${fmtToken(o.amount)} ${o.token}`).join(' + ')}`, tone: 'up' });
+    pushToast({ title: 'Withdrawal confirmed', detail: `Received ${preview.outputs.map((o) => `${fmtToken(o.amount)} ${o.token}`).join(' + ')}`, tone: 'success' });
   };
 
   let cta = { label: 'Withdraw', disabled: true };
@@ -345,11 +345,11 @@ function WithdrawForm({ vault: v }: { vault: Vault }) {
         <AmountBox value={amount} onChange={setAmount} tokenLabel={v.receiptSymbol} tokenIcon={<TokenPair a={v.token0} b={v.token1} size={18} />} balance={connected ? total : undefined} connected={connected} usd={amt * v.pricePerShare} error={insufficient} />
       </Field>
       <Field label="Receive">
-        <div className="grid gap-1.5 border-t border-line-2 pt-3 num">
-          <div className="display num text-[22px] leading-8 text-ink">
-            {preview ? preview.outputs.map((o) => `${fmtToken(o.amount)} ${o.token}`).join(' + ') : <span className="text-ink-3">0</span>}
+        <div className="grid gap-1.5 border-t border-stroke-strong pt-3 num">
+          <div className="display num text-[22px] leading-8 text-strong">
+            {preview ? preview.outputs.map((o) => `${fmtToken(o.amount)} ${o.token}`).join(' + ') : <span className="text-weaker">0</span>}
           </div>
-          <div className="text-xs text-ink-3">{preview ? `${fmtUsd(preview.netUsd, { compact: false, cents: true })} after ${fmtPct(CONSTANTS.WITHDRAWAL_FEE)} fee` : 'No lock-up. Redeem anytime.'}</div>
+          <div className="text-xs text-weaker">{preview ? `${fmtUsd(preview.netUsd, { compact: false, cents: true })} after ${fmtPct(CONSTANTS.WITHDRAWAL_FEE)} fee` : 'No lock-up. Redeem anytime.'}</div>
         </div>
       </Field>
       <Button block variant="secondary" onClick={submit} disabled={cta.disabled} loading={busy || connecting}>{cta.label}</Button>
@@ -360,8 +360,8 @@ function WithdrawForm({ vault: v }: { vault: Vault }) {
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex justify-between gap-2.5 py-[5px]">
-      <dt className="text-ink-3">{k}</dt>
-      <dd className="text-right text-ink">{v}</dd>
+      <dt className="text-weaker">{k}</dt>
+      <dd className="text-right text-strong">{v}</dd>
     </div>
   );
 }

@@ -28,18 +28,18 @@ export function RangeMeter({ vault: v, market }: { vault: Vault; market: MarketS
       aria-label={`Price ${fmtQuote(v.currentPrice)} ${inRange ? 'inside' : 'outside'} the range ${fmtQuote(g.lower)} to ${fmtQuote(g.upper)}`}
     >
       <clipPath id={clip}><rect x="0" y="0" width="100%" height="40" /></clipPath>
-      <rect x="0" y="40" width="100%" height="1" className="fill-line-2" />
-      {TICKS.map((i) => <rect key={i} x={`${i * 5}%`} y="41" width="1" height={i % 5 ? 3 : 6} className="fill-line-2" />)}
+      <rect x="0" y="40" width="100%" height="1" className="fill-stroke-strong" />
+      {TICKS.map((i) => <rect key={i} x={`${i * 5}%`} y="41" width="1" height={i % 5 ? 3 : 6} className="fill-stroke-strong" />)}
       {/* the range, lit on the scale */}
-      <rect x={pct(g.lower)} y="37" width={`${((span / (d1 - d0)) * 100).toFixed(2)}%`} height="3" className="fill-sun" opacity={inRange ? 0.35 : 0.12} />
+      <rect x={pct(g.lower)} y="37" width={`${((span / (d1 - d0)) * 100).toFixed(2)}%`} height="3" className="fill-accent" opacity={inRange ? 0.35 : 0.12} />
       {/* the price: the sun, half set behind the scale */}
-      <g clipPath={`url(#${clip})`}><circle cx={sunX} cy="38" r="7.5" className="fill-sun" /></g>
+      <g clipPath={`url(#${clip})`}><circle cx={sunX} cy="38" r="7.5" className="fill-accent" /></g>
       {/* the bounds: inner faces sit exactly on the prices */}
-      <rect x={pct(g.lower)} y="12" width="5" height="28" transform="translate(-5 0)" className="fill-ink" />
-      <rect x={pct(g.upper)} y="12" width="5" height="28" className="fill-ink" />
-      <text x={pct(g.lower)} dx="-9" y="23" textAnchor="end" fontSize="10.5" className="fill-ink-3">{fmtQuote(g.lower)}</text>
-      <text x={pct(g.upper)} dx="9" y="23" fontSize="10.5" className="fill-ink-3">{fmtQuote(g.upper)}</text>
-      <text x={sunX} y="58" textAnchor={anchor} fontSize="10.5" fontWeight="500" className="fill-sun-core">{fmtQuote(v.currentPrice)}</text>
+      <rect x={pct(g.lower)} y="12" width="5" height="28" transform="translate(-5 0)" className="fill-strong" />
+      <rect x={pct(g.upper)} y="12" width="5" height="28" className="fill-strong" />
+      <text x={pct(g.lower)} dx="-9" y="23" textAnchor="end" fontSize="10.5" className="fill-weaker">{fmtQuote(g.lower)}</text>
+      <text x={pct(g.upper)} dx="9" y="23" fontSize="10.5" className="fill-weaker">{fmtQuote(g.upper)}</text>
+      <text x={sunX} y="58" textAnchor={anchor} fontSize="10.5" fontWeight="500" className="fill-accent-bright">{fmtQuote(v.currentPrice)}</text>
     </svg>
   );
 }

@@ -1,45 +1,24 @@
 import type { Config } from 'tailwindcss';
+import plugin from 'tailwindcss/plugin';
+import { cssVariables, tailwindColors } from './src/lib/tokens';
 
-// Design tokens — Dusk direction. Values live in CSS variables (src/index.css) so every
-// utility name stays the one the components already use.
+// Design tokens — Dusk direction.
+//
+// Colour comes in two layers, both defined in src/lib/tokens.ts: primitives (the palette) and
+// semantic tokens (roles). Only the semantic names become utilities, so a component cannot reach
+// a primitive: `text-strong`, `bg-fill-weak`, `border-stroke-weak`. The plugin at the bottom writes
+// both layers out as CSS variables. See docs/design-system.md and the gallery at /design-system.
 //
 // Dusk is dark only. One rule shapes it: only the price is round. The sun, the price needle
 // and price points are circles; everything structural (ranges, controls, cards, token tiles)
 // is square-cut. That is why the radius scale below is small all the way up to `full`.
 // Draw a real circle with `rounded-circle`.
-const v = (name: string) => `rgb(var(--c-${name}) / <alpha-value>)`;
 
 export default {
   darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
-    colors: {
-      transparent: 'transparent',
-      current: 'currentColor',
-      white: '#FFFFFF',
-      black: '#000000',
-      deep: v('deep'),
-      dusk: v('dusk'),
-      panel: v('panel'),
-      'panel-2': v('panel-2'),
-      line: v('line'),
-      'line-2': v('line-2'),
-      ink: v('ink'),
-      'ink-2': v('ink-2'),
-      'ink-3': v('ink-3'),
-      aqua: v('aqua'),
-      'aqua-dim': v('aqua-dim'),
-      up: v('up'),
-      down: v('down'),
-      amber: v('amber'),
-      apricot: v('apricot'),
-      glass: v('glass'),
-      tide: v('tide'),
-      sun: v('sun'),
-      'sun-core': v('sun-core'),
-      'on-primary': v('on-primary'),
-      'on-accent': v('on-accent'),
-    },
+    colors: tailwindColors(),
     fontFamily: {
       // `display` is the emphasis face for numbers and UI titles; the serif is for page-level titles.
       // "Switzer Figures" holds only figures and their signs (src/index.css), so it leads both stacks:
@@ -66,7 +45,10 @@ export default {
         '4xl': ['38px', '44px'],
       },
       letterSpacing: { label: '0.14em' },
-      boxShadow: { pop: '0 20px 50px rgb(var(--c-shadow) / 0.5), 0 0 0 1px rgb(var(--c-line-2))' },
+      boxShadow: {
+        pop: '0 20px 50px rgb(var(--color-black) / 0.5), 0 0 0 1px rgb(var(--color-stroke-strong))',
+        sheet: '-30px 0 80px rgb(var(--color-black) / 0.5)',
+      },
       transitionTimingFunction: { dusk: 'cubic-bezier(0.65, 0, 0.35, 1)' },
       keyframes: {
         'fade-in': { from: { opacity: '0', transform: 'translateY(4px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
@@ -82,5 +64,7 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(({ addBase }) => addBase({ ':root, .dark': { 'color-scheme': 'dark', ...cssVariables() } })),
+  ],
 } satisfies Config;

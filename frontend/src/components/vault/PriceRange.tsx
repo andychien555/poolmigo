@@ -103,15 +103,15 @@ export function PriceRange({ vault: v, market, className }: Props) {
 
   return (
     <section className={className} aria-label="Price range">
-      <div className="overflow-hidden rounded-lg border border-line-2 bg-deep">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-[11px] text-xs text-ink-3">
+      <div className="overflow-hidden rounded-lg border border-stroke-strong bg-fill-recessed">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-stroke-weak px-4 py-[11px] text-xs text-weaker">
           <h3 className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-            <b className="text-sm font-medium text-ink">Price range</b>
+            <b className="text-sm font-medium text-strong">Price range</b>
             <button
               type="button"
               onClick={() => setFlipped(!flipped)}
               aria-label={`Priced in ${quote} per ${base}. Switch to ${base} per ${quote}`}
-              className="inline-flex h-6 items-center gap-1.5 rounded border border-line-2 px-2 text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+              className="inline-flex h-6 items-center gap-1.5 rounded border border-stroke-strong px-2 text-weak transition-colors hover:border-stroke-stronger hover:text-strong"
             >
               {quote} per {base}
               <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
@@ -120,8 +120,8 @@ export function PriceRange({ vault: v, market, className }: Props) {
             </button>
           </h3>
           <span className="num">
-            {g.defensive && <span className="text-amber">Widened while the US market is closed · </span>}
-            {!g.defensive && !inRange && <span className="text-down">Out of range · </span>}
+            {g.defensive && <span className="text-warning">Widened while the US market is closed · </span>}
+            {!g.defensive && !inRange && <span className="text-error">Out of range · </span>}
             Last rebalance {fmtRelativeDays(v.lastRebalanceDaysAgo)}
           </span>
         </header>
@@ -197,8 +197,8 @@ export function PriceRange({ vault: v, market, className }: Props) {
             <rect x="0" y={HORIZON} width={W} height={HEIGHT - HORIZON} fill={`url(#${ground})`} />
             <rect x={X(lower)} y={HORIZON} width={X(upper) - X(lower)} height="34" fill={`url(#${lane})`} />
             {stones.map((st) => <path key={st.name} d={st.shadow} fill={`url(#${cast})`} />)}
-            <rect x="0" y={HORIZON} width={W} height="1" className="fill-line-2" />
-            <rect x={X(lower)} y={HORIZON - 1} width={X(upper) - X(lower)} height="2" className="fill-sun" opacity={inRange ? 0.75 : 0.25} />
+            <rect x="0" y={HORIZON} width={W} height="1" className="fill-stroke-strong" />
+            <rect x={X(lower)} y={HORIZON - 1} width={X(upper) - X(lower)} height="2" className="fill-accent" opacity={inRange ? 0.75 : 0.25} />
 
             {/* the bounds: inner faces sit exactly on Lower and Upper */}
             {stones.map((st) => (
@@ -207,19 +207,19 @@ export function PriceRange({ vault: v, market, className }: Props) {
                 <rect x={st.litLeft ? st.x : st.x + STONE_W - 3} y={top} width="3" height={STONE_H} fill={`url(#${lit})`} opacity=".85" />
                 <rect x={st.litLeft ? st.x + STONE_W - 4 : st.x} y={top} width="4" height={STONE_H} fill="#3a2226" opacity=".1" />
                 <rect x={st.x} y={top} width={STONE_W} height="1" fill="#fff8ea" opacity=".6" />
-                <text x={st.centre} y={top - 32} textAnchor="middle" className="fill-ink-3" {...label}>{st.name}</text>
-                <text x={st.centre} y={top - 11} textAnchor="middle" fontSize="16" className="fill-ink num">{fmtQuote(st.value)}</text>
+                <text x={st.centre} y={top - 32} textAnchor="middle" className="fill-weaker" {...label}>{st.name}</text>
+                <text x={st.centre} y={top - 11} textAnchor="middle" fontSize="16" className="fill-strong num">{fmtQuote(st.value)}</text>
               </g>
             ))}
 
             {/* the price reading */}
-            {!aside && <rect x={sunX} y={HORIZON - 96} width="1" height={96 - SUN_R - 14} className="fill-sun-core" opacity=".55" />}
-            <text x={priceX} y={HORIZON - 132} textAnchor={priceAnchor} className="fill-ink-2" {...label}>PRICE</text>
-            <text x={priceX} y={HORIZON - 106} textAnchor={priceAnchor} fontSize="24" className="fill-sun-core num">{priceText}</text>
+            {!aside && <rect x={sunX} y={HORIZON - 96} width="1" height={96 - SUN_R - 14} className="fill-accent-bright" opacity=".55" />}
+            <text x={priceX} y={HORIZON - 132} textAnchor={priceAnchor} className="fill-weak" {...label}>PRICE</text>
+            <text x={priceX} y={HORIZON - 106} textAnchor={priceAnchor} fontSize="24" className="fill-accent-bright num">{priceText}</text>
 
             {/* the graduated horizon: the price axis */}
-            {minor.map((t, i) => <rect key={i} x={t.x} y={HORIZON + 1} width="1" height={t.major ? 10 : 5} className="fill-ink-3" opacity={t.major ? 0.9 : 0.45} />)}
-            {ticks.map((t) => <text key={t} x={X(t)} y={HORIZON + 30} textAnchor="middle" fontSize="11" className="fill-ink-3 num">{t.toFixed(tickDigits)}</text>)}
+            {minor.map((t, i) => <rect key={i} x={t.x} y={HORIZON + 1} width="1" height={t.major ? 10 : 5} className="fill-weaker" opacity={t.major ? 0.9 : 0.45} />)}
+            {ticks.map((t) => <text key={t} x={X(t)} y={HORIZON + 30} textAnchor="middle" fontSize="11" className="fill-weaker num">{t.toFixed(tickDigits)}</text>)}
           </svg>
         </div>
       </div>

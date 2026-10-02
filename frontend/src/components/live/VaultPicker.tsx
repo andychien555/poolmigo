@@ -26,11 +26,11 @@ export function VaultPicker({ chainId, selectedKey }: { chainId: number; selecte
   if (vaults.length === 1) {
     const [only] = vaults;
     return (
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-line bg-panel px-4 py-2.5 text-xs">
-        <span className="text-ink-3">Vault</span>
-        <span className="font-medium text-ink">{only.label}</span>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-stroke-weak bg-background-elevated px-4 py-2.5 text-xs">
+        <span className="text-weaker">Vault</span>
+        <span className="font-medium text-strong">{only.label}</span>
         <ReceiptChip symbol={only.receipt.symbol} />
-        <span className="num text-ink-3" title={only.vault}>{shortHex(only.vault)}</span>
+        <span className="num text-weaker" title={only.vault}>{shortHex(only.vault)}</span>
       </div>
     );
   }
@@ -41,7 +41,7 @@ export function VaultPicker({ chainId, selectedKey }: { chainId: number; selecte
         <h2 className="display text-sm font-semibold">
           {vaults.length} vaults on {chainShortLabel(chainId)}
         </h2>
-        <span className="text-2xs text-ink-3">Each vault is its own basket with its own receipt token</span>
+        <span className="text-2xs text-weaker">Each vault is its own basket with its own receipt token</span>
       </div>
       <div
         role="radiogroup"
@@ -58,7 +58,7 @@ export function VaultPicker({ chainId, selectedKey }: { chainId: number; selecte
 
 function ReceiptChip({ symbol }: { symbol: string }) {
   return (
-    <span className="inline-flex items-center h-5 px-1.5 rounded border border-line-2 bg-panel-2 text-2xs font-medium num text-ink-2 whitespace-nowrap">
+    <span className="inline-flex items-center h-5 px-1.5 rounded border border-stroke-strong bg-fill-weak text-2xs font-medium num text-weak whitespace-nowrap">
       {symbol}
     </span>
   );
@@ -88,31 +88,31 @@ function VaultCard({
       onClick={onSelect}
       className={cx(
         'group text-left rounded-lg border p-3.5 transition-colors min-w-0',
-        selected ? 'border-aqua/70 bg-aqua/5 ring-1 ring-aqua/30' : 'border-line bg-panel hover:border-line-2',
+        selected ? 'border-stroke-selected/70 bg-fill-primary/5 ring-1 ring-stroke-selected/30' : 'border-stroke-weak bg-background-elevated hover:border-stroke-strong',
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <span className={cx('text-sm font-medium leading-snug', selected ? 'text-ink' : 'text-ink-2 group-hover:text-ink')}>
+        <span className={cx('text-sm font-medium leading-snug', selected ? 'text-strong' : 'text-weak group-hover:text-strong')}>
           {vault.label}
         </span>
         <span
           aria-hidden
           className={cx(
             'mt-0.5 h-4 w-4 shrink-0 rounded-full border inline-flex items-center justify-center',
-            selected ? 'border-aqua bg-aqua' : 'border-line-2',
+            selected ? 'border-stroke-primary bg-fill-primary' : 'border-stroke-strong',
           )}
         >
-          {selected && <span className="h-1.5 w-1.5 rounded-full bg-deep" />}
+          {selected && <span className="h-1.5 w-1.5 rounded-full bg-inverse-strong" />}
         </span>
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2 text-2xs">
         <ReceiptChip symbol={vault.receipt.symbol} />
-        <span className="num text-ink-3" title={vault.vault}>{shortHex(vault.vault)}</span>
-        <span className="text-ink-3">· {vault.key}</span>
+        <span className="num text-weaker" title={vault.vault}>{shortHex(vault.vault)}</span>
+        <span className="text-weaker">· {vault.key}</span>
       </div>
 
-      <div className="mt-2 text-2xs text-ink-3 num truncate" title={hint.symbols.join(' · ')}>
+      <div className="mt-2 text-2xs text-weaker num truncate" title={hint.symbols.join(' · ')}>
         {hint.symbols.length > 0 ? (
           <>
             {hint.symbols.length} tokens · {hint.symbols.slice(0, HINT_SYMBOLS).join(' · ')}
@@ -125,7 +125,7 @@ function VaultCard({
           'reading basket…'
         )}
       </div>
-      {mismatch && <div className="mt-1.5 text-2xs text-amber">On-chain symbol is {hint.symbol} — registry entry is stale</div>}
+      {mismatch && <div className="mt-1.5 text-2xs text-warning">On-chain symbol is {hint.symbol} — registry entry is stale</div>}
     </button>
   );
 }

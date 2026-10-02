@@ -36,10 +36,10 @@ export function Layout() {
       <main className="flex-1 w-full">
         <Outlet />
       </main>
-      <footer className="border-t border-line">
-        <div className="wrap py-[22px] flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-xs text-ink-3">
+      <footer className="border-t border-stroke-weak">
+        <div className="wrap py-[22px] flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-xs text-weaker">
           <span>
-            {BRAND.name} · <Link to="/live" className="text-up hover:underline">Live vault</Link> reads the deployed contract;
+            {BRAND.name} · <Link to="/live" className="text-success hover:underline">Live vault</Link> reads the deployed contract;
             everything else is prototype demo data.
           </span>
           <span>LP positions can lose value and may underperform holding the assets.</span>

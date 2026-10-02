@@ -11,7 +11,7 @@ interface Props<T extends string> {
 /** Segmented control — used for Deposit/Withdraw, 30D/7D, asset chips. */
 export function Segmented<T extends string>({ value, onChange, options, size = 'md', className }: Props<T>) {
   return (
-    <div className={cx('inline-flex rounded-lg border border-line bg-panel p-[3px]', className)} role="tablist">
+    <div className={cx('inline-flex rounded-lg border border-stroke-weak bg-background-elevated p-[3px]', className)} role="tablist">
       {options.map((o) => (
         <button
           key={o.value}
@@ -22,7 +22,7 @@ export function Segmented<T extends string>({ value, onChange, options, size = '
           className={cx(
             'rounded-sm transition-colors whitespace-nowrap disabled:opacity-40',
             size === 'sm' ? 'h-7 px-3 text-xs' : 'h-8 px-3 text-sm',
-            value === o.value ? 'bg-aqua text-on-primary' : 'text-ink-2 hover:text-ink',
+            value === o.value ? 'bg-fill-primary text-inverse-strong' : 'text-weak hover:text-strong',
           )}
         >
           {o.label}
@@ -34,7 +34,7 @@ export function Segmented<T extends string>({ value, onChange, options, size = '
 
 export function UnderlineTabs<T extends string>({ value, onChange, options, className }: Props<T>) {
   return (
-    <div className={cx('flex border-b border-line', className)} role="tablist">
+    <div className={cx('flex border-b border-stroke-weak', className)} role="tablist">
       {options.map((o) => (
         <button
           key={o.value}
@@ -43,7 +43,7 @@ export function UnderlineTabs<T extends string>({ value, onChange, options, clas
           onClick={() => onChange(o.value)}
           className={cx(
             'h-11 px-4 text-sm font-medium -mb-px border-b-2 transition-colors',
-            value === o.value ? 'border-ink text-ink' : 'border-transparent text-ink-3 hover:text-ink-2',
+            value === o.value ? 'border-stroke-selected text-strong' : 'border-transparent text-weaker hover:text-weak',
           )}
         >
           {o.label}

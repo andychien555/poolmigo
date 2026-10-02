@@ -58,7 +58,7 @@ export function Markets() {
   return (
     <div>
       {/* The sky: who you are here and what you hold, over the scene */}
-      <section className={cx('relative overflow-hidden border-b border-line-2', d.connected ? 'sm:h-[clamp(420px,54vh,490px)]' : 'sm:h-[clamp(470px,64vh,580px)]')}>
+      <section className={cx('relative overflow-hidden border-b border-stroke-strong', d.connected ? 'sm:h-[clamp(420px,54vh,490px)]' : 'sm:h-[clamp(470px,64vh,580px)]')}>
         {/* On phones the scene is a band across the top; from sm up it fills the section */}
         <SkyScene className="absolute inset-x-0 top-0 h-[300px] w-full sm:h-full" />
         <div className="sky-shade absolute inset-x-0 top-0 z-[2] h-[300px] pointer-events-none sm:h-full" />
@@ -66,9 +66,9 @@ export function Markets() {
           {d.connected ? (
             <>
               <Sidekick onClaim={() => setParams({ claim: '1' })} />
-              <p className="eyebrow !text-ink-2">Your deposits</p>
+              <p className="eyebrow !text-weak">Your deposits</p>
               <div className="display num text-[clamp(48px,6vw,80px)] leading-none tracking-[-0.02em]">{fmtUsd(d.depositsUsd, { compact: false })}</div>
-              <p className="text-base text-ink-2 num">
+              <p className="text-base text-weak num">
                 {nPositions ? `Across ${nPositions} vault${nPositions > 1 ? 's' : ''}` : 'No deposits yet'} · {shortAddress(address)}
               </p>
             </>
@@ -79,8 +79,8 @@ export function Markets() {
         <div className="wrap relative z-[4] py-6 sm:absolute sm:inset-x-0 sm:bottom-0">
           {showMine ? (
             <StatRow cols={2} packed rule={false}>
-              <Stat label="Fees earned" value={`+${fmtUsd(totalFees, { compact: false, cents: true })}`} tone="up" />
-              <Stat label="PMG rewards" value={`${fmtToken(d.pendingTide, 2)} PMG`} tone="tide" sub={<>≈ {fmtUsd(d.pendingTide * CONSTANTS.TIDE_PRICE, { compact: false, cents: true })}</>} />
+              <Stat label="Fees earned" value={`+${fmtUsd(totalFees, { compact: false, cents: true })}`} tone="success" />
+              <Stat label="PMG rewards" value={`${fmtToken(d.pendingTide, 2)} PMG`} tone="accent" sub={<>≈ {fmtUsd(d.pendingTide * CONSTANTS.TIDE_PRICE, { compact: false, cents: true })}</>} />
             </StatRow>
           ) : (
             <StatRow cols={2} packed rule={false}>
@@ -96,11 +96,11 @@ export function Markets() {
         <div className="mb-[22px] flex flex-wrap items-end justify-between gap-x-7 gap-y-[18px]">
           <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-2">
             <h1 className="title text-[clamp(32px,3.6vw,46px)]">Vaults</h1>
-            <span className="text-sm text-ink-3 num">{rows.length} of {VAULTS.length} vaults</span>
+            <span className="text-sm text-weaker num">{rows.length} of {VAULTS.length} vaults</span>
           </div>
           <div className="flex w-full flex-wrap items-center gap-x-[22px] gap-y-3.5 sm:w-auto">
             <ChainFilter value={chain} onChange={setChain} />
-            <label className="flex h-10 w-full items-center gap-2 rounded border border-line-2 px-3 text-ink-3 focus-within:border-ink-2 sm:w-[220px]">
+            <label className="flex h-10 w-full items-center gap-2 rounded border border-stroke-strong px-3 text-weaker focus-within:border-stroke-strongest sm:w-[220px]">
               <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 shrink-0" fill="none" aria-hidden>
                 <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -110,13 +110,13 @@ export function Markets() {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search vaults"
                 aria-label="Search vaults"
-                className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-3 focus-visible:outline-none"
+                className="min-w-0 flex-1 bg-transparent text-sm text-strong outline-none placeholder:text-weaker focus-visible:outline-none"
               />
             </label>
           </div>
         </div>
 
-        <div className={cx('eyebrow hidden items-center gap-x-6 border-b border-line-2 pb-2.5 md:grid', cols)}>
+        <div className={cx('eyebrow hidden items-center gap-x-6 border-b border-stroke-strong pb-2.5 md:grid', cols)}>
           <span>Vault</span>
           <span>Price within its range</span>
           <span className="justify-self-end"><SortHead label="APR" active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} /></span>
@@ -133,7 +133,7 @@ export function Markets() {
             <VaultRow key={v.id} vault={v} tvl={tvl} market={market} showMine={showMine} cols={cols} onDeposit={() => setParams({ deposit: v.id })} />
           ))}
           {rows.length === 0 && (
-            <li className="border-b border-line py-12 text-center text-ink-3">No vaults match{q ? ` "${q}"` : ''}{chain !== 'all' ? ` on ${CHAINS[chain].name}` : ''}.</li>
+            <li className="border-b border-stroke-weak py-12 text-center text-weaker">No vaults match{q ? ` "${q}"` : ''}{chain !== 'all' ? ` on ${CHAINS[chain].name}` : ''}.</li>
           )}
         </ul>
       </div>
@@ -159,12 +159,12 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
     if (r) setPop({ top: r.bottom + 4, right: window.innerWidth - r.right });
     setHover(true);
   };
-  const label = 'mr-1.5 text-xs font-normal text-ink-3 md:hidden';
+  const label = 'mr-1.5 text-xs font-normal text-weaker md:hidden';
 
   return (
     <li
       className={cx(
-        'grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 border-b border-line py-4 transition-colors duration-300 ease-dusk hover:bg-ink/[0.035]',
+        'grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 border-b border-stroke-weak py-4 transition-colors duration-300 ease-dusk hover:bg-strong/[0.035]',
         "[grid-template-areas:'pair_apr''meter_meter''tvl_act''mine_act'] md:[grid-template-areas:none]",
         cols,
       )}
@@ -172,7 +172,7 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
     >
       <div className="flex min-w-0 items-center gap-3.5 [grid-area:pair] md:[grid-area:auto]">
         <TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} />
-        <div className="min-w-0 font-serif text-[23px] font-light leading-[1.1] text-ink md:whitespace-nowrap">{vaultName(v)}</div>
+        <div className="min-w-0 font-serif text-[23px] font-light leading-[1.1] text-strong md:whitespace-nowrap">{vaultName(v)}</div>
       </div>
       <div className="min-w-0 [grid-area:meter] md:[grid-area:auto]"><RangeMeter vault={v} market={market} /></div>
       <div ref={aprCell} className="justify-self-end whitespace-nowrap [grid-area:apr] md:[grid-area:auto]" onMouseEnter={onEnter} onMouseLeave={() => setHover(false)}>
@@ -181,7 +181,7 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
           pop &&
           createPortal(
             <div
-              className="fixed z-40 w-72 bg-panel-2 border border-line-2 rounded-md shadow-pop p-3 text-left animate-fade-in"
+              className="fixed z-40 w-72 bg-background-popover border border-stroke-strong rounded-md shadow-pop p-3 text-left animate-fade-in"
               style={{ top: pop.top, right: pop.right }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -190,16 +190,16 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
             document.body,
           )}
       </div>
-      <div className="num text-md text-ink-2 [grid-area:tvl] md:justify-self-end md:[grid-area:auto]"><span className={label}>TVL</span>{fmtUsd(tvl)}</div>
+      <div className="num text-md text-weak [grid-area:tvl] md:justify-self-end md:[grid-area:auto]"><span className={label}>TVL</span>{fmtUsd(tvl)}</div>
       {showMine && (
         <div className="num grid gap-px [grid-area:mine] md:justify-items-end md:[grid-area:auto]">
           {position ? (
             <>
-              <span className="text-ink"><span className={label}>My deposit</span>{fmtUsd(m.positionValue(position, v), { compact: false })}</span>
-              <small className="text-xs text-up">+{fmtUsd(m.feesEarned(m.positionValue(position, v), v.feeApr7d, position.depositedAt, Date.now()), { compact: false, cents: true })} fees</small>
+              <span className="text-strong"><span className={label}>My deposit</span>{fmtUsd(m.positionValue(position, v), { compact: false })}</span>
+              <small className="text-xs text-success">+{fmtUsd(m.feesEarned(m.positionValue(position, v), v.feeApr7d, position.depositedAt, Date.now()), { compact: false, cents: true })} fees</small>
             </>
           ) : (
-            <span className="text-ink-3"><span className={label}>My deposit</span>—</span>
+            <span className="text-weaker"><span className={label}>My deposit</span>—</span>
           )}
         </div>
       )}
@@ -214,7 +214,7 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
 
 function SortHead({ label, active, dir, onClick }: { label: string; active: boolean; dir: 'asc' | 'desc'; onClick: () => void }) {
   return (
-    <button onClick={onClick} className={cx('inline-flex items-center gap-[5px] uppercase tracking-label hover:text-ink', active && 'text-ink')} aria-sort={active ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'}>
+    <button onClick={onClick} className={cx('inline-flex items-center gap-[5px] uppercase tracking-label hover:text-strong', active && 'text-strong')} aria-sort={active ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'}>
       {label}
       <span aria-hidden>{active ? (dir === 'desc' ? '↓' : '↑') : '↕'}</span>
     </button>

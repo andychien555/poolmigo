@@ -15,12 +15,12 @@ export function LiveVaultTeaser() {
   const vaultCount = vaultsForChain(vault.chainId).length;
 
   return (
-    <section className="bg-panel border border-line rounded-lg p-4">
+    <section className="bg-background-elevated border border-stroke-weak rounded-lg p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 min-w-0">
           <h2 className="display text-sm font-semibold">{vault.entry?.label ?? vault.name ?? 'Poolmigo vault'}</h2>
           <LiveBadge />
-          <span className="text-2xs text-ink-3 num truncate">
+          <span className="text-2xs text-weaker num truncate">
             {chainName}
             {vault.hasDeployment && <> · {vault.receipt.symbol} · {shortHex(vault.address)}</>}
             {vaultCount > 1 && <> · {vaultCount} vaults on this network</>}
@@ -28,18 +28,18 @@ export function LiveVaultTeaser() {
         </div>
         <Link
           to="/live"
-          className="shrink-0 inline-flex items-center justify-center h-9 px-3 rounded-md bg-aqua text-on-primary text-xs font-medium hover:bg-aqua-dim transition-colors"
+          className="shrink-0 inline-flex items-center justify-center h-9 px-3 rounded-md bg-fill-primary text-inverse-strong text-xs font-medium hover:bg-fill-primary-hover transition-colors"
         >
           {unreachable || !vault.hasDeployment ? 'Open live vault' : 'Deposit in kind'}
         </Link>
       </div>
 
       {!vault.hasDeployment ? (
-        <p className="mt-3 text-xs text-amber">
+        <p className="mt-3 text-xs text-warning">
           No Poolmigo deployment on {chainName} yet — switch network in the header. The prototype below keeps working.
         </p>
       ) : unreachable ? (
-        <p className="mt-3 text-xs text-amber">
+        <p className="mt-3 text-xs text-warning">
           {isLocalChain(vault.chainId)
             ? 'Local chain not reachable — start Anvil with the demo stack to see live data.'
             : `${chainName} RPC not reachable right now.`}{' '}
@@ -64,8 +64,8 @@ export function LiveVaultTeaser() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <div className="text-2xs text-ink-3">{label}</div>
-      <div className="text-sm text-ink truncate">{children}</div>
+      <div className="text-2xs text-weaker">{label}</div>
+      <div className="text-sm text-strong truncate">{children}</div>
     </div>
   );
 }

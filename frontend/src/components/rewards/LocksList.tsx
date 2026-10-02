@@ -24,26 +24,26 @@ export function LocksList() {
     await new Promise((r) => setTimeout(r, 1500));
     unlock(id);
     setBusy(null);
-    pushToast({ title: 'Unlock confirmed', detail: `${fmtToken(amount, 1)} PMG returned to your wallet`, tone: 'up' });
+    pushToast({ title: 'Unlock confirmed', detail: `${fmtToken(amount, 1)} PMG returned to your wallet`, tone: 'success' });
   };
 
   return (
     <section>
       <h3 className="eyebrow mb-3 flex justify-between gap-2.5">
         Locked PMG
-        <span className="num text-sm normal-case tracking-normal text-tide">{fmtToken(total, 0)} PMG</span>
+        <span className="num text-sm normal-case tracking-normal text-accent">{fmtToken(total, 0)} PMG</span>
       </h3>
       <Timeline locks={sorted} now={now} />
       <ul className="mt-2">
         {sorted.map((l) => {
           const ready = m.isUnlockable(l, now);
           return (
-            <li key={l.id} className="flex items-center justify-between gap-3 border-t border-line py-3 num">
+            <li key={l.id} className="flex items-center justify-between gap-3 border-t border-stroke-weak py-3 num">
               <div className="min-w-0">
-                <span className="font-medium text-ink">{fmtToken(l.amount, 1)} PMG</span>
-                {l.redistributionEarned > 0 && <span className="ml-1.5 text-xs text-up">+{fmtToken(l.redistributionEarned, 1)} earned</span>}
-                <small className="mt-0.5 block text-xs text-ink-3">
-                  Locked {fmtDate(l.lockedAt)} · {ready ? <span className="text-up">ready to unlock</span> : <>unlocks {fmtDate(l.unlockAt)} · {m.lockDaysLeft(l, now)}d left</>}
+                <span className="font-medium text-strong">{fmtToken(l.amount, 1)} PMG</span>
+                {l.redistributionEarned > 0 && <span className="ml-1.5 text-xs text-success">+{fmtToken(l.redistributionEarned, 1)} earned</span>}
+                <small className="mt-0.5 block text-xs text-weaker">
+                  Locked {fmtDate(l.lockedAt)} · {ready ? <span className="text-success">ready to unlock</span> : <>unlocks {fmtDate(l.unlockAt)} · {m.lockDaysLeft(l, now)}d left</>}
                 </small>
               </div>
               {ready && <Button size="sm" onClick={() => doUnlock(l.id, l.amount)} loading={busy === l.id}>Unlock</Button>}
@@ -76,21 +76,21 @@ function Timeline({ locks, now }: { locks: Lock[]; now: number }) {
     <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={`Locked rewards on a timeline from ${fmtDate(d0)} to ${fmtDate(d1 - DAY)}`}>
       {months.map((t, i) => (
         <g key={t}>
-          <rect x={X(t)} y={TOP - 6} width="1" height={H - TOP - 18} className="fill-line" />
-          {i < months.length - 1 && i % every === 0 && <text x={X(t) + 4} y={H - 6} fontSize="10.5" className="fill-ink-3">{MONTHS[new Date(t).getUTCMonth()]}</text>}
+          <rect x={X(t)} y={TOP - 6} width="1" height={H - TOP - 18} className="fill-stroke-weak" />
+          {i < months.length - 1 && i % every === 0 && <text x={X(t) + 4} y={H - 6} fontSize="10.5" className="fill-weaker">{MONTHS[new Date(t).getUTCMonth()]}</text>}
         </g>
       ))}
       {locks.map((l, i) => {
         const y = TOP + i * ROW, x0 = X(l.lockedAt), x1 = X(l.unlockAt), served = Math.min(xNow, x1);
         return (
           <g key={l.id}>
-            <rect x={x0} y={y} width={x1 - x0} height="8" className="fill-ink" opacity=".22" />
-            <rect x={x0} y={y} width={Math.max(0, served - x0)} height="8" className={m.isUnlockable(l, now) ? 'fill-up' : 'fill-ink'} />
+            <rect x={x0} y={y} width={x1 - x0} height="8" className="fill-strong" opacity=".22" />
+            <rect x={x0} y={y} width={Math.max(0, served - x0)} height="8" className={m.isUnlockable(l, now) ? 'fill-success' : 'fill-strong'} />
           </g>
         );
       })}
-      <rect x={xNow} y="4" width="1" height={H - 22} className="fill-sun" />
-      <text x={xNow + 5 > W - 40 ? xNow - 5 : xNow + 5} y="13" textAnchor={xNow + 5 > W - 40 ? 'end' : 'start'} fontSize="10.5" className="fill-sun">Today</text>
+      <rect x={xNow} y="4" width="1" height={H - 22} className="fill-accent" />
+      <text x={xNow + 5 > W - 40 ? xNow - 5 : xNow + 5} y="13" textAnchor={xNow + 5 > W - 40 ? 'end' : 'start'} fontSize="10.5" className="fill-accent">Today</text>
     </svg>
   );
 }

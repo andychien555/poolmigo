@@ -47,25 +47,25 @@ export function LiveVault() {
   return (
     <div className="wrap py-6 space-y-6">
       <header className="flex flex-wrap items-center gap-3">
-        <Link to="/" className="text-xs text-ink-3 hover:text-ink-2 mr-1">← Earn</Link>
+        <Link to="/" className="text-xs text-weaker hover:text-weak mr-1">← Earn</Link>
         <h1 className="display text-2xl font-semibold">{vault.entry?.label ?? vault.name ?? 'Poolmigo vault'}</h1>
         <LiveBadge />
         {vault.hasDeployment && (
           <span
-            className="inline-flex items-center h-7 px-2.5 rounded-full bg-panel-2 border border-line-2 text-xs font-medium text-ink num"
+            className="inline-flex items-center h-7 px-2.5 rounded-full bg-fill-weak border border-stroke-strong text-xs font-medium text-strong num"
             title={`Receipt token: ${receipt.name} (${receipt.symbol})`}
           >
             {receipt.symbol}
           </span>
         )}
-        <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-panel border border-line text-xs text-ink-2 num">
+        <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-background-elevated border border-stroke-weak text-xs text-weak num">
           {chainName}
           {vault.hasDeployment && <> · {shortHex(vault.address)}</>}
         </span>
-        {vault.isLoading && <Spinner className="h-4 w-4 text-ink-3" />}
+        {vault.isLoading && <Spinner className="h-4 w-4 text-weaker" />}
       </header>
 
-      <p className="text-sm text-ink-2 max-w-3xl leading-relaxed">
+      <p className="text-sm text-weak max-w-3xl leading-relaxed">
         An in-kind basket vault: you deposit the basket tokens themselves and receive{' '}
         <span className="num">{receipt.symbol}</span>
         {receipt.name !== receipt.symbol && <> ({receipt.name})</>}, a fungible pro-rata claim on the whole basket. There is no USD
@@ -128,7 +128,7 @@ export function LiveVault() {
             <Stat
               label="Deposits"
               value={vault.paused ? 'Paused' : 'Open'}
-              tone={vault.paused ? 'amber' : 'up'}
+              tone={vault.paused ? 'warning' : 'success'}
               sub={`${vault.adapters.length} adapters registered`}
             />
           </StatRow>
@@ -142,16 +142,16 @@ export function LiveVault() {
             <div className="space-y-6 min-w-0">
               <Card title="Your position" action={<LiveBadge label="Live" />}>
                 {user.shares === 0n ? (
-                  <p className="text-sm text-ink-3">
+                  <p className="text-sm text-weaker">
                     {address ? `No ${receipt.symbol} yet. Deposit below to mint a claim on the basket.` : 'Connect a wallet to see your position.'}
                   </p>
                 ) : (
                   <>
                     <div className="flex items-baseline justify-between gap-3 mb-2">
-                      <span className="text-xs text-ink-3">{receipt.symbol} balance</span>
+                      <span className="text-xs text-weaker">{receipt.symbol} balance</span>
                       <span className="display num text-xl font-semibold">{formatAmountSignificant(user.shares, vault.decimals)}</span>
                     </div>
-                    <div className="text-xs text-ink-3 mb-1">Redeemable right now (previewRedeem)</div>
+                    <div className="text-xs text-weaker mb-1">Redeemable right now (previewRedeem)</div>
                     <TokenAmountList tokens={vault.tokens} amounts={user.owed} digits={6} />
                   </>
                 )}
@@ -176,12 +176,12 @@ function BasketTable({ vault }: { vault: ReturnType<typeof useLiveVault> }) {
   return (
     <Card
       title="Basket"
-      action={<span className="text-2xs text-ink-3">totalTokens() = idle + Σ adapter position()</span>}
+      action={<span className="text-2xs text-weaker">totalTokens() = idle + Σ adapter position()</span>}
     >
       <div className="overflow-x-auto">
         <table className="w-full text-sm num min-w-[460px]">
           <thead>
-            <tr className="text-xs text-ink-3 border-b border-line">
+            <tr className="text-xs text-weaker border-b border-stroke-weak">
               <th className="text-left font-medium pb-2">Token</th>
               <th className="text-right font-medium pb-2">Total</th>
               <th className="text-right font-medium pb-2">Idle</th>
@@ -196,21 +196,21 @@ function BasketTable({ vault }: { vault: ReturnType<typeof useLiveVault> }) {
               const working = vault.inPosition[i] ?? 0n;
               const pct = total > 0n ? Number((working * 10_000n) / total) / 100 : 0;
               return (
-                <tr key={t.address} className="border-b border-line last:border-0">
+                <tr key={t.address} className="border-b border-stroke-weak last:border-0">
                   <td className="py-2.5">
-                    <div className="font-medium text-ink">{t.symbol}</div>
-                    <div className="text-2xs text-ink-3" title={t.address}>
+                    <div className="font-medium text-strong">{t.symbol}</div>
+                    <div className="text-2xs text-weaker" title={t.address}>
                       {t.name} · {t.decimals} dp · {shortHex(t.address)}
                     </div>
                   </td>
-                  <td className="py-2.5 text-right text-ink">{formatAmount(total, t.decimals, 4)}</td>
-                  <td className="py-2.5 text-right text-ink-2">{formatAmount(idle, t.decimals, 4)}</td>
-                  <td className="py-2.5 text-right text-ink-2">{formatAmount(working, t.decimals, 4)}</td>
+                  <td className="py-2.5 text-right text-strong">{formatAmount(total, t.decimals, 4)}</td>
+                  <td className="py-2.5 text-right text-weak">{formatAmount(idle, t.decimals, 4)}</td>
+                  <td className="py-2.5 text-right text-weak">{formatAmount(working, t.decimals, 4)}</td>
                   <td className="py-2.5 pl-3">
-                    <div className="h-1.5 w-full rounded-full bg-line overflow-hidden" title={`${pct.toFixed(1)}% deployed`}>
-                      <div className={cx('h-full rounded-full bg-aqua')} style={{ width: `${Math.min(100, pct)}%` }} />
+                    <div className="h-1.5 w-full rounded-full bg-fill-track overflow-hidden" title={`${pct.toFixed(1)}% deployed`}>
+                      <div className={cx('h-full rounded-full bg-fill-primary')} style={{ width: `${Math.min(100, pct)}%` }} />
                     </div>
-                    <div className="text-2xs text-ink-3 mt-1 text-right">{pct.toFixed(1)}% deployed</div>
+                    <div className="text-2xs text-weaker mt-1 text-right">{pct.toFixed(1)}% deployed</div>
                   </td>
                 </tr>
               );

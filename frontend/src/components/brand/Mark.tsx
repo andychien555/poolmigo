@@ -10,7 +10,7 @@ export function Mark({ size = 24, className }: { size?: number; className?: stri
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} className={cx('block shrink-0', className)} aria-hidden>
       <clipPath id={clip} clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="48" height="40" /></clipPath>
-      <circle cx="24" cy="38.5" r="7.5" clipPath={`url(#${clip})`} className="fill-sun" />
+      <circle cx="24" cy="38.5" r="7.5" clipPath={`url(#${clip})`} className="fill-accent" />
       <rect x="10" y="4" width="6" height="36" fill="currentColor" />
       <rect x="32" y="4" width="6" height="36" fill="currentColor" />
       <rect x="0" y="40" width="48" height="1.8" fill="currentColor" />

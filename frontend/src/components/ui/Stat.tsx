@@ -5,19 +5,18 @@ interface Props {
   label: ReactNode;
   value: ReactNode;
   sub?: ReactNode;
-  tone?: 'default' | 'tide' | 'up' | 'down' | 'amber' | 'aqua';
+  tone?: 'default' | 'accent' | 'success' | 'error' | 'warning';
   size?: 'md' | 'lg';
   className?: string;
   onClick?: () => void;
 }
 
 const tones = {
-  default: 'text-ink',
-  tide: 'text-tide',
-  up: 'text-up',
-  down: 'text-down',
-  amber: 'text-amber',
-  aqua: 'text-aqua',
+  default: 'text-strong',
+  accent: 'text-accent',
+  success: 'text-success',
+  error: 'text-error',
+  warning: 'text-warning',
 };
 
 export function Stat({ label, value, sub, tone = 'default', size = 'md', className, onClick }: Props) {
@@ -33,7 +32,7 @@ export function Stat({ label, value, sub, tone = 'default', size = 'md', classNa
     >
       <div className="eyebrow">{label}</div>
       <div className={cx('display num truncate', size === 'lg' ? 'text-3xl' : 'text-[22px] leading-7', tones[tone], onClick && 'group-hover:underline decoration-1 underline-offset-4')}>{value}</div>
-      {sub && <div className="text-xs text-ink-3 num">{sub}</div>}
+      {sub && <div className="text-xs text-weaker num">{sub}</div>}
     </Tag>
   );
 }
@@ -50,8 +49,8 @@ export function StatRow({ children, className, cols = 4, packed, rule = true }: 
       <div
         className={cx(
           'grid grid-cols-2 gap-x-3.5 gap-y-[18px] md:gap-x-7 md:gap-y-5',
-          '[&>*]:relative [&>*]:border-t [&>*]:border-line-2 [&>*]:pt-2.5 md:[&>*]:border-t-0',
-          '[&>*]:before:absolute [&>*]:before:left-0 [&>*]:before:-top-px [&>*]:before:h-[7px] [&>*]:before:w-px [&>*]:before:bg-ink-2',
+          '[&>*]:relative [&>*]:border-t [&>*]:border-stroke-strong [&>*]:pt-2.5 md:[&>*]:border-t-0',
+          '[&>*]:before:absolute [&>*]:before:left-0 [&>*]:before:-top-px [&>*]:before:h-[7px] [&>*]:before:w-px [&>*]:before:bg-weak',
           rule ? 'md:[&>*]:pt-3 md:[&>*]:before:-top-[9px] md:[&>*]:before:h-[13px]' : 'md:[&>*]:pt-0 md:[&>*]:before:hidden',
           packed
             ? 'md:flex md:flex-wrap md:gap-x-14 md:[&>*]:pr-2'

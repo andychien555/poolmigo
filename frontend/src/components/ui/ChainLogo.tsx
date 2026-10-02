@@ -6,7 +6,7 @@ export function ChainLogo({ chain, size = 16, className }: { chain: ChainId; siz
   const c = CHAINS[chain];
   return (
     <span
-      className={cx('inline-flex items-center justify-center rounded-sm text-deep shrink-0', chain !== 'robinhood' && 'bg-ink-2', className)}
+      className={cx('inline-flex items-center justify-center rounded-sm text-inverse-strong shrink-0', chain !== 'robinhood' && 'bg-weak', className)}
       style={{ width: size, height: size, ...(chain === 'robinhood' ? { background: c.color, color: '#000' } : {}) }}
       title={c.name}
       aria-label={c.name}

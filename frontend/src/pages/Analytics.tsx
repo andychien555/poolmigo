@@ -44,7 +44,7 @@ function useWeeks(): Week[] {
 
 export function Analytics() {
   const pal = usePalette();
-  const AQUA = pal.aqua, GLASS = pal.glass, UP = pal.up, PMG = pal.apricot;
+  const PRIMARY = pal.strong, SECONDARY = pal.chartSecondary, SUCCESS = pal.success, ACCENT = pal.accent;
   const [win, setWin] = useState<Window>('week');
   const weeks = useWeeks();
   const last = weeks[weeks.length - 1];
@@ -54,28 +54,28 @@ export function Analytics() {
   const delta = (k: Metric) => last[k] / prev[k] - 1;
   const coverage = m.buybackCoverage(pick('buybacksUsd'), win === 'week' ? last.emissionsUsd : sum('emissionsUsd'));
 
-  const metrics: Array<{ k: Metric; label: string; color: string; tone?: 'aqua' | 'up' }> = [
-    { k: 'volumeUsd', label: 'Volume', color: GLASS },
-    { k: 'feesUsd', label: 'Fees', color: UP, tone: 'up' },
-    { k: 'revenueUsd', label: 'Revenue', color: PMG },
-    { k: 'buybacksUsd', label: 'Buybacks', color: AQUA, tone: 'aqua' },
+  const metrics: Array<{ k: Metric; label: string; color: string; tone?: 'success' }> = [
+    { k: 'volumeUsd', label: 'Volume', color: SECONDARY },
+    { k: 'feesUsd', label: 'Fees', color: SUCCESS, tone: 'success' },
+    { k: 'revenueUsd', label: 'Revenue', color: ACCENT },
+    { k: 'buybacksUsd', label: 'Buybacks', color: PRIMARY },
   ];
 
   return (
     <div className="wrap py-6">
     <div className="space-y-6 max-w-[1080px] mx-auto">
-      <section className="bg-panel border border-line rounded-lg p-5 md:p-6 space-y-5">
+      <section className="bg-background-elevated border border-stroke-weak rounded-lg p-5 md:p-6 space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="display text-2xl font-semibold">Protocol analytics</h1>
               <DemoBadge />
             </div>
-            <p className="text-sm text-ink-2 mt-1">Poolmigo vaults across Ethereum, Robinhood Chain and Arc.</p>
+            <p className="text-sm text-weak mt-1">Poolmigo vaults across Ethereum, Robinhood Chain and Arc.</p>
           </div>
           <Segmented<Window> size="sm" value={win} onChange={setWin} options={[{ value: 'week', label: 'This week' }, { value: 'all', label: '8 weeks' }]} />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 bg-deep border border-line rounded-lg divide-x divide-line">
+        <div className="grid grid-cols-2 md:grid-cols-4 bg-fill-recessed border border-stroke-weak rounded-lg divide-x divide-stroke-weak">
           {metrics.map((mt) => (
             <Tile
               key={mt.k}
@@ -84,7 +84,7 @@ export function Analytics() {
               tone={mt.tone}
               sub={
                 win === 'week' ? (
-                  <span className={delta(mt.k) >= 0 ? 'text-up' : 'text-down'}>{fmtPctSigned(delta(mt.k))} from prior week</span>
+                  <span className={delta(mt.k) >= 0 ? 'text-success' : 'text-error'}>{fmtPctSigned(delta(mt.k))} from prior week</span>
                 ) : (
                   'Last 8 weeks'
                 )
@@ -92,7 +92,7 @@ export function Analytics() {
             />
           ))}
         </div>
-        <p className="text-2xs text-ink-3">Revenue is the protocol's 10% share of fees plus zap swap fees. Buybacks are funded from revenue and paid to lockers.</p>
+        <p className="text-2xs text-weaker">Revenue is the protocol's 10% share of fees plus zap swap fees. Buybacks are funded from revenue and paid to lockers.</p>
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -102,8 +102,8 @@ export function Analytics() {
       </div>
 
       <StatRow>
-        <Stat label="Emissions this week" value={fmtUsd(last.emissionsUsd, { compact: false })} tone="tide" />
-        <Stat label="Buyback coverage" value={fmtPct(coverage)} tone={coverage >= 0.6 ? 'aqua' : 'amber'} />
+        <Stat label="Emissions this week" value={fmtUsd(last.emissionsUsd, { compact: false })} tone="accent" />
+        <Stat label="Buyback coverage" value={fmtPct(coverage)} tone={coverage >= 0.6 ? 'default' : 'warning'} />
         <Stat label="Lock rate" value={fmtPct(PROTOCOL.lockRate, 0)} />
         <Stat label="Market cap" value={fmtUsd(m.circulatingMarketCap(PROTOCOL.circulatingTide))} />
       </StatRow>
@@ -112,12 +112,12 @@ export function Analytics() {
   );
 }
 
-function Tile({ label, value, sub, tone }: { label: string; value: string; sub?: ReactNode; tone?: 'aqua' | 'up' }) {
+function Tile({ label, value, sub, tone }: { label: string; value: string; sub?: ReactNode; tone?: 'success' }) {
   return (
     <div className="p-5">
-      <div className="text-xs text-ink-3">{label}</div>
-      <div className={cx('display num text-3xl md:text-4xl font-semibold mt-2 leading-none', tone === 'aqua' ? 'text-aqua' : tone === 'up' ? 'text-up' : 'text-ink')}>{value}</div>
-      {sub && <div className="text-xs text-ink-2 mt-2 num">{sub}</div>}
+      <div className="text-xs text-weaker">{label}</div>
+      <div className={cx('display num text-3xl md:text-4xl font-semibold mt-2 leading-none', tone === 'success' ? 'text-success' : 'text-strong')}>{value}</div>
+      {sub && <div className="text-xs text-weak mt-2 num">{sub}</div>}
     </div>
   );
 }
@@ -127,24 +127,24 @@ function BarCard({ title, data, k, color }: { title: string; data: Week[]; k: Me
   const lastIdx = data.length - 1;
   const total = data.reduce((a, w) => a + w[k], 0);
   return (
-    <section className="bg-panel border border-line rounded-lg p-5">
+    <section className="bg-background-elevated border border-stroke-weak rounded-lg p-5">
       <div className="flex items-baseline justify-between">
         <h3 className="display text-md font-semibold">{title}</h3>
-        <span className="text-sm text-ink-2 num">{fmtUsd(total)} <span className="text-ink-3 text-xs">8 weeks</span></span>
+        <span className="text-sm text-weak num">{fmtUsd(total)} <span className="text-weaker text-xs">8 weeks</span></span>
       </div>
       <div className="h-40 mt-4">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }} barCategoryGap="30%">
-            <XAxis dataKey="date" tick={{ fill: pal.ink3, fontSize: 11 }} tickLine={false} axisLine={false} ticks={[data[0].date, data[4].date, data[lastIdx].date]} />
+            <XAxis dataKey="date" tick={{ fill: pal.weaker, fontSize: 11 }} tickLine={false} axisLine={false} ticks={[data[0].date, data[4].date, data[lastIdx].date]} />
             <RTooltip
-              cursor={{ fill: pal.panel2 }}
+              cursor={{ fill: pal.fillHover }}
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
                 const p = payload[0].payload as Week;
                 return (
-                  <div className="bg-panel border border-line rounded-md shadow-pop px-2.5 py-1.5 text-xs num">
-                    <div className="text-ink-3">Week of {p.date}</div>
-                    <div className="text-ink font-medium">{fmtUsd(p[k], { compact: p[k] >= 1_000_000 })}</div>
+                  <div className="bg-background-elevated border border-stroke-weak rounded-md shadow-pop px-2.5 py-1.5 text-xs num">
+                    <div className="text-weaker">Week of {p.date}</div>
+                    <div className="text-strong font-medium">{fmtUsd(p[k], { compact: p[k] >= 1_000_000 })}</div>
                   </div>
                 );
               }}

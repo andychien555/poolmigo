@@ -3,9 +3,9 @@ import { cx } from '@/lib/format';
 import type { RangeStatus, Tier } from '@/lib/types';
 
 const tierStyles: Record<Tier, string> = {
-  Core: 'border-line-2 text-ink-2',
-  Turbo: 'border-line-2 text-ink',
-  Degen: 'border-down/45 text-down',
+  Core: 'border-stroke-strong text-weak',
+  Turbo: 'border-stroke-strong text-strong',
+  Degen: 'border-stroke-error/45 text-error',
 };
 
 export function TierBadge({ tier, className }: { tier: Tier; className?: string }) {
@@ -23,21 +23,21 @@ export function TierBadge({ tier, className }: { tier: Tier; className?: string 
 }
 
 const statusMeta: Record<RangeStatus, { label: string; dot: string; text: string }> = {
-  in: { label: 'In range', dot: 'bg-up', text: 'text-ink-2' },
-  out: { label: 'Out of range', dot: 'bg-down', text: 'text-down' },
-  defensive: { label: 'Defensive', dot: 'bg-amber', text: 'text-amber' },
+  in: { label: 'In range', dot: 'bg-success', text: 'text-weak' },
+  out: { label: 'Out of range', dot: 'bg-error', text: 'text-error' },
+  defensive: { label: 'Defensive', dot: 'bg-warning', text: 'text-warning' },
 };
 
 export function RangeStatusBadge({ status, className }: { status: RangeStatus; className?: string }) {
   const s = statusMeta[status];
   return (
     <span className={cx('inline-flex items-center gap-1.5 text-xs', s.text, className)}>
-      <span className={cx('h-1.5 w-1.5 rounded-full', s.dot, status === 'defensive' && 'ring-2 ring-amber/25')} />
+      <span className={cx('h-1.5 w-1.5 rounded-full', s.dot, status === 'defensive' && 'ring-2 ring-stroke-warning/25')} />
       {s.label}
     </span>
   );
 }
 
 export function Pill({ children, className }: { children: ReactNode; className?: string }) {
-  return <span className={cx('inline-flex items-center h-5 px-1.5 rounded bg-panel-2 text-2xs text-ink-2 border border-line', className)}>{children}</span>;
+  return <span className={cx('inline-flex items-center h-5 px-1.5 rounded bg-fill-weak text-2xs text-weak border border-stroke-weak', className)}>{children}</span>;
 }
