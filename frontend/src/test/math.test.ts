@@ -92,12 +92,14 @@ describe('zap / withdraw math', () => {
     expect(z.legs[0].usd).toBeCloseTo(z.legs[1].usd, 8);
   });
   it('withdraw applies 0.1% fee and values by pricePerShare', () => {
-    const w = m.withdrawPreview(nvda, 2_000, 'usdg', TOKEN_PRICES);
+    const w = m.withdrawPreview(nvda, 2_000, 'USDG', TOKEN_PRICES);
     expect(w.grossUsd).toBeCloseTo(2_006.4, 6);
     expect(w.feeUsd).toBeCloseTo(2.0064, 6);
     expect(w.outputs[0].amount).toBeCloseTo(2_004.3936, 4);
     const both = m.withdrawPreview(nvda, 2_000, 'both', TOKEN_PRICES);
     expect(both.outputs.reduce((a, o) => a + o.usd, 0)).toBeCloseTo(w.netUsd, 8);
+    const single = m.withdrawPreview(nvda, 2_000, 'NVDA', TOKEN_PRICES);
+    expect(single.outputs).toEqual([{ token: 'NVDA', amount: w.netUsd / TOKEN_PRICES.NVDA, usd: w.netUsd }]);
   });
 });
 

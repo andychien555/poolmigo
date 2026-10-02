@@ -63,7 +63,7 @@ describe('store — cross-page consistency after actions (checklist §7)', () =>
   });
 
   it('withdraw with staked migoLP unstakes and pays out net of the 0.1% fee; full exit removes the position', () => {
-    const preview = m.withdrawPreview(nvda, 2_000, 'usdg', TOKEN_PRICES);
+    const preview = m.withdrawPreview(nvda, 2_000, 'USDG', TOKEN_PRICES);
     useStore.getState().withdraw({ vaultId: nvda.id, preview });
     let s = useStore.getState();
     expect(s.user.positions[nvda.id].staked).toBeCloseTo(7_800, 6);

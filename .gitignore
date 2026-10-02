@@ -18,3 +18,4 @@ backend/.keeper-state*.json
 .env
 .env.*
 !.env.example
+.gstack/

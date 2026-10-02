@@ -40,7 +40,6 @@ function VaultView({ vaultId, market }: { vaultId: string; market: 'open' | 'clo
   const [params, setParams] = useSearchParams();
   const { tvl, breakdown: b } = useVaultApr(v);
   const cap = TIER_CAPACITY[v.tier];
-  const fill = Math.min(1, tvl / cap);
   const [aprHover, setAprHover] = useState(false);
 
   return (
@@ -67,10 +66,7 @@ function VaultView({ vaultId, market }: { vaultId: string; market: 'open' | 'clo
                 </div>
               )}
             </div>
-            <div className="flex min-w-0 flex-col gap-1">
-              <Stat label="Capacity" value={fmtUsd(tvl)} sub={<>of {fmtUsd(cap)} · {fmtPct(fill, 0)} filled</>} />
-              <span className="gauge mt-0.5 w-[150px]" aria-hidden><i style={{ width: `${fill * 100}%` }} /></span>
-            </div>
+            <Stat label="Capacity" value={`${fmtUsd(tvl)} / ${cap / 1_000_000}M`} />
           </StatRow>
         </header>
 

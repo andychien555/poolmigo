@@ -118,8 +118,16 @@ function AmountBox({
   );
 }
 
-/** Visible choice of what to pay with — single tokens or both, each with its logo. */
-function PayWith({ options, value, onChange }: { options: Array<{ id: string; label: string; icon: React.ReactNode }>; value: string; onChange: (id: string) => void }) {
+/** The tokens a vault takes and pays out: the dollar token, each side of the pair, then both sides together. */
+function useTokenOptions(v: Vault) {
+  return useMemo(() => {
+    const singles = Array.from(new Set([STABLE, v.token0, v.token1])).map((t) => ({ id: t, label: t, icon: <TokenIcon symbol={t} size={22} /> }));
+    return [...singles, { id: DUAL, label: `${v.token0} + ${v.token1}`, icon: <TokenPair a={v.token0} b={v.token1} size={22} /> }];
+  }, [v]);
+}
+
+/** Visible choice of what to pay with or receive — single tokens or both, each with its logo. */
+function TokenChoice({ options, value, onChange }: { options: Array<{ id: string; label: string; icon: React.ReactNode }>; value: string; onChange: (id: string) => void }) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {options.map((o) => (
@@ -163,10 +171,7 @@ function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?
   const [ack, setAck] = useState(false);
 
   const bal = (t: string) => balances[t] ?? 0;
-  const payOptions = useMemo(() => {
-    const singles = Array.from(new Set([STABLE, v.token0, v.token1])).map((t) => ({ id: t, label: t, icon: <TokenIcon symbol={t} size={22} /> }));
-    return [...singles, { id: DUAL, label: `${v.token0} + ${v.token1}`, icon: <TokenPair a={v.token0} b={v.token1} size={22} /> }];
-  }, [v]);
+  const payOptions = useTokenOptions(v);
   const isDual = asset === DUAL;
   const amt = Number(amount) || 0;
   const amt1 = Number(amount1) || 0;
@@ -213,7 +218,7 @@ function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?
   return (
     <div className="grid gap-4">
       <Field label="Pay with">
-        <PayWith options={payOptions} value={asset} onChange={(id) => { setAsset(id); setAmount(''); setAmount1(''); }} />
+        <TokenChoice options={payOptions} value={asset} onChange={(id) => { setAsset(id); setAmount(''); setAmount1(''); }} />
       </Field>
 
       <Field label="Amount">
@@ -299,13 +304,14 @@ function WithdrawForm({ vault: v }: { vault: Vault }) {
   const withdraw = useStore((s) => s.withdraw);
   const pushToast = useStore((s) => s.pushToast);
   const [amount, setAmount] = useState('');
-  const [mode, setMode] = useState<'usdg' | 'both'>('usdg');
+  const [asset, setAsset] = useState(STABLE);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
+  const receiveOptions = useTokenOptions(v);
   const total = m.positionTdlp(position);
   const amt = Number(amount) || 0;
-  const preview = amt > 0 ? m.withdrawPreview(v, amt, mode, TOKEN_PRICES) : null;
+  const preview = amt > 0 ? m.withdrawPreview(v, amt, asset === DUAL ? 'both' : asset, TOKEN_PRICES) : null;
   const insufficient = connected && amt > total + 1e-9;
 
   const submit = async () => {
@@ -332,22 +338,16 @@ function WithdrawForm({ vault: v }: { vault: Vault }) {
 
   return (
     <div className="grid gap-4">
+      <Field label="Receive in">
+        <TokenChoice options={receiveOptions} value={asset} onChange={setAsset} />
+      </Field>
       <Field label="Amount">
         <AmountBox value={amount} onChange={setAmount} tokenLabel={v.receiptSymbol} tokenIcon={<TokenPair a={v.token0} b={v.token1} size={18} />} balance={connected ? total : undefined} connected={connected} usd={amt * v.pricePerShare} error={insufficient} />
       </Field>
       <Field label="Receive">
         <div className="grid gap-1.5 border-t border-line-2 pt-3 num">
-          <div className="flex items-center justify-between gap-2.5">
-            <div className="display num min-w-0 text-[22px] leading-8 text-ink">
-              {preview ? preview.outputs.map((o) => `${fmtToken(o.amount)} ${o.token}`).join(' + ') : <span className="text-ink-3">0</span>}
-            </div>
-            <div className="inline-flex shrink-0 rounded-lg border border-line bg-deep p-[3px]">
-              {(['usdg', 'both'] as const).map((k) => (
-                <button key={k} onClick={() => setMode(k)} aria-pressed={mode === k} className={cx('h-7 rounded-sm px-2.5 text-xs', mode === k ? 'bg-aqua text-on-primary' : 'text-ink-2 hover:text-ink')}>
-                  {k === 'usdg' ? STABLE : 'Both'}
-                </button>
-              ))}
-            </div>
+          <div className="display num text-[22px] leading-8 text-ink">
+            {preview ? preview.outputs.map((o) => `${fmtToken(o.amount)} ${o.token}`).join(' + ') : <span className="text-ink-3">0</span>}
           </div>
           <div className="text-xs text-ink-3">{preview ? `${fmtUsd(preview.netUsd, { compact: false, cents: true })} after ${fmtPct(CONSTANTS.WITHDRAWAL_FEE)} fee` : 'No lock-up. Redeem anytime.'}</div>
         </div>

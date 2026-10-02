@@ -160,9 +160,6 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
     setHover(true);
   };
   const label = 'mr-1.5 text-xs font-normal text-ink-3 md:hidden';
-  const status = m.rangeStatus(v, market);
-  // Only what needs attention sits under the name
-  const flags = [v.tier === 'Degen' && 'High risk', status === 'out' && 'Out of range'].filter(Boolean);
 
   return (
     <li
@@ -175,10 +172,7 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
     >
       <div className="flex min-w-0 items-center gap-3.5 [grid-area:pair] md:[grid-area:auto]">
         <TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} />
-        <div className="min-w-0">
-          <div className="font-serif text-[23px] font-light leading-[1.1] text-ink md:whitespace-nowrap">{vaultName(v)}</div>
-          {flags.length > 0 && <div className="mt-[3px] text-xs text-down">{flags.join(' · ')}</div>}
-        </div>
+        <div className="min-w-0 font-serif text-[23px] font-light leading-[1.1] text-ink md:whitespace-nowrap">{vaultName(v)}</div>
       </div>
       <div className="min-w-0 [grid-area:meter] md:[grid-area:auto]"><RangeMeter vault={v} market={market} /></div>
       <div ref={aprCell} className="justify-self-end whitespace-nowrap [grid-area:apr] md:[grid-area:auto]" onMouseEnter={onEnter} onMouseLeave={() => setHover(false)}>

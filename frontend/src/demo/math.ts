@@ -223,7 +223,8 @@ export function dualPreview(v: Vault, amount0: number, amount1: number, prices: 
   };
 }
 
-export type WithdrawMode = 'usdg' | 'both';
+/** `'both'` pays out the pair's two tokens; a token symbol pays out everything in that token. */
+export type WithdrawMode = 'both' | (string & {});
 
 export interface WithdrawPreview {
   tdlp: number;
@@ -238,12 +239,12 @@ export function withdrawPreview(v: Vault, tdlp: number, mode: WithdrawMode, pric
   const feeUsd = grossUsd * CONSTANTS.WITHDRAWAL_FEE;
   const netUsd = grossUsd - feeUsd;
   const outputs: WithdrawPreview['outputs'] =
-    mode === 'usdg'
-      ? [{ token: 'USDG', amount: netUsd / prices.USDG, usd: netUsd }]
-      : [
+    mode === 'both'
+      ? [
           { token: v.token0, amount: netUsd / 2 / prices[v.token0], usd: netUsd / 2 },
           { token: v.token1, amount: netUsd / 2 / prices[v.token1], usd: netUsd / 2 },
-        ];
+        ]
+      : [{ token: mode, amount: netUsd / prices[mode], usd: netUsd }];
   return { tdlp, grossUsd, feeUsd, netUsd, outputs };
 }
 

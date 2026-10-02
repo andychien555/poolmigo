@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import type { Vault } from '@/lib/types';
 import * as m from '@/demo/math';
 import type { MarketStatus } from '@/lib/market';
@@ -31,20 +31,27 @@ function niceTicks(min: number, max: number, count: number): number[] {
  * Price range as the instrument itself: a sky, two stones standing on the bounds, the sun at the
  * current price, and a graduated horizon as the price axis. The stones' inner faces sit exactly
  * on Lower and Upper, so the gap between them is the range.
+ * The price reads either way round: token1 per token0 as the pool quotes it, or flipped.
  */
 export function PriceRange({ vault: v, market, className }: Props) {
   const id = useId();
   const [host, width] = useElementWidth<HTMLDivElement>();
   const W = Math.max(320, width);
+  const [flipped, setFlipped] = useState(false);
   const g = m.rangeGeometry(v, market);
   const inRange = v.currentPrice >= g.lower && v.currentPrice <= g.upper;
+  // Flipped, every price is its reciprocal, so the two bounds change places
+  const price = flipped ? 1 / v.currentPrice : v.currentPrice;
+  const lower = flipped ? 1 / g.upper : g.lower;
+  const upper = flipped ? 1 / g.lower : g.upper;
+  const [base, quote] = flipped ? [v.token1, v.token0] : [v.token0, v.token1];
 
   // price → x: the scale runs 24% of the range width past each bound
-  const span = g.upper - g.lower, pad = 20;
-  const d0 = g.lower - span * 0.24, d1 = g.upper + span * 0.24;
+  const span = upper - lower, pad = 20;
+  const d0 = lower - span * 0.24, d1 = upper + span * 0.24;
   const X = (p: number) => pad + ((p - d0) / (d1 - d0)) * (W - pad * 2);
   // a price beyond the scale stops at its end, so the sun never leaves the frame
-  const sunX = Math.min(W - pad - SUN_R, Math.max(pad + SUN_R, X(v.currentPrice)));
+  const sunX = Math.min(W - pad - SUN_R, Math.max(pad + SUN_R, X(price)));
 
   const ticks = niceTicks(d0, d1, Math.max(4, Math.floor(W / 110)));
   const step = ticks.length > 1 ? ticks[1] - ticks[0] : span;
@@ -65,8 +72,8 @@ export function PriceRange({ vault: v, market, className }: Props) {
   const nearDunes = ridge(5, 3.5, 0.013, 2, 0.031, 1.2);
 
   const stones = [
-    { x: X(g.lower) - STONE_W, bound: X(g.lower), name: 'LOWER', value: g.lower },
-    { x: X(g.upper), bound: X(g.upper), name: 'UPPER', value: g.upper },
+    { x: X(lower) - STONE_W, bound: X(lower), name: 'LOWER', value: lower },
+    { x: X(upper), bound: X(upper), name: 'UPPER', value: upper },
   ].map((st) => {
     const centre = st.x + STONE_W / 2;
     // the face turned to the sun is lit; the shadow falls away from it across the ground
@@ -78,7 +85,7 @@ export function PriceRange({ vault: v, market, className }: Props) {
 
   // The price figure sits above the sun in the darker sky, joined to it by a hairline.
   // Near a stone it steps aside so it never lies across the stone.
-  const priceText = fmtQuote(v.currentPrice);
+  const priceText = fmtQuote(price);
   const half = (priceText.length * 13.5) / 2 + 8; // about half the figure's width at 24px, plus air
   let priceX = Math.min(W - half, Math.max(half, sunX));
   let priceAnchor: 'start' | 'middle' | 'end' = 'middle';
@@ -98,7 +105,20 @@ export function PriceRange({ vault: v, market, className }: Props) {
     <section className={className} aria-label="Price range">
       <div className="overflow-hidden rounded-lg border border-line-2 bg-deep">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-[11px] text-xs text-ink-3">
-          <h3><b className="text-sm font-medium text-ink">Price range</b> · {v.token1} per {v.token0}</h3>
+          <h3 className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+            <b className="text-sm font-medium text-ink">Price range</b>
+            <button
+              type="button"
+              onClick={() => setFlipped(!flipped)}
+              aria-label={`Priced in ${quote} per ${base}. Switch to ${base} per ${quote}`}
+              className="inline-flex h-6 items-center gap-1.5 rounded border border-line-2 px-2 text-ink-2 transition-colors hover:border-ink-3 hover:text-ink"
+            >
+              {quote} per {base}
+              <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
+                <path d="M3 5.5h10m0 0L10.5 3M13 5.5 10.5 8M13 10.5H3m0 0L5.5 8M3 10.5 5.5 13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </h3>
           <span className="num">
             {g.defensive && <span className="text-amber">Widened while the US market is closed · </span>}
             {!g.defensive && !inRange && <span className="text-down">Out of range · </span>}
@@ -110,7 +130,7 @@ export function PriceRange({ vault: v, market, className }: Props) {
             viewBox={`0 0 ${W} ${HEIGHT}`}
             className="block h-auto w-full"
             role="img"
-            aria-label={`Price ${fmtQuote(v.currentPrice)} ${inRange ? 'between' : 'outside'} the lower bound ${fmtQuote(g.lower)} and the upper bound ${fmtQuote(g.upper)}`}
+            aria-label={`Price ${fmtQuote(price)} ${quote} per ${base}, ${inRange ? 'between' : 'outside'} the lower bound ${fmtQuote(lower)} and the upper bound ${fmtQuote(upper)}`}
           >
             <defs>
               <linearGradient id={sky} x1="0" y1="0" x2="0" y2="1">
@@ -175,10 +195,10 @@ export function PriceRange({ vault: v, market, className }: Props) {
 
             {/* ground: the lit lane between the stones is where the position earns */}
             <rect x="0" y={HORIZON} width={W} height={HEIGHT - HORIZON} fill={`url(#${ground})`} />
-            <rect x={X(g.lower)} y={HORIZON} width={X(g.upper) - X(g.lower)} height="34" fill={`url(#${lane})`} />
+            <rect x={X(lower)} y={HORIZON} width={X(upper) - X(lower)} height="34" fill={`url(#${lane})`} />
             {stones.map((st) => <path key={st.name} d={st.shadow} fill={`url(#${cast})`} />)}
             <rect x="0" y={HORIZON} width={W} height="1" className="fill-line-2" />
-            <rect x={X(g.lower)} y={HORIZON - 1} width={X(g.upper) - X(g.lower)} height="2" className="fill-sun" opacity={inRange ? 0.75 : 0.25} />
+            <rect x={X(lower)} y={HORIZON - 1} width={X(upper) - X(lower)} height="2" className="fill-sun" opacity={inRange ? 0.75 : 0.25} />
 
             {/* the bounds: inner faces sit exactly on Lower and Upper */}
             {stones.map((st) => (
