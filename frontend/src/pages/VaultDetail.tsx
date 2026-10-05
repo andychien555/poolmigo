@@ -6,7 +6,6 @@ import * as m from '@/demo/math';
 import { useStore } from '@/store/useStore';
 import { useMarketStatus, useVaultApr } from '@/store/selectors';
 import { TokenPair } from '@/components/ui/TokenIcon';
-import { CHAINS } from '@/demo/data/chains';
 import { Stat, StatRow } from '@/components/ui/Stat';
 import { PriceRange } from '@/components/vault/PriceRange';
 import { AprBreakdown } from '@/components/vault/AprBreakdown';
@@ -19,7 +18,6 @@ import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { BoostedApr } from '@/components/ui/BoostedApr';
 import { ClaimModal } from '@/components/rewards/ClaimModal';
-import { DataLegend, DemoBadge } from '@/components/ui/DataBadge';
 
 export function VaultDetail() {
   const { id = '' } = useParams();
@@ -44,19 +42,20 @@ function VaultView({ vaultId, market }: { vaultId: string; market: 'open' | 'clo
 
   return (
     <div className="wrap pt-[26px] pb-[120px]">
-      <div className="grid items-start gap-x-10 gap-y-[30px] lg:grid-cols-[minmax(0,1fr)_384px]">
-        <header className="grid gap-3.5 lg:col-start-1">
-          <Link to="/" className="justify-self-start text-sm text-weaker hover:text-strong">← All vaults</Link>
+      <div className="grid items-start gap-x-10 gap-y-10 lg:grid-cols-[minmax(0,1fr)_384px]">
+        <header className="grid gap-6 lg:col-start-1">
+          <Link to="/" className="group -my-1.5 inline-flex items-center gap-3 justify-self-start py-1.5 text-md text-weak transition-colors duration-300 ease-dusk hover:text-strong">
+            {/* Drawn, not typed: a long hairline shaft with a small head, which the typeface's own arrow is not. */}
+            <svg viewBox="0 0 28 12" className="h-3 w-7 shrink-0 transition-transform duration-300 ease-dusk group-hover:-translate-x-1" fill="none" aria-hidden>
+              <path d="M27 6H1.5M6 1.5 1.5 6 6 10.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            All vaults
+          </Link>
           <div className="flex flex-wrap items-center gap-[18px]">
             <TokenPair a={v.token0} b={v.token1} size={36} chain={v.chain} />
-            <h1 className="title font-thin text-[clamp(44px,5.4vw,74px)]">{vaultName(v)}</h1>
+            <h1 className="title font-thin text-[clamp(38px,4.4vw,60px)]">{vaultName(v)}</h1>
           </div>
-          <p className="-mt-0.5 mb-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-sm text-weak">
-            {CHAINS[v.chain].name}
-            <DemoBadge label="Demo vault" />
-            <Link to="/live" className="text-xs text-success hover:underline">See the live on-chain vault →</Link>
-          </p>
-          <StatRow cols={3} packed>
+          <StatRow cols={3}>
             <Stat label="TVL" value={fmtUsd(tvl)} />
             <div className="cursor-help" onMouseEnter={() => setAprHover(true)} onMouseLeave={() => setAprHover(false)}>
               <Stat label="APR" value={<BoostedApr value={fmtPct(b.totalApr)} />} />
@@ -78,7 +77,6 @@ function VaultView({ vaultId, market }: { vaultId: string; market: 'open' | 'clo
         <PriceRange vault={v} market={market} className="min-w-0 lg:col-start-1" />
         <NavChart vault={v} className="min-w-0 lg:col-start-1" />
       </div>
-      <DataLegend className="mt-8" />
       <ClaimModal open={params.get('claim') === '1'} onClose={() => setParams({})} />
     </div>
   );
@@ -103,7 +101,7 @@ function YourPosition({ vault: v, tvl, onClaim }: { vault: Vault; tvl: number; o
         <Row label="Your APR" value={fmtPct(b.totalApr)} tip={`${fmtPct(b.feeApr)} from fees + ${fmtPct(b.tideApr)} in PMG`} />
         <Row label="PMG rewards" value={`${fmtToken(d.pendingTide, 1)} PMG`} tone="text-accent" tip={`≈ ${fmtUsd(d.pendingTide * CONSTANTS.TIDE_PRICE, { compact: false, cents: true })} across all your vaults`} />
       </dl>
-      <Button block onClick={onClaim} disabled={d.pendingTide < 0.005}>
+      <Button block variant="accent" onClick={onClaim} disabled={d.pendingTide < 0.005}>
         {d.pendingTide < 0.005 ? 'No rewards to claim yet' : `Claim ${fmtToken(d.pendingTide, 1)} PMG`}
       </Button>
     </section>

@@ -5,8 +5,8 @@ import { VAULTS, VAULT_BY_ID, vaultName } from '@/demo/data/vaults';
 import { CHAINS, type ChainId } from '@/demo/data/chains';
 import { ChainFilter } from '@/components/ui/ChainFilter';
 import * as m from '@/demo/math';
-import { cx, fmtPct, fmtToken, fmtUsd, shortAddress } from '@/lib/format';
-import { CONSTANTS, DEMO_ADDRESS } from '@/demo/constants';
+import { cx, fmtPct, fmtToken, fmtUsd } from '@/lib/format';
+import { CONSTANTS } from '@/demo/constants';
 import type { MarketStatus } from '@/lib/market';
 import type { Vault } from '@/lib/types';
 import { useStore } from '@/store/useStore';
@@ -19,7 +19,6 @@ import { AprBreakdown } from '@/components/vault/AprBreakdown';
 import { DepositModal } from '@/components/deposit/DepositModal';
 import { ClaimModal } from '@/components/rewards/ClaimModal';
 import { Welcome } from '@/components/layout/Welcome';
-import { Sidekick } from '@/components/layout/Sidekick';
 import { SkyScene } from '@/components/brand/SkyScene';
 import { RangeMeter } from '@/components/vault/RangeMeter';
 
@@ -51,26 +50,20 @@ export function Markets() {
   }, 0);
 
   const market = useMarketStatus();
-  const address = useStore((s) => s.address) ?? DEMO_ADDRESS;
-  const nPositions = Object.keys(positions).length;
   const cols = showMine ? COLS_MINE : COLS;
 
   return (
     <div>
       {/* The sky: who you are here and what you hold, over the scene */}
-      <section className={cx('relative overflow-hidden border-b border-stroke-strong', d.connected ? 'sm:h-[clamp(420px,54vh,490px)]' : 'sm:h-[clamp(470px,64vh,580px)]')}>
+      <section className={cx('relative overflow-hidden border-b border-stroke-strong', d.connected ? 'sm:h-[clamp(360px,44vh,410px)]' : 'sm:h-[clamp(410px,54vh,500px)]')}>
         {/* On phones the scene is a band across the top; from sm up it fills the section */}
-        <SkyScene className="absolute inset-x-0 top-0 h-[300px] w-full sm:h-full" />
-        <div className="sky-shade absolute inset-x-0 top-0 z-[2] h-[300px] pointer-events-none sm:h-full" />
-        <div className="wrap relative z-[4] grid justify-items-start gap-[18px] pt-[230px] sm:pt-[clamp(40px,7vh,72px)]">
+        <SkyScene className="absolute inset-x-0 top-0 h-[260px] w-full sm:h-full" />
+        <div className="sky-shade absolute inset-x-0 top-0 z-[2] h-[260px] pointer-events-none sm:h-full" />
+        <div className="wrap relative z-[4] grid justify-items-start gap-[18px] pt-[190px] sm:pt-[clamp(32px,6vh,56px)]">
           {d.connected ? (
             <>
-              <Sidekick onClaim={() => setParams({ claim: '1' })} />
               <p className="eyebrow !text-weak">Your deposits</p>
-              <div className="display num text-[clamp(48px,6vw,80px)] leading-none tracking-[-0.02em]">{fmtUsd(d.depositsUsd, { compact: false })}</div>
-              <p className="text-base text-weak num">
-                {nPositions ? `Across ${nPositions} vault${nPositions > 1 ? 's' : ''}` : 'No deposits yet'} · {shortAddress(address)}
-              </p>
+              <div className="display num !font-light text-[clamp(48px,6vw,80px)] leading-none tracking-[-0.02em]">{fmtUsd(d.depositsUsd, { compact: false })}</div>
             </>
           ) : (
             <Welcome />
@@ -116,7 +109,7 @@ export function Markets() {
           </div>
         </div>
 
-        <div className={cx('eyebrow hidden items-center gap-x-6 border-b border-stroke-strong pb-2.5 md:grid', cols)}>
+        <div className={cx('eyebrow hidden items-center gap-x-6 border-b border-stroke-strong px-4 pb-2.5 md:grid', cols)}>
           <span>Vault</span>
           <span>Price within its range</span>
           <span className="justify-self-end"><SortHead label="APR" active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} /></span>
@@ -124,7 +117,7 @@ export function Markets() {
           {showMine && <span className="justify-self-end">My deposit</span>}
           <span />
         </div>
-        <div className="eyebrow flex justify-end gap-[18px] md:hidden">
+        <div className="eyebrow flex justify-end gap-[18px] px-3 md:hidden">
           <SortHead label="APR" active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} />
           <SortHead label="TVL" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} />
         </div>
@@ -164,7 +157,7 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
   return (
     <li
       className={cx(
-        'grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 border-b border-stroke-weak py-4 transition-colors duration-300 ease-dusk hover:bg-strong/[0.035]',
+        'grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 border-b border-stroke-weak px-3 py-4 md:px-4 transition-colors duration-300 ease-dusk hover:bg-strong/[0.035]',
         "[grid-template-areas:'pair_apr''meter_meter''tvl_act''mine_act'] md:[grid-template-areas:none]",
         cols,
       )}
