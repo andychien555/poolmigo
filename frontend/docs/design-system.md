@@ -251,7 +251,7 @@ Keys and wells set their own radius in `index.css`, outside this scale:
 | Class | Radius |
 |---|---|
 | `btn` | 10px (`--btn-radius`); 8px at Button size `xs` |
-| `seg` | 8px (`--seg-radius`) |
+| `seg` | 8px (`--seg-radius`). Nothing uses it since Segmented moved into a groove |
 | `well` | 11px (`--well-radius`) |
 | `groove` | The well's radius less its 3px padding, for the key inside it |
 
@@ -327,11 +327,11 @@ component picks a material by class; the colours come from tokens.
 | `btn-glass` | Dark glass: a 5% tint of `--glass` (default `strong`) with a lit top edge |
 | `btn-glass-danger` | Glass in `error` |
 | `btn-glass-warning` | Glass in `warning`. The header's network and wallet buttons add it when the wallet is on the wrong network |
-| `seg` | A glass track for a segmented control |
-| `seg-thumb` + `seg-thumb-key` | The sand key that sits under the chosen segment of a `seg` |
+| `seg` | A glass track for a segmented control. Unused: Segmented is a `groove` |
+| `seg-thumb` + `seg-thumb-key` | The sand key that sits under the chosen segment of a `seg`. Unused, as `seg` |
 | `seg-thumb` + `seg-thumb-glass` | The same key in glass, opaque underneath so it reads the same over anything |
 | `well` | A recess cut into a surface: `fill-recessed` at 60% with `shadow-well`. The field an amount is typed into |
-| `groove` | A `well` that holds a choice: the options sit in the recess and the chosen one is raised out of it as a glass key |
+| `groove` | A `well` that holds a choice: the options sit in the recess and the chosen one is raised out of it as a glass key. Segmented and the deposit card's token choice |
 
 Every state of a key is the same stack of shadows in the same order, so a state change only fades layers
 in and out. A state that drops a layer keeps it at zero alpha. Keep that order when adding a state, or
@@ -372,10 +372,10 @@ it. Use it for one button's own submit instead of placing a `Spinner` by hand.
 
 `src/components/ui/Tabs.tsx`, `src/components/ui/SlidingKey.tsx`
 
-`Segmented` is a `seg` glass track with one sand key on it. The key is a single element, `SlidingKey`,
-that measures the chosen item and slides there (300ms, `ease-dusk`) when the choice changes. Its first
-placement is not animated. It re-measures after every render and when the track resizes, so a label
-changing width keeps it in place.
+`Segmented` is a `well groove` with one glass key in it, the same form as the deposit card's token
+choice. The key is a single element, `SlidingKey`, that measures the chosen item and slides there
+(300ms, `ease-dusk`) when the choice changes. Its first placement is not animated. It re-measures after
+every render and when the track resizes, so a label changing width keeps it in place.
 
 `SlidingKey` can be used on any track that has relative positioning and is a `seg` or a `groove`:
 
@@ -396,8 +396,9 @@ const track = useRef<HTMLDivElement>(null);
 Render it as the track's first child, before the options. The options carry the label colour
 (`text-inverse-strong` on a sand key, `text-strong` on glass); the key draws nothing but itself.
 
-The deposit card's token choice is the `groove` + `glass` form: equal columns, so three or four
-options share one row.
+Segmented and the deposit card's token choice are both the `groove` + `glass` form. Segmented sizes to
+its labels; the token choice uses equal columns, so three or four options share one row. Nothing uses
+the `seg` track or the `key` tone at the moment.
 
 ## Component inventory
 
