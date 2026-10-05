@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Vault } from '@/lib/types';
 import { STABLE, TOKEN_PRICES, vaultName } from '@/demo/data/vaults';
@@ -9,6 +9,7 @@ import { useVaultApr } from '@/store/selectors';
 import { cx, fmtPct, fmtToken, fmtUsd } from '@/lib/format';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { SlidingKey } from '@/components/ui/SlidingKey';
 import { TokenIcon, TokenPair } from '@/components/ui/TokenIcon';
 import { useConnectWallet } from '@/chain/useConnectWallet';
 
@@ -29,7 +30,16 @@ export function DepositCard({ vault: v, initialAmount, showVaultLink = true }: P
   return (
     <div className="w-full max-w-[440px] mx-auto lg:max-w-none">
       <div className="grid gap-4 rounded-lg border border-stroke-strong bg-background-elevated px-[18px] pb-[18px]">
-        <div className="-mx-[18px] grid grid-cols-2 border-b border-stroke-strong" role="tablist">
+        <div className="relative -mx-[18px] grid grid-cols-2 border-b border-stroke-strong" role="tablist">
+          <span
+            aria-hidden
+            className={cx(
+              'pointer-events-none absolute -bottom-px left-0 h-0.5 w-1/2 transition-transform duration-300 ease-dusk',
+              tab === 'withdraw' && 'translate-x-full',
+            )}
+          >
+            <span className="absolute inset-y-0 inset-x-[18px] bg-strong" />
+          </span>
           {(['deposit', 'withdraw'] as Tab[]).map((t) => (
             <button
               key={t}
@@ -37,8 +47,8 @@ export function DepositCard({ vault: v, initialAmount, showVaultLink = true }: P
               aria-selected={tab === t}
               onClick={() => setTab(t)}
               className={cx(
-                'relative py-[13px] text-base transition-colors',
-                tab === t ? 'text-strong after:absolute after:inset-x-[18px] after:-bottom-px after:h-0.5 after:bg-strong' : 'text-weaker hover:text-weak',
+                'relative py-[13px] text-base transition-colors duration-300 ease-dusk',
+                tab === t ? 'text-strong' : 'text-weaker hover:text-weak',
               )}
             >
               {t === 'deposit' ? 'Deposit' : 'Withdraw'}
@@ -54,7 +64,9 @@ export function DepositCard({ vault: v, initialAmount, showVaultLink = true }: P
           </div>
         )}
 
-        {tab === 'deposit' ? <DepositForm key={v.id} vault={v} initialAmount={initialAmount} /> : <WithdrawForm key={v.id} vault={v} />}
+        <div key={`${v.id}-${tab}`} className="animate-[vault-tab-in_200ms_ease-out]">
+          {tab === 'deposit' ? <DepositForm vault={v} initialAmount={initialAmount} /> : <WithdrawForm vault={v} />}
+        </div>
       </div>
     </div>
   );
@@ -87,7 +99,7 @@ function AmountBox({
   balance?: number; connected: boolean; usd?: number; autoFocus?: boolean; error?: boolean;
 }) {
   return (
-    <div className={cx('grid gap-1.5 rounded border bg-fill-recessed pb-2.5 pl-3.5 pr-3 pt-3', error ? 'border-stroke-error/60' : 'border-stroke-strong focus-within:border-stroke-focused')}>
+    <div className={cx('well grid gap-1.5 pb-2.5 pl-3.5 pr-3.5 pt-3 ring-inset', error ? 'ring-1 ring-stroke-error/60' : 'focus-within:ring-1 focus-within:ring-stroke-focused')}>
       <div className="flex items-center gap-2.5">
         <input
           type="number"
@@ -100,7 +112,7 @@ function AmountBox({
           placeholder="0"
           className="w-0 min-w-0 flex-1 bg-transparent display text-[30px] leading-[1.15] num text-strong placeholder:text-weaker outline-none focus-visible:outline-none"
         />
-        <span className="inline-flex h-8 items-center gap-2 whitespace-nowrap rounded border border-stroke-strong pl-[5px] pr-2.5 text-sm font-medium">
+        <span className="inline-flex items-center gap-2 whitespace-nowrap text-sm font-medium">
           {tokenIcon}
           {tokenLabel}
         </span>
@@ -121,23 +133,30 @@ function AmountBox({
 /** The tokens a vault takes and pays out: the dollar token, each side of the pair, then both sides together. */
 function useTokenOptions(v: Vault) {
   return useMemo(() => {
-    const singles = Array.from(new Set([STABLE, v.token0, v.token1])).map((t) => ({ id: t, label: t, icon: <TokenIcon symbol={t} size={22} /> }));
-    return [...singles, { id: DUAL, label: `${v.token0} + ${v.token1}`, icon: <TokenPair a={v.token0} b={v.token1} size={22} /> }];
+    const singles = Array.from(new Set([STABLE, v.token0, v.token1])).map((t) => ({ id: t, label: t, name: t, icon: <TokenIcon symbol={t} size={18} /> }));
+    return [...singles, { id: DUAL, label: 'Both', name: `${v.token0} + ${v.token1}`, icon: <TokenPair a={v.token0} b={v.token1} size={18} /> }];
   }, [v]);
 }
 
-/** Visible choice of what to pay with or receive — single tokens or both, each with its logo. */
-function TokenChoice({ options, value, onChange }: { options: Array<{ id: string; label: string; icon: React.ReactNode }>; value: string; onChange: (id: string) => void }) {
+/**
+ * Visible choice of what to pay with or receive — single tokens or both, each with its logo.
+ * One groove across the card with equal columns, so three or four options always share a row.
+ * The options sit in the recess; the chosen one is raised out of it as a glass key.
+ */
+function TokenChoice({ options, value, onChange }: { options: Array<{ id: string; label: string; name: string; icon: React.ReactNode }>; value: string; onChange: (id: string) => void }) {
+  const track = useRef<HTMLDivElement>(null);
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div ref={track} className="well groove grid w-full" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+      <SlidingKey track={track} chosen='[aria-pressed="true"]' tone="glass" />
       {options.map((o) => (
         <button
           key={o.id}
           onClick={() => onChange(o.id)}
           aria-pressed={value === o.id}
+          title={o.name === o.label ? undefined : o.name}
           className={cx(
-            'inline-flex h-9 items-center gap-2 rounded border pl-[5px] pr-[11px] text-sm font-medium transition-colors',
-            value === o.id ? 'border-stroke-selected bg-fill-selected text-strong' : 'border-stroke-strong text-weak hover:border-stroke-stronger',
+            'inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap text-sm font-medium transition-colors duration-300 ease-dusk',
+            value === o.id ? 'text-strong' : 'text-weak hover:text-strong',
           )}
         >
           {o.icon}

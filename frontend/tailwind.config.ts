@@ -48,6 +48,8 @@ export default {
       boxShadow: {
         pop: '0 20px 50px rgb(var(--color-black) / 0.5), 0 0 0 1px rgb(var(--color-stroke-strong))',
         sheet: '-30px 0 80px rgb(var(--color-black) / 0.5)',
+        // A recess cut into a surface: shade under the top edge, and the bottom rim catching the light.
+        well: 'inset 0 1px 2px rgb(var(--color-black) / 0.55), inset 0 3px 6px rgb(var(--color-black) / 0.3), 0 1px 0 rgb(var(--color-strong) / 0.08)',
       },
       transitionTimingFunction: { dusk: 'cubic-bezier(0.65, 0, 0.35, 1)' },
       keyframes: {

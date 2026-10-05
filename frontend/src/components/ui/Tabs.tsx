@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { cx } from '@/lib/format';
+import { SlidingKey } from './SlidingKey';
 
 interface Props<T extends string> {
   value: T;
@@ -8,10 +10,16 @@ interface Props<T extends string> {
   className?: string;
 }
 
-/** Segmented control — used for Deposit/Withdraw, 30D/7D, asset chips. */
+/**
+ * Segmented control — used for Deposit/Withdraw, 30D/7D, asset chips.
+ * A glass track with one lit key on it: the key is a single element that slides to the chosen segment.
+ */
 export function Segmented<T extends string>({ value, onChange, options, size = 'md', className }: Props<T>) {
+  const track = useRef<HTMLDivElement>(null);
+
   return (
-    <div className={cx('inline-flex rounded-lg border border-stroke-weak bg-background-elevated p-[3px]', className)} role="tablist">
+    <div ref={track} className={cx('seg inline-flex', className)} role="tablist">
+      <SlidingKey track={track} chosen='[aria-selected="true"]' />
       {options.map((o) => (
         <button
           key={o.value}
@@ -20,9 +28,9 @@ export function Segmented<T extends string>({ value, onChange, options, size = '
           disabled={o.disabled}
           onClick={() => onChange(o.value)}
           className={cx(
-            'rounded-sm transition-colors whitespace-nowrap disabled:opacity-40',
+            'transition-colors duration-300 ease-dusk whitespace-nowrap disabled:opacity-40',
             size === 'sm' ? 'h-7 px-3 text-xs' : 'h-8 px-3 text-sm',
-            value === o.value ? 'bg-fill-primary text-inverse-strong' : 'text-weak hover:text-strong',
+            value === o.value ? 'text-inverse-strong' : 'text-weak hover:text-strong',
           )}
         >
           {o.label}

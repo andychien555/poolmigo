@@ -45,9 +45,9 @@ function ButtonSection() {
         </div>
       </SubSection>
 
-      <SubSection title="Sizes" note="Heights are read off the button. md is the default; sm is for the header and for rows.">
+      <SubSection title="Sizes" note="Heights are read off the button. md is the default; sm is for the header and for rows; xs sits inside a panel header.">
         <Specimen align="end" className="gap-x-10">
-          {(['sm', 'md', 'lg'] as const).map((s) => <SizeSample key={s} size={s} />)}
+          {(['xs', 'sm', 'md', 'lg'] as const).map((s) => <SizeSample key={s} size={s} />)}
         </Specimen>
       </SubSection>
 
@@ -81,7 +81,7 @@ function ButtonSection() {
         <PropsTable
           rows={[
             { name: 'variant', type: "'primary' | 'accent' | 'secondary' | 'ghost' | 'danger'", def: "'primary'", note: 'Which of the five.' },
-            { name: 'size', type: "'sm' | 'md' | 'lg'", def: "'md'", note: 'Height and text size.' },
+            { name: 'size', type: "'xs' | 'sm' | 'md' | 'lg'", def: "'md'", note: 'Height and text size.' },
             { name: 'loading', type: 'boolean', note: 'Shows the spinner and disables the button.' },
             { name: 'block', type: 'boolean', note: 'Fills the width of its container.' },
             { name: '…rest', type: 'ButtonHTMLAttributes', note: 'Passed to the button: onClick, disabled, type, aria-*.' },
@@ -92,7 +92,7 @@ function ButtonSection() {
   );
 }
 
-function SizeSample({ size }: { size: 'sm' | 'md' | 'lg' }) {
+function SizeSample({ size }: { size: 'xs' | 'sm' | 'md' | 'lg' }) {
   const [ref, [height]] = useComputed<HTMLDivElement>(['height']);
   return (
     <div className="grid justify-items-start gap-2.5">

@@ -37,7 +37,7 @@ export function WalletButton() {
 
   if (!connected) {
     return (
-      <Button size="sm" onClick={connectWallet} loading={isPending}>
+      <Button size="sm" className="sm:!px-4" onClick={connectWallet} loading={isPending}>
         {isPending ? 'Connecting' : 'Connect wallet'}
       </Button>
     );
@@ -47,17 +47,24 @@ export function WalletButton() {
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(!open)}
-        className={cx(
-          'h-9 px-3 rounded border bg-transparent font-mono text-xs text-strong inline-flex items-center gap-2.5',
-          wrongChain ? 'border-stroke-warning/60 hover:border-stroke-warning' : 'border-stroke-strong hover:border-stroke-stronger',
-        )}
-      >
-        <span className={cx('h-2 w-2', address ? 'bg-success' : 'bg-weaker')} />
-        {shortAddress(shown)}
-        {wrongChain && <span className="text-warning">!</span>}
-      </button>
+      <Button variant="secondary" size="sm" onClick={() => setOpen(!open)} className={cx('sm:!px-4', wrongChain && 'btn-glass-warning')}>
+        <span className="flex items-center gap-2.5 font-mono text-xs font-normal">
+          {/* The wallet mark takes the colour the status dot had: green on a real connection, grey on the demo wallet. */}
+          <svg
+            viewBox="0 0 16 16"
+            className={cx('h-4 w-4 shrink-0', address ? 'text-success' : 'text-weaker')}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            aria-hidden
+          >
+            <path d="M1.75 5.75h12.5v7.5H1.75zM1.75 5.75v-3h10v3" />
+            <path d="M10 8.5h2v2h-2z" fill="currentColor" stroke="none" />
+          </svg>
+          {shortAddress(shown)}
+          {wrongChain && <span className="text-warning">!</span>}
+        </span>
+      </Button>
       {open && (
         <div className="absolute right-0 top-full mt-2 w-72 bg-background-popover border border-stroke-strong rounded-md shadow-pop p-3 animate-fade-in z-40">
           <div className="text-2xs text-weaker mb-2 num break-all">{shown}</div>

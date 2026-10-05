@@ -7,6 +7,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { SUPPORTED_CHAINS, chainShortLabel, hasDeployment, isLocalChain } from '@/chain/chains';
 import { useSwitchToChain, useTargetChain } from '@/chain/useTargetChain';
+import { Button } from '@/components/ui/Button';
+import { ChainLogo } from '@/components/ui/ChainLogo';
 import { Spinner } from '@/components/ui/Spinner';
 import { cx } from '@/lib/format';
 
@@ -26,32 +28,43 @@ export function ChainSelector() {
   }, [open]);
 
   const warn = isWrongChain || !deployed;
+  // The registry does not say whose chain it is, so the mark goes by name. Other chains show the status dot alone.
+  const robinhood = /robinhood/i.test(chain.name);
 
   return (
     <div className="relative" ref={ref}>
-      <button
+      <Button
         type="button"
+        variant="secondary"
+        size="sm"
         onClick={() => setOpen(!open)}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`Network: ${chain.name}`}
         title={isWrongChain ? 'Your wallet is on another network' : !deployed ? 'No Poolmigo deployment on this network' : chain.name}
-        className={cx(
-          'h-9 px-2.5 rounded-md border bg-background-elevated text-xs text-strong inline-flex items-center gap-2 max-w-[12rem]',
-          warn ? 'border-stroke-warning/60 hover:border-stroke-warning' : 'border-stroke-weak hover:border-stroke-strong',
-        )}
+        className={cx('sm:!px-4', warn && 'btn-glass-warning')}
       >
-        {switching ? (
-          <Spinner className="h-3 w-3 text-weaker" />
-        ) : (
-          <span className={cx('h-2 w-2 rounded-full shrink-0', warn ? 'bg-warning' : 'bg-success')} aria-hidden />
-        )}
-        <span className="truncate">{chainShortLabel(chain.id)}</span>
-        {isLocalChain(chain.id) && <span className="text-2xs text-weaker">local</span>}
-        <svg viewBox="0 0 12 12" className="h-3 w-3 text-weaker shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-          <path d="M3 4.5l3 3 3-3" />
-        </svg>
-      </button>
+        {/* flex, not inline-flex, here and on the mark: an inline box sits on the label's text line and ends up above centre */}
+        <span className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+          {switching ? (
+            <Spinner className="h-3 w-3 text-weaker" />
+          ) : robinhood ? (
+            <span className="relative flex shrink-0">
+              <ChainLogo chain="robinhood" size={18} />
+              {warn && <span className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-warning ring-[1.5px] ring-background-base" aria-hidden />}
+            </span>
+          ) : (
+            <span className={cx('h-2 w-2 rounded-full shrink-0', warn ? 'bg-warning' : 'bg-success')} aria-hidden />
+          )}
+          <span className="inline-flex min-w-0 items-baseline gap-1.5">
+            <span className="max-w-[9rem] truncate">{chainShortLabel(chain.id)}</span>
+            {isLocalChain(chain.id) && <span className="text-2xs font-normal text-weaker">local</span>}
+          </span>
+          <svg viewBox="0 0 12 12" className="h-3 w-3 text-weaker shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+            <path d="M3 4.5l3 3 3-3" />
+          </svg>
+        </span>
+      </Button>
       {open && (
         <ul
           role="listbox"

@@ -110,6 +110,7 @@ export const SEMANTIC_GROUPS: SemanticGroup[] = [
       { name: 'fill-track', ref: 'sand-120', use: 'Switch off, progress and slider tracks' },
       { name: 'fill-primary', ref: 'sand-1000', use: 'Primary action, selected segment, switch on' },
       { name: 'fill-primary-hover', ref: 'sand-bright', use: 'Primary action, hovered' },
+      { name: 'fill-primary-shade', ref: 'sand-700', use: 'The body of a primary key, under its highlight' },
       { name: 'fill-accent', ref: 'sun-1000', use: 'Reward action, reward switch on' },
       { name: 'fill-accent-hover', ref: 'sun-bright', use: 'Reward action, hovered' },
       { name: 'fill-inverse', ref: 'sand-1000', use: 'Tooltips' },
