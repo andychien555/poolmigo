@@ -3,7 +3,7 @@ import { Tooltip } from './Tooltip';
 
 /**
  * Provenance tags. Every number on screen is one of two things and the UI has to say which:
- *  - <DemoBadge/>  — invented figure from src/demo (no chain can produce it: APR, USD, PMG, locks)
+ *  - <DemoBadge/>  — invented figure from src/demo (no chain can produce it: APR, USD, PMG)
  *  - <LiveBadge/>  — read from the deployed vault over RPC
  * See notes/frontend/INTEGRATION.md (internal) for the full mapping.
  */

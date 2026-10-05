@@ -30,15 +30,7 @@ export interface Position {
   depositedAt: number;
 }
 
-export interface Lock {
-  id: string;
-  amount: number; // PMG
-  lockedAt: number;
-  unlockAt: number;
-  redistributionEarned: number; // PMG
-}
-
-export type TxKind = 'deposit' | 'withdraw' | 'stake' | 'claim' | 'lock' | 'unlock';
+export type TxKind = 'deposit' | 'withdraw' | 'stake';
 
 export interface TxRecord {
   id: string;
@@ -52,7 +44,6 @@ export interface UserState {
   positions: Record<string, Position>;
   pendingTide: number;
   pendingUpdatedAt: number;
-  locks: Lock[];
   /** Deposits/withdrawals since load shift vault TVL by this much (USD). */
   tvlDelta: Record<string, number>;
   degenAcknowledged: boolean;

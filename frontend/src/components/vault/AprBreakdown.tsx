@@ -26,7 +26,7 @@ export function AprBreakdown({ vault, compact, className }: Props) {
       <div className="flex items-center justify-between py-1">
         <span className="text-weak inline-flex items-center gap-1.5">
           PMG rewards APR
-          <InfoDot tip="Paid in PMG. Claim 50% instantly or lock 90 days for the full amount." />
+          <InfoDot tip="Paid in PMG." />
         </span>
         <span className="font-medium text-accent">{fmtPct(b.tideApr)}</span>
       </div>

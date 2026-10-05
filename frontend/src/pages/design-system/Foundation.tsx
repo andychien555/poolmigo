@@ -556,17 +556,6 @@ function Marks() {
         <Specimen className="!block"><div className="ruler" /></Specimen>
       </SubSection>
 
-      <SubSection title="Hatch" note={<>Class <Code>hatch</Code>: the part that is given up. In the claim sheet it is the half forfeited by claiming early.</>}>
-        <Specimen className="!block">
-          <div className="grid max-w-[420px] gap-2">
-            <div className="flex h-2">
-              <i className="block h-full w-1/2 bg-strong" />
-              <i className="hatch block h-full flex-1" />
-            </div>
-            <div className="flex justify-between text-xs"><span className="text-strong">Received now</span><span className="text-weaker">Forfeited</span></div>
-          </div>
-        </Specimen>
-      </SubSection>
     </Section>
   );
 }
@@ -583,7 +572,7 @@ function Layering() {
       <div className="divide-y divide-stroke-weak border-y border-stroke-weak text-sm">
         {[
           ['z-[70]', 'Modal', 'A dialog and its scrim'],
-          ['z-50', 'Toast, sheets', 'Toasts; the deposit and claim sheets'],
+          ['z-50', 'Toast, sheets', 'Toasts; the deposit sheet'],
           ['z-40', 'Popover', 'Menus, popovers, tooltips'],
           ['z-30', 'Header', 'The sticky header'],
           ['z-20', 'Badge', 'The chain mark on a token pair'],

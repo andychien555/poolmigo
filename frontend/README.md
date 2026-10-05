@@ -8,7 +8,7 @@ Two layers, kept visibly apart:
   `shared/deployment.local.json`: basket totals, idle vs in-position split, adapters, migoLP balance,
   in-kind deposit and redeem. Every number is a chain read; nothing there is invented.
 - **Everything else — the prototype.** The product shell with demo figures (APR, USD, PMG rewards,
-  locks, buybacks), all isolated in `src/demo/` and tagged with a **Demo data** badge in the UI.
+  buybacks), all isolated in `src/demo/` and tagged with a **Demo data** badge in the UI.
 
 This package uses **pnpm** (`packageManager` is pinned in `package.json`); npm is not used anywhere.
 
@@ -198,7 +198,6 @@ demand, so it costs a visitor who connects with a browser extension nothing.
 | Reset demo state | Click the **Poolmigo** wordmark 5 times within 2.5 s |
 | Force US market status | `?market=closed` / `?market=open` / `?market=auto` (persists until changed) |
 | Open the deposit modal on Explore | `/?deposit=tsla-usdc` |
-| Open the claim modal on Explore | `/?claim=1` |
 | Force a theme | `?theme=dark` / `?theme=light` (persists; header toggle does the same) |
 
 State is persisted to `localStorage` under `poolmigo-demo-v1`.
@@ -215,7 +214,7 @@ State is persisted to `localStorage` under `poolmigo-demo-v1`.
 | `src/components/ui/DataBadge.tsx` | `Demo data` / `Live on-chain` provenance badges |
 | **`src/demo/`** | **Every invented number**: constants, math, seeded series, vault/protocol/user data |
 | `src/lib/market.ts` | US market clock (America/New_York, weekdays 09:30–16:00 ET, holidays ignored) |
-| `src/store/useStore.ts` | zustand store (persisted) with deposit / withdraw / stake / claim / lock / unlock |
+| `src/store/useStore.ts` | zustand store (persisted) with deposit / withdraw / stake |
 | `src/store/selectors.ts` | Derived hooks shared by Explore, Vault and Rewards |
 | `src/components/deposit/DepositCard.tsx` | The prototype deposit / withdraw card (demo data) |
 | `src/components/vault/PriceRange.tsx` | The range as an instrument: two stones on the bounds, the sun at the price, a graduated price axis (SVG) |

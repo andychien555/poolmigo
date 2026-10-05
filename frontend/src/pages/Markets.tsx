@@ -5,8 +5,7 @@ import { VAULTS, VAULT_BY_ID, vaultName } from '@/demo/data/vaults';
 import { CHAINS, type ChainId } from '@/demo/data/chains';
 import { ChainFilter } from '@/components/ui/ChainFilter';
 import * as m from '@/demo/math';
-import { cx, fmtPct, fmtToken, fmtUsd } from '@/lib/format';
-import { CONSTANTS } from '@/demo/constants';
+import { cx, fmtPct, fmtUsd } from '@/lib/format';
 import type { MarketStatus } from '@/lib/market';
 import type { Vault } from '@/lib/types';
 import { useStore } from '@/store/useStore';
@@ -17,7 +16,6 @@ import { BoostedApr } from '@/components/ui/BoostedApr';
 import { Button } from '@/components/ui/Button';
 import { AprBreakdown } from '@/components/vault/AprBreakdown';
 import { DepositModal } from '@/components/deposit/DepositModal';
-import { ClaimModal } from '@/components/rewards/ClaimModal';
 import { Welcome } from '@/components/layout/Welcome';
 import { SkyScene } from '@/components/brand/SkyScene';
 import { RangeMeter } from '@/components/vault/RangeMeter';
@@ -32,7 +30,6 @@ export function Markets() {
   const toggleSort = (key: 'tvl' | 'apr') => setSort((s) => (s.key === key ? { key, dir: s.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' }));
   const [params, setParams] = useSearchParams();
   const depositVault = VAULT_BY_ID[params.get('deposit') ?? ''] ?? null;
-  const claimOpen = params.get('claim') === '1';
   const rows = useMemo(
     () =>
       VAULTS.filter((v) => chain === 'all' || v.chain === chain)
@@ -73,7 +70,6 @@ export function Markets() {
           {showMine ? (
             <StatRow cols={2} packed rule={false}>
               <Stat label="Fees earned" value={`+${fmtUsd(totalFees, { compact: false, cents: true })}`} tone="success" />
-              <Stat label="PMG rewards" value={`${fmtToken(d.pendingTide, 2)} PMG`} tone="accent" sub={<>≈ {fmtUsd(d.pendingTide * CONSTANTS.TIDE_PRICE, { compact: false, cents: true })}</>} />
             </StatRow>
           ) : (
             <StatRow cols={2} packed rule={false}>
@@ -87,10 +83,7 @@ export function Markets() {
       {/* The plaza: every vault as an instrument */}
       <div className="wrap pt-[52px] pb-[120px]">
         <div className="mb-[22px] flex flex-wrap items-end justify-between gap-x-7 gap-y-[18px]">
-          <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-2">
-            <h1 className="title text-[clamp(32px,3.6vw,46px)]">Vaults</h1>
-            <span className="text-sm text-weaker num">{rows.length} of {VAULTS.length} vaults</span>
-          </div>
+          <h1 className="title text-[clamp(32px,3.6vw,46px)]">Vaults</h1>
           <div className="flex w-full flex-wrap items-center gap-x-[22px] gap-y-3.5 sm:w-auto">
             <ChainFilter value={chain} onChange={setChain} />
             <label className="flex h-10 w-full items-center gap-2 rounded border border-stroke-strong px-3 text-weaker focus-within:border-stroke-strongest sm:w-[220px]">
@@ -131,7 +124,6 @@ export function Markets() {
         </ul>
       </div>
       <DepositModal vault={depositVault} onClose={() => setParams({})} />
-      <ClaimModal open={claimOpen} onClose={() => setParams({})} />
     </div>
   );
 }

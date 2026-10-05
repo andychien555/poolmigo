@@ -130,8 +130,8 @@ Depth is tonal: a surface gets lighter as it comes forward.
 | `bg-fill-primary` | `sand-1000` | Primary action, selected segment, switch on |
 | `bg-fill-primary-hover` | `sand-bright` | Primary action, hovered |
 | `bg-fill-primary-shade` | `sand-700` | The body of a primary key, under its highlight |
-| `bg-fill-accent` | `sun-1000` | Reward action, reward switch on |
-| `bg-fill-accent-hover` | `sun-bright` | Reward action, hovered |
+| `bg-fill-accent` | `sun-1000` | The opening call to action |
+| `bg-fill-accent-hover` | `sun-bright` | The opening call to action, hovered |
 | `bg-fill-inverse` | `sand-1000` | Tooltips |
 | `bg-fill-success` | `green-1000` | Success tint (use `/10`) |
 | `bg-fill-error` | `red-1000` | Error tint (use `/10`) |
@@ -159,7 +159,7 @@ separate tokens because they are separate roles; pick by role, not by what looks
 | `border-stroke-focused` | `sun-1000` | Keyboard focus ring, the focused amount field |
 | `border-stroke-primary` | `sand-1000` | Edge of a primary fill |
 | `border-stroke-primary-hover` | `sand-bright` | Edge of a primary fill, hovered |
-| `border-stroke-accent` | `sun-1000` | Edge of an accent fill, the chosen reward option |
+| `border-stroke-accent` | `sun-1000` | Edge of an accent fill |
 | `border-stroke-accent-hover` | `sun-bright` | Edge of an accent fill, hovered |
 | `border-stroke-success` | `green-1000` | Success edge (use `/40`) |
 | `border-stroke-error` | `red-1000` | Error edge (use `/40`), invalid field |
@@ -208,7 +208,7 @@ the files in a public repository. Do not commit them.
 | `wordmark` | The name in the header |
 | `wrap` | The page container (see [Layout](#layout)) |
 | `ruler` | An engraved scale that readings hang from |
-| `hatch` | Diagonal hatching: the part that is given up |
+| `hatch` | Diagonal hatching. Only the gutters in the gallery's container diagram use it |
 
 ### Sizes
 
@@ -292,7 +292,7 @@ Not named yet; these are the values in use. A new layer takes its place in this 
 | Value | Layer |
 |---|---|
 | `z-[70]` | Modal and its scrim |
-| `z-50` | Toasts; the deposit and claim sheets |
+| `z-50` | Toasts; the deposit sheet |
 | `z-40` | Menus, popovers, tooltips |
 | `z-30` | The sticky header |
 | `z-20` | The chain mark on a token pair |
@@ -349,7 +349,7 @@ colour. It changes at once, partway through the body's transition (`--label-dela
 | Variant | Material | Label | Hover | Disabled | Use |
 |---|---|---|---|---|---|
 | `primary` | `btn-key btn-key-primary` | `text-inverse-strong` | The light beneath spreads | Body `fill-disabled`, a `stroke-strong` edge, no light; label `text-disabled` | The standard action |
-| `accent` | `btn-key btn-key-accent` | `text-on-accent` | The light beneath spreads | As primary | Reward actions, the opening call to action. One in view |
+| `accent` | `btn-key btn-key-accent` | `text-on-accent` | The light beneath spreads | As primary | The opening call to action. One in view |
 | `secondary` | `btn-glass` | `text-strong` | Tint 5% → 10%, edge brighter | Transparent, a `stroke-strong` edge; label `text-disabled` | The other action beside a primary one; the header's network and wallet buttons |
 | `ghost` | None | `text-weak` | `bg-fill-hover text-strong` | `text-disabled` | Stepping back inside a panel or dialog |
 | `danger` | `btn-glass btn-glass-danger` | `text-error` | As secondary, in `error` | As secondary, but the label stays `text-error` | Destructive, irreversible |

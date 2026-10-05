@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { VAULT_BY_ID, TIER_CAPACITY, vaultName } from '@/demo/data/vaults';
 import { fmtDate, fmtPct, fmtToken, fmtUsd, cx } from '@/lib/format';
 import * as m from '@/demo/math';
@@ -12,12 +12,8 @@ import { AprBreakdown } from '@/components/vault/AprBreakdown';
 import { NavChart } from '@/components/vault/NavChart';
 import { DepositCard } from '@/components/deposit/DepositCard';
 import type { Vault } from '@/lib/types';
-import { CONSTANTS } from '@/demo/constants';
-import { useUserDerived } from '@/store/selectors';
-import { Button } from '@/components/ui/Button';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { BoostedApr } from '@/components/ui/BoostedApr';
-import { ClaimModal } from '@/components/rewards/ClaimModal';
 
 export function VaultDetail() {
   const { id = '' } = useParams();
@@ -35,7 +31,6 @@ export function VaultDetail() {
 
 function VaultView({ vaultId, market }: { vaultId: string; market: 'open' | 'closed' }) {
   const v = VAULT_BY_ID[vaultId];
-  const [params, setParams] = useSearchParams();
   const { tvl, breakdown: b } = useVaultApr(v);
   const cap = TIER_CAPACITY[v.tier];
   const [aprHover, setAprHover] = useState(false);
@@ -70,22 +65,20 @@ function VaultView({ vaultId, market }: { vaultId: string; market: 'open' | 'clo
         </header>
 
         <aside className="grid gap-3.5 lg:sticky lg:top-20 lg:col-start-2 lg:row-span-3 lg:row-start-1">
-          <YourPosition vault={v} tvl={tvl} onClaim={() => setParams({ claim: '1' })} />
+          <YourPosition vault={v} tvl={tvl} />
           <DepositCard key={v.id} vault={v} showVaultLink={false} />
         </aside>
 
         <PriceRange vault={v} market={market} className="min-w-0 lg:col-start-1" />
         <NavChart vault={v} className="min-w-0 lg:col-start-1" />
       </div>
-      <ClaimModal open={params.get('claim') === '1'} onClose={() => setParams({})} />
     </div>
   );
 }
 
-function YourPosition({ vault: v, tvl, onClaim }: { vault: Vault; tvl: number; onClaim: () => void }) {
+function YourPosition({ vault: v, tvl }: { vault: Vault; tvl: number }) {
   const connected = useStore((s) => s.connected);
   const p = useStore((s) => s.user.positions[v.id]);
-  const d = useUserDerived();
   if (!connected || !p) return null;
   const value = m.positionValue(p, v);
   const fees = m.feesEarned(value, v.feeApr7d, p.depositedAt, Date.now());
@@ -99,11 +92,7 @@ function YourPosition({ vault: v, tvl, onClaim }: { vault: Vault; tvl: number; o
       <dl className="num text-sm">
         <Row label="Fees earned" value={`+${fmtUsd(fees, { compact: false, cents: true })}`} tone="text-success" tip="Fees compound into your migoLP automatically. Nothing to claim." />
         <Row label="Your APR" value={fmtPct(b.totalApr)} tip={`${fmtPct(b.feeApr)} from fees + ${fmtPct(b.tideApr)} in PMG`} />
-        <Row label="PMG rewards" value={`${fmtToken(d.pendingTide, 1)} PMG`} tone="text-accent" tip={`≈ ${fmtUsd(d.pendingTide * CONSTANTS.TIDE_PRICE, { compact: false, cents: true })} across all your vaults`} />
       </dl>
-      <Button block variant="accent" onClick={onClaim} disabled={d.pendingTide < 0.005}>
-        {d.pendingTide < 0.005 ? 'No rewards to claim yet' : `Claim ${fmtToken(d.pendingTide, 1)} PMG`}
-      </Button>
     </section>
   );
 }
