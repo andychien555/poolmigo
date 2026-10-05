@@ -92,7 +92,7 @@ export function Analytics() {
             />
           ))}
         </div>
-        <p className="text-2xs text-weaker">Revenue is the protocol's 10% share of fees plus zap swap fees. Buybacks are funded from revenue and paid to lockers.</p>
+        <p className="text-2xs text-weaker">Revenue is the protocol's 10% share of fees plus zap swap fees. Buybacks are funded from revenue.</p>
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -101,10 +101,9 @@ export function Analytics() {
         ))}
       </div>
 
-      <StatRow>
+      <StatRow cols={3}>
         <Stat label="Emissions this week" value={fmtUsd(last.emissionsUsd, { compact: false })} tone="accent" />
         <Stat label="Buyback coverage" value={fmtPct(coverage)} tone={coverage >= 0.6 ? 'default' : 'warning'} />
-        <Stat label="Lock rate" value={fmtPct(PROTOCOL.lockRate, 0)} />
         <Stat label="Market cap" value={fmtUsd(m.circulatingMarketCap(PROTOCOL.circulatingTide))} />
       </StatRow>
     </div>

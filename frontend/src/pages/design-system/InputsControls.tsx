@@ -67,7 +67,6 @@ function AmountInputSection() {
 function ToggleSection() {
   const [a, setA] = useState(true);
   const [b, setB] = useState(false);
-  const [c, setC] = useState(true);
   return (
     <Section
       id="toggle"
@@ -79,7 +78,6 @@ function ToggleSection() {
       <Specimen code='<Toggle checked={on} onChange={setOn} label="Auto-compound" />'>
         <label className="flex items-center gap-3 text-sm text-weak"><Toggle checked={a} onChange={setA} label="Auto-compound" /> Auto-compound</label>
         <label className="flex items-center gap-3 text-sm text-weak"><Toggle checked={b} onChange={setB} label="Show closed vaults" /> Show closed vaults</label>
-        <label className="flex items-center gap-3 text-sm text-weak"><Toggle checked={c} onChange={setC} tone="accent" label="Lock rewards" /> Lock rewards <Code>tone="accent"</Code></label>
       </Specimen>
       <SubSection title="Props">
         <PropsTable
@@ -87,7 +85,7 @@ function ToggleSection() {
             { name: 'checked', type: 'boolean', note: 'On or off.' },
             { name: 'onChange', type: '(v: boolean) => void', note: 'Called with the new value.' },
             { name: 'label', type: 'string', note: 'The accessible name. Always pass it; the visible text beside the switch is not linked to it.' },
-            { name: 'tone', type: "'primary' | 'accent'", def: "'primary'", note: 'Accent only for a setting about rewards.' },
+            { name: 'tone', type: "'primary' | 'accent'", def: "'primary'", note: 'No setting uses accent today.' },
           ]}
         />
       </SubSection>

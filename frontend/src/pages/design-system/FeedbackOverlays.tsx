@@ -37,7 +37,7 @@ function TooltipSection() {
       <SubSection title="Info dot" note="A small mark beside a label that has more to say.">
         <Specimen code='<InfoDot tip="…" />'>
           <span className="flex items-center gap-1.5 text-sm text-weak">Trading fees <InfoDot tip="The 7-day average, annualised." /></span>
-          <span className="flex items-center gap-1.5 text-sm text-weak">PMG rewards <InfoDot wide tip="Rewards are paid in PMG on top of trading fees. They can be claimed now or locked." /></span>
+          <span className="flex items-center gap-1.5 text-sm text-weak">PMG rewards <InfoDot wide tip="Rewards are paid in PMG on top of trading fees." /></span>
         </Specimen>
       </SubSection>
       <SubSection title="Props">
@@ -56,7 +56,6 @@ function TooltipSection() {
 
 const TOASTS: Array<{ label: string; toast: Omit<Toast, 'id'> }> = [
   { label: 'success', toast: { title: 'Deposit confirmed', detail: '1,250 USDG into ETH / USDG', tone: 'success' } },
-  { label: 'accent', toast: { title: 'Claim confirmed', detail: '18.3 PMG sent to your wallet', tone: 'accent' } },
   { label: 'warning', toast: { title: 'Demo reset', detail: 'Wallet disconnected. Positions restored to defaults.', tone: 'warning' } },
   { label: 'default', toast: { title: 'Address copied' } },
 ];
@@ -82,7 +81,7 @@ function ToastSection() {
           rows={[
             { name: 'title', type: 'string', note: 'What happened, as a fact: "Deposit confirmed".' },
             { name: 'detail', type: 'string', note: 'The amount and where it went.' },
-            { name: 'tone', type: "'default' | 'accent' | 'success' | 'warning'", def: "'default'", note: 'Accent for rewards. There is no error tone: a failure stays beside the action that failed.' },
+            { name: 'tone', type: "'default' | 'accent' | 'success' | 'warning'", def: "'default'", note: 'No toast uses accent today. There is no error tone: a failure stays beside the action that failed.' },
           ]}
         />
       </SubSection>

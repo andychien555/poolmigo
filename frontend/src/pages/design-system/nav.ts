@@ -28,7 +28,7 @@ export const TABS: TabConfig[] = [
       { id: 'shape', label: 'Shape', keywords: ['radius', 'rounded', 'corner', 'circle'] },
       { id: 'spacing', label: 'Spacing & layout', keywords: ['gutter', 'container', 'wrap', 'breakpoint', 'grid'] },
       { id: 'motion', label: 'Motion', keywords: ['animation', 'easing', 'duration', 'transition'] },
-      { id: 'marks', label: 'Marks & textures', keywords: ['logo', 'ruler', 'hatch', 'wordmark'] },
+      { id: 'marks', label: 'Marks & textures', keywords: ['logo', 'ruler', 'wordmark'] },
       { id: 'layering', label: 'Layering', keywords: ['z-index', 'stack'] },
       { id: 'focus', label: 'Focus', keywords: ['keyboard', 'outline', 'accessibility'] },
     ],
