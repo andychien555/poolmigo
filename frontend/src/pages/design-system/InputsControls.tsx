@@ -101,7 +101,7 @@ function SegmentedSection() {
       id="segmented"
       title="Segmented"
       source="src/components/ui/Tabs.tsx"
-      lede="A choice between a few views of the same thing: a time window, a way to pay. The chosen segment is filled sand; the rest are plain text."
+      lede="A choice between a few views of the same thing: a time window, a way to pay. The options sit in a groove; the chosen one is raised out of it as a glass key."
     >
       <Specimen code='<Segmented size="sm" value={win} onChange={setWin} options={[…]} />'>
         <div className="grid justify-items-start gap-2">
