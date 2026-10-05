@@ -4,6 +4,7 @@ import * as m from '@/demo/math';
 import type { MarketStatus } from '@/lib/market';
 import { fmtQuote, fmtRelativeDays } from '@/lib/format';
 import { useElementWidth } from '@/lib/useElementWidth';
+import { Button } from '@/components/ui/Button';
 
 interface Props {
   vault: Vault;
@@ -97,7 +98,8 @@ export function PriceRange({ vault: v, market, className }: Props) {
     }
   }
 
-  const sky = `${id}-sky`, glow = `${id}-glow`, bloom = `${id}-bloom`, sun = `${id}-sun`, stone = `${id}-stone`, lit = `${id}-lit`;
+  const sky = `${id}-sky`, glow = `${id}-glow`, bloom = `${id}-bloom`, sun = `${id}-sun`;
+  const face = `${id}-face`, side = `${id}-side`, warmL = `${id}-warm-l`, warmR = `${id}-warm-r`, foot = `${id}-foot`, grain = `${id}-grain`, plate = `${id}-plate`;
   const ground = `${id}-ground`, cast = `${id}-cast`, lane = `${id}-lane`, above = `${id}-above`;
   const label = { fontSize: 10, letterSpacing: '0.14em' } as const;
 
@@ -107,17 +109,20 @@ export function PriceRange({ vault: v, market, className }: Props) {
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-stroke-weak px-4 py-[11px] text-xs text-weaker">
           <h3 className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
             <b className="text-sm font-medium text-strong">Price range</b>
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="xs"
               onClick={() => setFlipped(!flipped)}
               aria-label={`Priced in ${quote} per ${base}. Switch to ${base} per ${quote}`}
-              className="inline-flex h-6 items-center gap-1.5 rounded border border-stroke-strong px-2 text-weak transition-colors hover:border-stroke-stronger hover:text-strong"
             >
-              {quote} per {base}
-              <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
-                <path d="M3 5.5h10m0 0L10.5 3M13 5.5 10.5 8M13 10.5H3m0 0L5.5 8M3 10.5 5.5 13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+              <span className="inline-flex items-center gap-1.5">
+                {quote} per {base}
+                <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
+                  <path d="M3 5.5h10m0 0L10.5 3M13 5.5 10.5 8M13 10.5H3m0 0L5.5 8M3 10.5 5.5 13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </Button>
           </h3>
           <span className="num">
             {g.defensive && <span className="text-warning">Widened while the US market is closed · </span>}
@@ -158,15 +163,47 @@ export function PriceRange({ vault: v, market, className }: Props) {
                 <stop offset=".5" stopColor="#ffd592" />
                 <stop offset="1" stopColor="#ff9a4a" />
               </radialGradient>
-              <linearGradient id={stone} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#f1e5d6" />
-                <stop offset=".55" stopColor="#cdb09c" />
-                <stop offset="1" stopColor="#9a7868" />
+              {/* the stone's face is in shade: the sun is behind it */}
+              <linearGradient id={face} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#dcc3b1" />
+                <stop offset=".5" stopColor="#b99889" />
+                <stop offset="1" stopColor="#845f58" />
               </linearGradient>
-              <linearGradient id={lit} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#fff0d4" />
-                <stop offset="1" stopColor="#ffb877" />
+              <linearGradient id={side} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#f7dcb8" />
+                <stop offset=".6" stopColor="#f0bc8a" />
+                <stop offset="1" stopColor="#e2955e" />
               </linearGradient>
+              {/* sunlight creeping round the lit edge onto the face, from the left or from the right */}
+              <linearGradient id={warmL} x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stopColor="#ffb877" stopOpacity=".34" />
+                <stop offset=".7" stopColor="#ffb877" stopOpacity="0" />
+              </linearGradient>
+              <linearGradient id={warmR} x1="1" y1="0" x2="0" y2="0">
+                <stop offset="0" stopColor="#ffb877" stopOpacity=".34" />
+                <stop offset=".7" stopColor="#ffb877" stopOpacity="0" />
+              </linearGradient>
+              <linearGradient id={foot} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#2a161a" stopOpacity="0" />
+                <stop offset="1" stopColor="#2a161a" stopOpacity=".38" />
+              </linearGradient>
+              {/* cut limestone: a fine grain, faint bedding courses lying across the block, and a few pits */}
+              <filter id={grain} x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
+                <feTurbulence type="fractalNoise" baseFrequency="1.15" numOctaves="2" seed="4" result="fineNoise" />
+                <feColorMatrix in="fineNoise" type="matrix" values="1.3 0 0 0 -.15  1.3 0 0 0 -.15  1.3 0 0 0 -.15  0 0 0 0 1" result="fine" />
+                <feTurbulence type="fractalNoise" baseFrequency="0.018 0.19" numOctaves="3" seed="9" result="bedNoise" />
+                <feColorMatrix in="bedNoise" type="matrix" values=".5 0 0 0 .25  .5 0 0 0 .25  .5 0 0 0 .25  0 0 0 0 1" result="bed" />
+                <feTurbulence type="fractalNoise" baseFrequency="0.42 0.3" numOctaves="2" seed="21" result="pitNoise" />
+                <feColorMatrix in="pitNoise" type="matrix" values="0 0 0 0 .2  0 0 0 0 .12  0 0 0 0 .12  0 4.05 0 0 -2.97" result="pits" />
+                <feBlend in="bed" in2="SourceGraphic" mode="soft-light" result="bedded" />
+                <feBlend in="fine" in2="bedded" mode="soft-light" result="grained" />
+                <feComposite in="pits" in2="grained" operator="over" result="pitted" />
+                <feComposite in="pitted" in2="SourceGraphic" operator="in" />
+              </filter>
+              <filter id={plate} x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
+                <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="2" />
+                <feColorMatrix type="matrix" values="1.4 0 0 0 -.2  1.4 0 0 0 -.2  1.4 0 0 0 -.2  0 0 0 0 1" />
+              </filter>
               <linearGradient id={ground} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" stopColor="#2a181c" />
                 <stop offset="1" stopColor="#150d10" />
@@ -200,13 +237,19 @@ export function PriceRange({ vault: v, market, className }: Props) {
             <rect x="0" y={HORIZON} width={W} height="1" className="fill-stroke-strong" />
             <rect x={X(lower)} y={HORIZON - 1} width={X(upper) - X(lower)} height="2" className="fill-accent" opacity={inRange ? 0.75 : 0.25} />
 
+            {/* a faint grain over the whole plate, under the stones and the figures, so they stay crisp */}
+            <rect x="0" y="0" width={W} height={HEIGHT} filter={`url(#${plate})`} opacity=".16" className="mix-blend-soft-light" />
+
             {/* the bounds: inner faces sit exactly on Lower and Upper */}
             {stones.map((st) => (
               <g key={st.name}>
-                <rect x={st.x} y={top} width={STONE_W} height={STONE_H} fill={`url(#${stone})`} />
-                <rect x={st.litLeft ? st.x : st.x + STONE_W - 3} y={top} width="3" height={STONE_H} fill={`url(#${lit})`} opacity=".85" />
-                <rect x={st.litLeft ? st.x + STONE_W - 4 : st.x} y={top} width="4" height={STONE_H} fill="#3a2226" opacity=".1" />
-                <rect x={st.x} y={top} width={STONE_W} height="1" fill="#fff8ea" opacity=".6" />
+                <g filter={`url(#${grain})`}>
+                  <rect x={st.x} y={top} width={STONE_W} height={STONE_H} fill={`url(#${face})`} />
+                  <rect x={st.x} y={top} width={STONE_W} height={STONE_H} fill={`url(#${st.litLeft ? warmL : warmR})`} />
+                  <rect x={st.litLeft ? st.x : st.x + STONE_W - 4} y={top} width="4" height={STONE_H} fill={`url(#${side})`} />
+                  <rect x={st.x} y={HORIZON - 26} width={STONE_W} height="26" fill={`url(#${foot})`} />
+                </g>
+                <rect x={st.x} y={top} width={STONE_W} height="1" fill="#fff3e0" opacity=".3" />
                 <text x={st.centre} y={top - 32} textAnchor="middle" className="fill-weaker" {...label}>{st.name}</text>
                 <text x={st.centre} y={top - 11} textAnchor="middle" fontSize="16" className="fill-strong num">{fmtQuote(st.value)}</text>
               </g>

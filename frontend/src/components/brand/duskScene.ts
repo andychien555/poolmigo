@@ -10,7 +10,7 @@
 import {
   ACESFilmicToneMapping, AdditiveBlending, BackSide, BoxGeometry, CanvasTexture, CircleGeometry, Color, CylinderGeometry,
   DirectionalLight, Fog, Group, HemisphereLight, InstancedMesh, MathUtils, Matrix4, Mesh, MeshBasicMaterial,
-  MeshStandardMaterial, PCFShadowMap, PerspectiveCamera, PlaneGeometry, Quaternion, SRGBColorSpace, Scene,
+  MeshStandardMaterial, PCFShadowMap, PerspectiveCamera, PlaneGeometry, Quaternion, LinearSRGBColorSpace, RepeatWrapping, SRGBColorSpace, Scene,
   ShaderMaterial, SphereGeometry, Sprite, SpriteMaterial, Vector3, WebGLRenderer,
 } from 'three';
 
@@ -44,6 +44,84 @@ function glowTexture(): CanvasTexture {
   const t = new CanvasTexture(c);
   t.colorSpace = SRGBColorSpace;
   return t;
+}
+
+/** Cut limestone: stable mineral grain, faint bedding and occasional shallow pores. */
+function limestoneTextures(anisotropy: number): { color: CanvasTexture; bump: CanvasTexture } {
+  // Dense, contrasting grains match the stippled limestone in the flat range drawing.
+  const width = 256, height = 512;
+  const colorCanvas = document.createElement('canvas');
+  const bumpCanvas = document.createElement('canvas');
+  colorCanvas.width = bumpCanvas.width = width;
+  colorCanvas.height = bumpCanvas.height = height;
+  const colorContext = colorCanvas.getContext('2d')!;
+  const bumpContext = bumpCanvas.getContext('2d')!;
+  const colorPixels = colorContext.createImageData(width, height);
+  const bumpPixels = bumpContext.createImageData(width, height);
+  let seed = 21;
+  const random = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  // Periodic fields keep the bedding continuous around the four vertical faces.
+  const cols = 16, rows = 96;
+  const field = Float32Array.from({ length: cols * rows }, () => random());
+  const bedding = Float32Array.from({ length: rows }, () => random());
+  const smooth = (t: number) => t * t * (3 - 2 * t);
+  for (let y = 0; y < height; y++) {
+    const fy = y / height * rows, iy = Math.floor(fy), ty = smooth(fy - iy);
+    const nextY = (iy + 1) % rows;
+    const bed = MathUtils.lerp(bedding[iy], bedding[nextY], ty) - 0.5;
+    for (let x = 0; x < width; x++) {
+      const fx = x / width * cols, ix = Math.floor(fx), tx = smooth(fx - ix);
+      const nextX = (ix + 1) % cols;
+      const cloud = MathUtils.lerp(
+        MathUtils.lerp(field[iy * cols + ix], field[iy * cols + nextX], tx),
+        MathUtils.lerp(field[nextY * cols + ix], field[nextY * cols + nextX], tx), ty,
+      ) - 0.5;
+      const fine = (random() + random()) / 2 - 0.5;
+      const pore = random() > 0.987 ? random() : 0;
+      const tone = 200 + fine * 150 + cloud * 20 + bed * 7 - pore * 45;
+      const relief = 128 + fine * 55 + cloud * 14 + bed * 10 - pore * 75;
+      const i = (y * width + x) * 4;
+      for (let channel = 0; channel < 3; channel++) {
+        colorPixels.data[i + channel] = tone;
+        bumpPixels.data[i + channel] = relief;
+      }
+      colorPixels.data[i + 3] = bumpPixels.data[i + 3] = 255;
+    }
+  }
+  colorContext.putImageData(colorPixels, 0, 0);
+  bumpContext.putImageData(bumpPixels, 0, 0);
+  const color = new CanvasTexture(colorCanvas), bump = new CanvasTexture(bumpCanvas);
+  // Albedo is authored as linear reflectance; bump is non-color height data.
+  color.colorSpace = LinearSRGBColorSpace;
+  for (const texture of [color, bump]) {
+    texture.wrapS = texture.wrapT = RepeatWrapping;
+    texture.anisotropy = anisotropy;
+  }
+  return { color, bump };
+}
+
+/** Unwrap the vertical faces around one perimeter, keeping grain at physical scale. */
+function monolithGeometry(): BoxGeometry {
+  const geometry = new BoxGeometry(POST_W, POST_H, POST_D);
+  const position = geometry.attributes.position, normal = geometry.attributes.normal, uv = geometry.attributes.uv;
+  const perimeter = 2 * (POST_W + POST_D);
+  for (let i = 0; i < position.count; i++) {
+    const x = position.getX(i), y = position.getY(i), z = position.getZ(i);
+    let u: number;
+    if (Math.abs(normal.getY(i)) > 0.5) {
+      uv.setXY(i, (x + POST_W / 2) / perimeter, (z + POST_D / 2) / POST_H);
+      continue;
+    }
+    if (normal.getZ(i) > 0.5) u = x + POST_W / 2;
+    else if (normal.getX(i) > 0.5) u = POST_W + POST_D / 2 - z;
+    else if (normal.getZ(i) < -0.5) u = POST_W + POST_D + POST_W / 2 - x;
+    else u = 2 * POST_W + POST_D + POST_D / 2 + z;
+    uv.setXY(i, u / perimeter, (y + POST_H / 2) / POST_H);
+  }
+  return geometry;
 }
 
 function ease(x: number): number {
@@ -132,7 +210,13 @@ export function createDuskScene(host: HTMLElement, opts: { offset?: number } = {
 
   // ---------- Plaza and graduated scale ----------
   const stone = new MeshStandardMaterial({ color: '#b99a88', roughness: 0.95 });
-  const monolith = new MeshStandardMaterial({ color: '#e4cdb8', roughness: 0.86 });
+  const limestone = limestoneTextures(Math.min(4, renderer.capabilities.getMaxAnisotropy()));
+  const postGeometry = monolithGeometry();
+  const monolith = new MeshStandardMaterial({
+    // Restore the mean reflectance absorbed by the color map, preserving the dusk palette.
+    color: new Color('#e4cdb8').multiplyScalar(255 / 200),
+    map: limestone.color, bumpMap: limestone.bump, bumpScale: 0.018, roughness: 0.95,
+  });
   const engraving = new MeshStandardMaterial({ color: '#4a2f2b', roughness: 1 });
 
   const plaza = new Mesh(new BoxGeometry(120, BASE, 90), stone);
@@ -188,7 +272,7 @@ export function createDuskScene(host: HTMLElement, opts: { offset?: number } = {
 
   // ---------- The range: two monoliths ----------
   const makePost = () => {
-    const mesh = new Mesh(new BoxGeometry(POST_W, POST_H, POST_D), monolith);
+    const mesh = new Mesh(postGeometry, monolith);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.position.y = BASE + POST_H / 2;
@@ -200,7 +284,7 @@ export function createDuskScene(host: HTMLElement, opts: { offset?: number } = {
   // Other ranges far away in the haze
   const farPair = (x: number, z: number, s: number, ry: number) => {
     const g = new Group();
-    const a = new Mesh(new BoxGeometry(POST_W, POST_H, POST_D), monolith);
+    const a = new Mesh(postGeometry, monolith);
     a.position.set(-(RANGE_R + POST_W / 2), POST_H / 2, 0);
     const b = a.clone();
     b.position.x = RANGE_R + POST_W / 2;
@@ -383,6 +467,8 @@ export function createDuskScene(host: HTMLElement, opts: { offset?: number } = {
         const mat = mesh.material;
         if (Array.isArray(mat)) mat.forEach((x) => x.dispose()); else mat?.dispose();
       });
+      limestone.color.dispose();
+      limestone.bump.dispose();
       glowTex.dispose();
       renderer.dispose();
       renderer.domElement.remove();
