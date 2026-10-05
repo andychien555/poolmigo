@@ -1,0 +1,38 @@
+{
+  "chainId": 46630,
+  "fork": true,
+  "mintable": false,
+  "periphery": {
+    "planExecutor": "0x81AE7583f06C2Bc141b9141FB9D701F0F2f59133",
+    "zapIn": "0xED0626e8Eea7098C1e03B72c1c72B89a43EF4812",
+    "zapOut": "0x4A0a7843BbC7d33e4824cb5bdb531f0E195B64E1"
+  },
+  "rpcUrl": "http://127.0.0.1:8547",
+  "vaults": [
+    {
+      "demoUser": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      "implementation": "0x50f9B4555CDcA878eF43a9e2a816107c4f49DF45",
+      "keeper": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "key": "demo",
+      "label": "USDG / WETH basket (RHC fork - real Uniswap v3 + v4)",
+      "receipt": {
+        "name": "migoLP",
+        "symbol": "migoLP"
+      },
+      "vault": "0x63763137C765BE274f1953e3C2e41E5668459977"
+    },
+    {
+      "demoUser": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      "implementation": "0x50f9B4555CDcA878eF43a9e2a816107c4f49DF45",
+      "keeper": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "key": "stocks",
+      "label": "Stock-pair basket (5 stocks + mUSDG)",
+      "receipt": {
+        "name": "migoStockLP",
+        "symbol": "migoStockLP"
+      },
+      "vault": "0xaEDA30eC4368181EFa71Ea32fb57c673Ab930f8f"
+    }
+  ],
+  "version": 2
+}
