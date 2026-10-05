@@ -49,6 +49,8 @@ export const VAULTS: Vault[] = [
     token1: 'USDG',
     receiptSymbol: 'sunEthLP',
     chain: 'robinhood',
+    poolVersion: 'v3',
+    poolFee: 100,
     tier: 'Turbo', // trades around the clock, so it never takes the market-closed stance
     tvl: 2_400_000,
     feeApr7d: 0.186,
@@ -68,6 +70,8 @@ export const VAULTS: Vault[] = [
     token1: 'USDG',
     receiptSymbol: 'sunNvdaLP',
     chain: 'robinhood',
+    poolVersion: 'v3',
+    poolFee: 500,
     tier: 'Core',
     tvl: 4_200_000,
     feeApr7d: 0.142,
@@ -87,6 +91,8 @@ export const VAULTS: Vault[] = [
     token1: 'ETH',
     receiptSymbol: 'sunPonsEthLP',
     chain: 'robinhood',
+    poolVersion: 'v3',
+    poolFee: 3000,
     tier: 'Degen',
     tvl: 540_000,
     feeApr7d: 0.31,
@@ -106,6 +112,8 @@ export const VAULTS: Vault[] = [
     token1: 'USDG',
     receiptSymbol: 'sunSpcxLP',
     chain: 'robinhood',
+    poolVersion: 'v3',
+    poolFee: 500,
     tier: 'Core',
     tvl: 1_800_000,
     feeApr7d: 0.195,
@@ -125,6 +133,8 @@ export const VAULTS: Vault[] = [
     token1: 'USDG',
     receiptSymbol: 'sunPonsLP',
     chain: 'robinhood',
+    poolVersion: 'v4',
+    poolFee: 3000,
     tier: 'Degen',
     tvl: 760_000,
     feeApr7d: 0.264,
@@ -144,6 +154,8 @@ export const VAULTS: Vault[] = [
     token1: 'ETH',
     receiptSymbol: 'sunCashcatEthLP',
     chain: 'robinhood',
+    poolVersion: 'v3',
+    poolFee: 3000,
     tier: 'Degen',
     tvl: 410_000,
     feeApr7d: 0.886,
@@ -163,6 +175,8 @@ export const VAULTS: Vault[] = [
     token1: 'ETH',
     receiptSymbol: 'sunSpyEthLP',
     chain: 'robinhood',
+    poolVersion: 'v3',
+    poolFee: 500,
     tier: 'Core',
     tvl: 1_300_000,
     feeApr7d: 0.128,
@@ -182,4 +196,9 @@ export const VAULT_BY_ID: Record<string, Vault> = Object.fromEntries(VAULTS.map(
 
 export function vaultName(v: Vault): string {
   return `${v.token0} / ${v.token1}`;
+}
+
+/** The pool behind the vault, as the DEX lists it: "v3 · 0.05%". */
+export function poolLabel(v: Vault): string {
+  return `${v.poolVersion} · ${v.poolFee / 10_000}%`;
 }
