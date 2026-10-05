@@ -129,6 +129,7 @@ Depth is tonal: a surface gets lighter as it comes forward.
 | `bg-fill-track` | `sand-120` | Switch off, progress and slider tracks |
 | `bg-fill-primary` | `sand-1000` | Primary action, selected segment, switch on |
 | `bg-fill-primary-hover` | `sand-bright` | Primary action, hovered |
+| `bg-fill-primary-shade` | `sand-700` | The body of a primary key, under its highlight |
 | `bg-fill-accent` | `sun-1000` | Reward action, reward switch on |
 | `bg-fill-accent-hover` | `sun-bright` | Reward action, hovered |
 | `bg-fill-inverse` | `sand-1000` | Tooltips |
@@ -139,6 +140,9 @@ Depth is tonal: a surface gets lighter as it comes forward.
 
 `fill-overlay` carries its own opacity, so it takes no modifier. `--color-fill-selection` (`rose-1000`) is a
 CSS variable only, used for `::selection` at 35%.
+
+The keys (see [Keys, glass and wells](#keys-glass-and-wells)) read `fill-primary-shade`, `fill-primary-hover`,
+`fill-accent`, `fill-accent-hover` and `fill-disabled` as CSS variables in `index.css`, not as classes.
 
 Several fills share one value today (`fill-weak`, `fill-hover`, `fill-selected`, `fill-disabled`). They are
 separate tokens because they are separate roles; pick by role, not by what looks the same.
@@ -242,6 +246,17 @@ structural (ranges, controls, cards, token tiles) is square-cut.
 | `rounded-full` | 2px | Square-cut on purpose: a status dot is a small square |
 | `rounded-circle` | 50% | A real circle. The price only |
 
+Keys and wells set their own radius in `index.css`, outside this scale:
+
+| Class | Radius |
+|---|---|
+| `btn` | 10px (`--btn-radius`); 8px at Button size `xs` |
+| `seg` | 8px (`--seg-radius`) |
+| `well` | 11px (`--well-radius`) |
+| `groove` | The well's radius less its 3px padding, for the key inside it |
+
+This departs from the square-cut rule; see [Known inconsistencies](#known-inconsistencies).
+
 ## Shadows
 
 Depth comes from tone and hairlines. Only what leaves the page plane casts a shadow.
@@ -250,8 +265,10 @@ Depth comes from tone and hairlines. Only what leaves the page plane casts a sha
 |---|---|
 | `shadow-pop` | Menus, popovers, dialogs, toasts |
 | `shadow-sheet` | The side sheet |
+| `shadow-well` | A recess cut into a surface: shade under its top edge, the bottom rim catching the light. Applied by `well` |
 
-Cards and panels take none.
+Cards and panels take none. Keys and glass carry their own stacks of shadows in `index.css`
+(`btn-key`, `btn-glass`, `seg-thumb-key`); they are part of the material, not tokens.
 
 ## Motion
 
@@ -260,7 +277,8 @@ Cards and panels take none.
 | `ease-dusk` | `cubic-bezier(0.65, 0, 0.35, 1)` | The one easing curve, shared with the scene |
 | `duration-150` | 150ms | A small flip: the toggle knob, a chevron |
 | `animate-fade-in` | 160ms | Something appearing in place: popover, toast, dialog |
-| `duration-300 ease-dusk` | 300ms | A colour change on a control |
+| `duration-300 ease-dusk` | 300ms | A colour change on a control; a key's light and shadow; the sliding key moving to a new choice; the spinner slot opening in a button |
+| `animate-[vault-tab-in_200ms_ease-out]` | 200ms | The deposit card's form fading in when Deposit and Withdraw switch |
 | `animate-slide-in` | 450ms | The side sheet arriving |
 | `animate-rise` | 2s, alternating | The loader |
 
@@ -290,7 +308,37 @@ Not named yet; these are the values in use. A new layer takes its place in this 
 
 Keyboard focus is a 2px outline in `stroke-focused`, offset 3px, on every button, link and input
 (`index.css`). Do not remove it. A field that wraps its input shows focus on its own edge with
-`focus-within:border-stroke-focused`.
+`focus-within:border-stroke-focused`. A `well` has no border, so it rings itself instead:
+`ring-inset focus-within:ring-1 focus-within:ring-stroke-focused`.
+
+---
+
+## Keys, glass and wells
+
+Controls are made of three materials, all defined in the `components` layer of `src/index.css`. A
+component picks a material by class; the colours come from tokens.
+
+| Class | What it is |
+|---|---|
+| `btn` | The shared base of every Button: radius, timing, the 1px press on `:active` |
+| `btn-key` | A lit keycap: a darker body, a highlight across its top half, light gathering along the bottom edge and spilling onto the ground beneath. Needs a colour class |
+| `btn-key-primary` | The sand key: body `fill-primary-shade`, light `fill-primary-hover` |
+| `btn-key-accent` | The sun key: body `fill-accent`, light `fill-accent-hover` |
+| `btn-glass` | Dark glass: a 5% tint of `--glass` (default `strong`) with a lit top edge |
+| `btn-glass-danger` | Glass in `error` |
+| `btn-glass-warning` | Glass in `warning`. The header's network and wallet buttons add it when the wallet is on the wrong network |
+| `seg` | A glass track for a segmented control |
+| `seg-thumb` + `seg-thumb-key` | The sand key that sits under the chosen segment of a `seg` |
+| `seg-thumb` + `seg-thumb-glass` | The same key in glass, opaque underneath so it reads the same over anything |
+| `well` | A recess cut into a surface: `fill-recessed` at 60% with `shadow-well`. The field an amount is typed into |
+| `groove` | A `well` that holds a choice: the options sit in the recess and the chosen one is raised out of it as a glass key |
+
+Every state of a key is the same stack of shadows in the same order, so a state change only fades layers
+in and out. A state that drops a layer keeps it at zero alpha. Keep that order when adding a state, or
+one layer will morph into another.
+
+A key's label does not fade: going between disabled and enabled it would pass through the body's own
+colour. It changes at once, partway through the body's transition (`--label-delay`).
 
 ---
 
@@ -298,26 +346,62 @@ Keyboard focus is a 2px outline in `stroke-focused`, offset 3px, on every button
 
 `src/components/ui/Button.tsx`
 
-| Variant | Rest | Hover | Disabled | Use |
-|---|---|---|---|---|
-| `primary` | `bg-fill-primary text-inverse-strong` | `bg-fill-primary-hover` | `bg-fill-disabled text-disabled` | The standard action |
-| `accent` | `bg-fill-accent text-on-accent` | `bg-fill-accent-hover` | `bg-fill-disabled text-disabled` | Reward actions, the opening call to action. One in view |
-| `secondary` | `border-stroke-strong text-strong` | `border-stroke-strongest` | `text-disabled` | The other action beside a primary one |
-| `ghost` | `text-weak` | `bg-fill-hover text-strong` | `text-disabled` | Stepping back inside a panel or dialog |
-| `danger` | `border-stroke-error/40 text-error` | `bg-fill-error/10` | (none yet) | Destructive, irreversible |
+| Variant | Material | Label | Hover | Disabled | Use |
+|---|---|---|---|---|---|
+| `primary` | `btn-key btn-key-primary` | `text-inverse-strong` | The light beneath spreads | Body `fill-disabled`, a `stroke-strong` edge, no light; label `text-disabled` | The standard action |
+| `accent` | `btn-key btn-key-accent` | `text-on-accent` | The light beneath spreads | As primary | Reward actions, the opening call to action. One in view |
+| `secondary` | `btn-glass` | `text-strong` | Tint 5% → 10%, edge brighter | Transparent, a `stroke-strong` edge; label `text-disabled` | The other action beside a primary one; the header's network and wallet buttons |
+| `ghost` | None | `text-weak` | `bg-fill-hover text-strong` | `text-disabled` | Stepping back inside a panel or dialog |
+| `danger` | `btn-glass btn-glass-danger` | `text-error` | As secondary, in `error` | As secondary, but the label stays `text-error` | Destructive, irreversible |
 
-| Size | Class | Height |
+All variants press 1px down on `:active`. For a warning state on a secondary button, add
+`btn-glass-warning` through `className`.
+
+| Size | Class | Height | Use |
+|---|---|---|---|
+| `xs` | `h-7 px-2.5 text-xs`, radius 8px | 28px | Inside a panel header (the price range's flip control) |
+| `sm` | `h-9 px-3 text-sm` | 36px | The header, rows |
+| `md` | `h-11 px-[18px] text-base` | 44px (default) | |
+| `lg` | `h-12 px-5 text-md` | 48px | |
+
+`loading` disables the button and opens a slot before the label for the spinner, so the button widens
+instead of jumping; the label stays. When loading ends the slot closes and the spinner fades out with
+it. Use it for one button's own submit instead of placing a `Spinner` by hand.
+
+## Segmented and SlidingKey
+
+`src/components/ui/Tabs.tsx`, `src/components/ui/SlidingKey.tsx`
+
+`Segmented` is a `seg` glass track with one sand key on it. The key is a single element, `SlidingKey`,
+that measures the chosen item and slides there (300ms, `ease-dusk`) when the choice changes. Its first
+placement is not animated. It re-measures after every render and when the track resizes, so a label
+changing width keeps it in place.
+
+`SlidingKey` can be used on any track that has relative positioning and is a `seg` or a `groove`:
+
+```tsx
+const track = useRef<HTMLDivElement>(null);
+<div ref={track} className="well groove grid">
+  <SlidingKey track={track} chosen='[aria-pressed="true"]' tone="glass" />
+  {options.map((o) => <button aria-pressed={value === o.id} … />)}
+</div>
+```
+
+| Prop | Type | What it does |
 |---|---|---|
-| `sm` | `h-9 px-3 text-sm` | 36px |
-| `md` | `h-11 px-[18px] text-base` | 44px (default) |
-| `lg` | `h-12 px-5 text-md` | 48px |
+| `track` | `RefObject<HTMLElement>` | The track the key is rendered inside |
+| `chosen` | `string` | A selector for the chosen item inside the track, e.g. `[aria-selected="true"]` |
+| `tone` | `'key' \| 'glass'` | `key` (default) is the lit sand key; `glass` is the secondary button's material |
 
-`loading` disables the button and shows the mark as a spinner; the label stays. Use it for one button's
-own submit instead of placing a `Spinner` by hand.
+Render it as the track's first child, before the options. The options carry the label colour
+(`text-inverse-strong` on a sand key, `text-strong` on glass); the key draws nothing but itself.
+
+The deposit card's token choice is the `groove` + `glass` form: equal columns, so three or four
+options share one row.
 
 ## Component inventory
 
-Base components in `src/components/ui/`, as of 2026-10-02. "In use" means the app renders it somewhere
+Base components in `src/components/ui/`, as of 2026-10-05. "In use" means the app renders it somewhere
 outside the gallery.
 
 | Component | File | In use |
@@ -326,6 +410,7 @@ outside the gallery.
 | AmountInput | `AmountInput.tsx` | No. The deposit card draws its own field |
 | Toggle | `Toggle.tsx` | No |
 | Segmented | `Tabs.tsx` | Yes |
+| SlidingKey | `SlidingKey.tsx` | Yes, inside Segmented and the deposit card's token choice. No gallery section of its own |
 | UnderlineTabs | `Tabs.tsx` | No |
 | ChainFilter | `ChainFilter.tsx` | Yes, but draws nothing while there is one chain |
 | Card | `Card.tsx` | Yes |
@@ -362,10 +447,18 @@ To tint, use an opacity modifier on an existing token (`bg-fill-success/10`) bef
 Carried over as they were, so that moving to semantic tokens changed no pixel. Each is a decision to make,
 not a bug in the token layer.
 
-- **Field focus is shown four ways.** The deposit card's amount field turns its edge to `stroke-focused`
-  (sun). `AmountInput` uses `stroke-stronger`, the live amount input and the local dev field use
-  `stroke-strong`, and the vault search uses `stroke-strongest`. One of these should be the rule.
-- **`danger` has no disabled style.** A disabled danger button looks enabled.
+- **Field focus is shown four ways.** The deposit card's amount field (a `well`) rings itself in
+  `stroke-focused` (sun). `AmountInput` uses `stroke-stronger`, the live amount input and the local dev
+  field use `stroke-strong`, and the vault search uses `stroke-strongest`. One of these should be the rule.
+- **A disabled `danger` button keeps its red label.** The glass drops to the plain disabled edge, but the
+  label stays `text-error` where every other variant turns `text-disabled`.
+- **Keys and wells are rounded.** Buttons (10px, 8px at `xs`), segmented tracks (8px) and wells (11px)
+  set their radius in `index.css`, outside the radius scale and against "everything structural is
+  square-cut". Cards, chips and menus are still 3–4px.
+- **Tokens the keys left behind.** Since buttons and segments became keys, `stroke-primary-hover`,
+  `stroke-accent-hover` and `fill-selected` are used by no component. `fill-primary`'s use still reads
+  "primary action, selected segment", but those are now drawn from `fill-primary-shade` and
+  `fill-primary-hover`; `fill-primary` remains for the switch, the slider thumb and the live page.
 - **Error edges use three opacities** (`/40`, `/60`, `/70`) for the same role.
 - **Layering is unnamed.** `z-40`, `z-50`, `z-[70]` are raw values.
 - **Illustration colours are literals.** The 3D scene and the price range drawing (`PriceRange.tsx`,
