@@ -8,6 +8,10 @@ export interface Vault {
   token1: string;
   receiptSymbol: string;
   chain: ChainId;
+  /** The Uniswap pool the vault provides liquidity in. */
+  poolVersion: 'v3' | 'v4';
+  /** That pool's fee tier, in Uniswap's units (hundredths of a basis point: 500 = 0.05%). */
+  poolFee: number;
   tier: Tier;
   tvl: number;
   feeApr7d: number;
