@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { VAULT_BY_ID, TIER_CAPACITY, vaultName } from '@/demo/data/vaults';
+import { VAULT_BY_ID, TIER_CAPACITY, poolLabel, vaultName } from '@/demo/data/vaults';
 import { fmtDate, fmtPct, fmtToken, fmtUsd, cx } from '@/lib/format';
 import * as m from '@/demo/math';
 import { useStore } from '@/store/useStore';
@@ -46,9 +46,13 @@ function VaultView({ vaultId, market }: { vaultId: string; market: 'open' | 'clo
             </svg>
             All vaults
           </Link>
-          <div className="flex flex-wrap items-center gap-[18px]">
-            <TokenPair a={v.token0} b={v.token1} size={36} chain={v.chain} />
-            <h1 className="title font-thin text-[clamp(38px,4.4vw,60px)]">{vaultName(v)}</h1>
+          {/* The 36px pair is centred on the name's line (line-height 1), not on the name and pool line together */}
+          <div className="flex flex-wrap items-start gap-[18px] [--name:clamp(38px,4.4vw,60px)]">
+            <span className="flex shrink-0 mt-[calc((var(--name)-36px)/2)]"><TokenPair a={v.token0} b={v.token1} size={36} chain={v.chain} /></span>
+            <div>
+              <h1 className="title font-thin text-[length:var(--name)]">{vaultName(v)}</h1>
+              <p className="num mt-2 text-sm text-weak">{poolLabel(v)}</p>
+            </div>
           </div>
           <StatRow cols={3}>
             <Stat label="TVL" value={fmtUsd(tvl)} />

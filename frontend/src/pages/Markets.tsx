@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { VAULTS, VAULT_BY_ID, vaultName } from '@/demo/data/vaults';
+import { VAULTS, VAULT_BY_ID, poolLabel, vaultName } from '@/demo/data/vaults';
 import { CHAINS, type ChainId } from '@/demo/data/chains';
 import { ChainFilter } from '@/components/ui/ChainFilter';
 import * as m from '@/demo/math';
@@ -157,7 +157,10 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
     >
       <div className="flex min-w-0 items-center gap-3.5 [grid-area:pair] md:[grid-area:auto]">
         <TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} />
-        <div className="min-w-0 font-serif text-[23px] font-light leading-[1.1] text-strong md:whitespace-nowrap">{vaultName(v)}</div>
+        <div className="min-w-0">
+          <div className="font-serif text-[23px] font-light leading-[1.1] text-strong md:whitespace-nowrap">{vaultName(v)}</div>
+          <div className="num mt-1 text-xs text-weaker">{poolLabel(v)}</div>
+        </div>
       </div>
       <div className="min-w-0 [grid-area:meter] md:[grid-area:auto]"><RangeMeter vault={v} market={market} /></div>
       <div ref={aprCell} className="justify-self-end whitespace-nowrap [grid-area:apr] md:[grid-area:auto]" onMouseEnter={onEnter} onMouseLeave={() => setHover(false)}>
