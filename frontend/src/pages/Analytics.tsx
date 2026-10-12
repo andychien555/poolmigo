@@ -4,6 +4,7 @@ import { PROTOCOL } from '@/demo/data/protocol';
 import { VAULTS } from '@/demo/data/vaults';
 import * as m from '@/demo/math';
 import { emissionsSeries, hashSeed, mulberry32 } from '@/demo/series';
+import { BRAND } from '@/lib/brand';
 import { cx, fmtPct, fmtPctSigned, fmtUsd } from '@/lib/format';
 import { Segmented } from '@/components/ui/Tabs';
 import { Stat, StatRow } from '@/components/ui/Stat';
@@ -71,7 +72,7 @@ export function Analytics() {
               <h1 className="display text-2xl font-semibold">Protocol analytics</h1>
               <DemoBadge />
             </div>
-            <p className="text-sm text-weak mt-1">MySun vaults across Ethereum, Robinhood Chain and Arc.</p>
+            <p className="text-sm text-weak mt-1">{BRAND.name} vaults across Ethereum, Robinhood Chain and Arc.</p>
           </div>
           <Segmented<Window> size="sm" value={win} onChange={setWin} options={[{ value: 'week', label: 'This week' }, { value: 'all', label: '8 weeks' }]} />
         </div>

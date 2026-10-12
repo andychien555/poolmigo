@@ -13,6 +13,7 @@
  */
 import type { EIP1193Provider } from 'viem';
 import { DEFAULT_CHAIN_ID, SUPPORTED_CHAINS } from '@/chain/chains';
+import { BRAND } from '@/lib/brand';
 
 /** Empty string when unset — the picker hides WalletConnect rather than failing at click time. */
 export const WALLETCONNECT_PROJECT_ID: string = (
@@ -45,7 +46,7 @@ export function loadWalletConnect(): Promise<EIP1193Provider> {
       rpcMap: Object.fromEntries(SUPPORTED_CHAINS.map((c) => [c.id, c.rpcUrls.default.http[0]])),
       showQrModal: true,
       metadata: {
-        name: 'MySun',
+        name: BRAND.name,
         description: 'In-kind, multi-pool LP auto-rebalance vault',
         url: origin,
         icons: [`${origin}/favicon.svg`],

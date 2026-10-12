@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { VAULTS, VAULT_BY_ID, poolLabel, vaultName } from '@/demo/data/vaults';
+import { VAULTS, VAULT_BY_ID, vaultName } from '@/demo/data/vaults';
 import { CHAINS, type ChainId } from '@/demo/data/chains';
 import { ChainFilter } from '@/components/ui/ChainFilter';
 import * as m from '@/demo/math';
@@ -26,15 +26,15 @@ export function Markets() {
   const d = useUserDerived();
   const [q, setQ] = useState('');
   const [chain, setChain] = useState<ChainId | 'all'>('all');
-  const [sort, setSort] = useState<{ key: 'tvl' | 'apr'; dir: 'asc' | 'desc' }>({ key: 'tvl', dir: 'desc' });
-  const toggleSort = (key: 'tvl' | 'apr') => setSort((s) => (s.key === key ? { key, dir: s.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' }));
+  const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'tvl', dir: 'desc' });
+  const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' }));
   const [params, setParams] = useSearchParams();
   const depositVault = VAULT_BY_ID[params.get('deposit') ?? ''] ?? null;
   const rows = useMemo(
     () =>
       VAULTS.filter((v) => chain === 'all' || v.chain === chain)
         .filter((v) => `${vaultName(v)} ${CHAINS[v.chain].name}`.toLowerCase().replace(/\s/g, '').includes(q.toLowerCase().replace(/\s/g, '')))
-        .map((v) => ({ v, tvl: m.effectiveTvl(v, tvlDelta), apr: m.aprBreakdown(v, m.effectiveTvl(v, tvlDelta)).totalApr }))
+        .map((v) => ({ v, tvl: m.effectiveTvl(v, tvlDelta), apr: m.aprBreakdown(v, m.effectiveTvl(v, tvlDelta)).totalApr, vol: v.volume24h }))
         .sort((a, b) => (sort.dir === 'desc' ? b[sort.key] - a[sort.key] : a[sort.key] - b[sort.key])),
     [q, chain, tvlDelta, sort],
   );
@@ -47,7 +47,6 @@ export function Markets() {
   }, 0);
 
   const market = useMarketStatus();
-  const cols = showMine ? COLS_MINE : COLS;
 
   return (
     <div>
@@ -102,21 +101,22 @@ export function Markets() {
           </div>
         </div>
 
-        <div className={cx('eyebrow hidden items-center gap-x-6 border-b border-stroke-strong px-4 pb-2.5 md:grid', cols)}>
+        <div className={cx('eyebrow hidden items-center gap-x-6 border-b border-stroke-strong px-4 pb-2.5 lg:grid', COLS)}>
           <span>Vault</span>
           <span>Price within its range</span>
           <span className="justify-self-end"><SortHead label="APR" active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} /></span>
           <span className="justify-self-end"><SortHead label="TVL" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} /></span>
-          {showMine && <span className="justify-self-end">My deposit</span>}
+          <span className="justify-self-end"><SortHead label="1D Vol" active={sort.key === 'vol'} dir={sort.dir} onClick={() => toggleSort('vol')} /></span>
           <span />
         </div>
-        <div className="eyebrow flex justify-end gap-[18px] px-3 md:hidden">
+        <div className="eyebrow flex justify-end gap-[18px] px-3 lg:hidden">
           <SortHead label="APR" active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} />
           <SortHead label="TVL" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} />
+          <SortHead label="1D Vol" active={sort.key === 'vol'} dir={sort.dir} onClick={() => toggleSort('vol')} />
         </div>
         <ul>
           {rows.map(({ v, tvl }) => (
-            <VaultRow key={v.id} vault={v} tvl={tvl} market={market} showMine={showMine} cols={cols} onDeposit={() => setParams({ deposit: v.id })} />
+            <VaultRow key={v.id} vault={v} tvl={tvl} market={market} onDeposit={() => setParams({ deposit: v.id })} />
           ))}
           {rows.length === 0 && (
             <li className="border-b border-stroke-weak py-12 text-center text-weaker">No vaults match{q ? ` "${q}"` : ''}{chain !== 'all' ? ` on ${CHAINS[chain].name}` : ''}.</li>
@@ -128,14 +128,15 @@ export function Markets() {
   );
 }
 
-// Columns: vault, its range, APR, TVL, (my deposit), action
-const COLS = 'md:grid-cols-[minmax(190px,1.15fr)_minmax(220px,1.7fr)_96px_92px_104px]';
-const COLS_MINE = 'md:grid-cols-[minmax(170px,1.1fr)_minmax(200px,1.5fr)_88px_84px_110px_96px] lg:grid-cols-[minmax(190px,1.15fr)_minmax(220px,1.7fr)_96px_92px_118px_104px]';
+type SortKey = 'tvl' | 'apr' | 'vol';
 
-function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault: Vault; tvl: number; market: MarketStatus; showMine: boolean; cols: string; onDeposit: () => void }) {
+// Columns: vault, its range, APR, TVL, 24h volume, action
+// A row only fits from lg; below that it stacks as on a phone.
+const COLS = 'lg:grid-cols-[minmax(190px,1.15fr)_minmax(220px,1.7fr)_96px_92px_104px_104px]';
+
+function VaultRow({ vault: v, tvl, market, onDeposit }: { vault: Vault; tvl: number; market: MarketStatus; onDeposit: () => void }) {
   const navigate = useNavigate();
   const { breakdown: b } = useVaultApr(v);
-  const position = useStore((s) => s.user.positions[v.id]);
   const [hover, setHover] = useState(false);
   const aprCell = useRef<HTMLDivElement>(null);
   const [pop, setPop] = useState<{ top: number; right: number } | null>(null);
@@ -144,26 +145,24 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
     if (r) setPop({ top: r.bottom + 4, right: window.innerWidth - r.right });
     setHover(true);
   };
-  const label = 'mr-1.5 text-xs font-normal text-weaker md:hidden';
+  const label = 'mr-1.5 text-xs font-normal text-weaker lg:hidden';
 
   return (
     <li
       className={cx(
-        'grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 border-b border-stroke-weak px-3 py-4 md:px-4 transition-colors duration-300 ease-dusk hover:bg-strong/[0.035]',
-        "[grid-template-areas:'pair_apr''meter_meter''tvl_act''mine_act'] md:[grid-template-areas:none]",
-        cols,
+        'grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 border-b border-stroke-weak px-3 py-4 lg:px-4 transition-colors duration-300 ease-dusk hover:bg-strong/[0.035]',
+        "[grid-template-areas:'pair_apr''meter_meter''tvl_act''vol_act'] lg:[grid-template-areas:none]",
+        COLS,
       )}
       onClick={() => navigate(`/vault/${v.id}`)}
     >
-      <div className="flex min-w-0 items-center gap-3.5 [grid-area:pair] md:[grid-area:auto]">
-        <TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} />
-        <div className="min-w-0">
-          <div className="font-serif text-[23px] font-light leading-[1.1] text-strong md:whitespace-nowrap">{vaultName(v)}</div>
-          <div className="num mt-1 text-xs text-weaker">{poolLabel(v)}</div>
-        </div>
+      {/* The 26px pair is centred on the name's first line, so a name that wraps on a phone does not pull it down */}
+      <div className="flex min-w-0 items-start gap-3.5 [grid-area:pair] [--name:calc(23px*1.1)] lg:[grid-area:auto]">
+        <span className="flex shrink-0 mt-[calc((var(--name)-26px)/2)]"><TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} /></span>
+        <div className="min-w-0 font-serif text-[23px] font-light leading-[var(--name)] text-strong lg:whitespace-nowrap">{vaultName(v)}</div>
       </div>
-      <div className="min-w-0 [grid-area:meter] md:[grid-area:auto]"><RangeMeter vault={v} market={market} /></div>
-      <div ref={aprCell} className="justify-self-end whitespace-nowrap [grid-area:apr] md:[grid-area:auto]" onMouseEnter={onEnter} onMouseLeave={() => setHover(false)}>
+      <div className="min-w-0 [grid-area:meter] lg:[grid-area:auto]"><RangeMeter vault={v} market={market} /></div>
+      <div ref={aprCell} className="justify-self-end whitespace-nowrap [grid-area:apr] lg:[grid-area:auto]" onMouseEnter={onEnter} onMouseLeave={() => setHover(false)}>
         <BoostedApr value={fmtPct(b.totalApr)} className="display num text-xl" />
         {hover &&
           pop &&
@@ -178,20 +177,9 @@ function VaultRow({ vault: v, tvl, market, showMine, cols, onDeposit }: { vault:
             document.body,
           )}
       </div>
-      <div className="num text-md text-weak [grid-area:tvl] md:justify-self-end md:[grid-area:auto]"><span className={label}>TVL</span>{fmtUsd(tvl)}</div>
-      {showMine && (
-        <div className="num grid gap-px [grid-area:mine] md:justify-items-end md:[grid-area:auto]">
-          {position ? (
-            <>
-              <span className="text-strong"><span className={label}>My deposit</span>{fmtUsd(m.positionValue(position, v), { compact: false })}</span>
-              <small className="text-xs text-success">+{fmtUsd(m.feesEarned(m.positionValue(position, v), v.feeApr7d, position.depositedAt, Date.now()), { compact: false, cents: true })} fees</small>
-            </>
-          ) : (
-            <span className="text-weaker"><span className={label}>My deposit</span>—</span>
-          )}
-        </div>
-      )}
-      <div className="justify-self-end self-center [grid-area:act] md:[grid-area:auto]">
+      <div className="num text-md text-weak [grid-area:tvl] lg:justify-self-end lg:[grid-area:auto]"><span className={label}>TVL</span>{fmtUsd(tvl)}</div>
+      <div className="num text-md text-weak [grid-area:vol] lg:justify-self-end lg:[grid-area:auto]"><span className={label}>1D Vol</span>{fmtUsd(v.volume24h, { tenths: true })}</div>
+      <div className="justify-self-end self-center [grid-area:act] lg:[grid-area:auto]">
         <Button size="sm" onClick={(e) => { e.stopPropagation(); onDeposit(); }}>
           Deposit
         </Button>
@@ -204,7 +192,8 @@ function SortHead({ label, active, dir, onClick }: { label: string; active: bool
   return (
     <button onClick={onClick} className={cx('inline-flex items-center gap-[5px] uppercase tracking-label hover:text-strong', active && 'text-strong')} aria-sort={active ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'}>
       {label}
-      <span aria-hidden>{active ? (dir === 'desc' ? '↓' : '↑') : '↕'}</span>
+      {/* Only the sorted column shows its arrow. The others keep the arrow's place, so a label never shifts */}
+      <span aria-hidden className={cx(!active && 'invisible')}>{active && dir === 'asc' ? '↑' : '↓'}</span>
     </button>
   );
 }

@@ -14,6 +14,8 @@ export interface Vault {
   poolFee: number;
   tier: Tier;
   tvl: number;
+  /** The pool's trading volume over the last 24 hours, in USD (the whole pool, not the vault's share). */
+  volume24h: number;
   feeApr7d: number;
   emissionWeight: number;
   rangeWidthPct: number;

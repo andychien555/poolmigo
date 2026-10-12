@@ -40,7 +40,8 @@ function pairPrice(token0: string, token1: string): number {
 
 /**
  * The first-phase pairs, all on Robinhood Chain. Prices are real; TVL, APR and range figures are
- * demo figures until the vaults are live.
+ * demo figures until the vaults are live. 24h volume is each pool's 1D volume as listed on the
+ * Robinhood Chain pools page on 2026-10-05.
  */
 export const VAULTS: Vault[] = [
   {
@@ -53,6 +54,7 @@ export const VAULTS: Vault[] = [
     poolFee: 100,
     tier: 'Turbo', // trades around the clock, so it never takes the market-closed stance
     tvl: 2_400_000,
+    volume24h: 389_900_000,
     feeApr7d: 0.186,
     emissionWeight: 0.2,
     rangeWidthPct: 0.1,
@@ -74,6 +76,7 @@ export const VAULTS: Vault[] = [
     poolFee: 500,
     tier: 'Core',
     tvl: 4_200_000,
+    volume24h: 25_200_000,
     feeApr7d: 0.142,
     emissionWeight: 0.3,
     rangeWidthPct: 0.18,
@@ -95,6 +98,7 @@ export const VAULTS: Vault[] = [
     poolFee: 3000,
     tier: 'Degen',
     tvl: 540_000,
+    volume24h: 5_000_000,
     feeApr7d: 0.31,
     emissionWeight: 0.07,
     rangeWidthPct: 0.08,
@@ -116,6 +120,7 @@ export const VAULTS: Vault[] = [
     poolFee: 500,
     tier: 'Core',
     tvl: 1_800_000,
+    volume24h: 21_300_000,
     feeApr7d: 0.195,
     emissionWeight: 0.15,
     rangeWidthPct: 0.2,
@@ -137,6 +142,7 @@ export const VAULTS: Vault[] = [
     poolFee: 3000,
     tier: 'Degen',
     tvl: 760_000,
+    volume24h: 3_900_000,
     feeApr7d: 0.264,
     emissionWeight: 0.1,
     rangeWidthPct: 0.08,
@@ -158,6 +164,7 @@ export const VAULTS: Vault[] = [
     poolFee: 3000,
     tier: 'Degen',
     tvl: 410_000,
+    volume24h: 13_300_000,
     feeApr7d: 0.886,
     emissionWeight: 0.05,
     rangeWidthPct: 0.05,
@@ -179,6 +186,7 @@ export const VAULTS: Vault[] = [
     poolFee: 500,
     tier: 'Core',
     tvl: 1_300_000,
+    volume24h: 6_200_000,
     feeApr7d: 0.128,
     emissionWeight: 0.13,
     rangeWidthPct: 0.18,
