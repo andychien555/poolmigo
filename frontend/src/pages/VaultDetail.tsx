@@ -41,7 +41,7 @@ function VaultView({ vaultId, market }: { vaultId: string; market: 'open' | 'clo
         <header className="grid gap-6 lg:col-start-1">
           <Link to="/" className="group -my-1.5 inline-flex items-center gap-3 justify-self-start py-1.5 text-md text-weak transition-colors duration-300 ease-dusk hover:text-strong">
             {/* BoxIcons arrow-back (react-icons BiArrowBack), filled with the link's colour so it follows the hover. */}
-            <svg width="24" height="24" viewBox="0 0 24 24" className="-my-px shrink-0 transition-transform duration-300 ease-dusk group-hover:-translate-x-1" fill="currentColor" aria-hidden>
+            <svg width="20" height="20" viewBox="0 0 24 24" className="shrink-0 transition-transform duration-300 ease-dusk group-hover:-translate-x-1" fill="currentColor" aria-hidden>
               <path d="M21 11H6.414l5.293-5.293-1.414-1.414L2.586 12l7.707 7.707 1.414-1.414L6.414 13H21z" />
             </svg>
             All vaults
