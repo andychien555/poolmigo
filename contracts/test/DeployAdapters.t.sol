@@ -14,6 +14,7 @@ import {MockToken} from "test/mocks/MockToken.sol";
 import {MockV3Factory, MockV3Pool} from "test/mocks/MockV3Pool.sol";
 import {MockPermit2Router} from "test/mocks/MockPermit2Router.sol";
 import {DeployAdapters} from "../script/DeployAdapters.s.sol";
+import {VaultImplArgs} from "test/utils/VaultImplArgs.sol";
 
 /// @dev Minimal v4 venue for the v4 adapter's constructor checks: it is its own PoolManager (`poolManager()` = this),
 ///      reports `permit2`, and answers every `extsload` with sqrtPriceX96 = 2^96 (every pool initialized at price 1).
@@ -70,7 +71,8 @@ contract DeployAdaptersScriptTest is Test, DeployAdapters {
                 abi.encodeCall(
                     MySunVaultUpgradeable(address(0)).initialize,
                     (deployer, "sunEthLP", "sunEthLP", basket, treasury, uint16(1000), 1_000e18, uint256(0))
-                )
+                ),
+                VaultImplArgs.proxyOpts()
             )
         );
 

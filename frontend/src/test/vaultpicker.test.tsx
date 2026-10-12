@@ -44,12 +44,15 @@ if (!window.localStorage) {
 
 const CHAIN = DEFAULT_CHAIN_ID;
 const VAULTS = vaultsForChain(CHAIN);
-const [DEMO, STOCKS] = VAULTS;
+const [DEMO, OTHER] = VAULTS;
 const radioName = (v: (typeof VAULTS)[number]) => `${v.label} (${v.receipt.symbol})`;
-/** The RHC fork stack: the default (demo) basket is the REAL USDG / WETH; stocks stays mock. */
+/** The RHC fork stack: "demo" (REAL USDG / WETH) + "pons" (REAL USDG / PONS); the all-mock stack: "demo" + "stocks". */
 const FORK = isForkDeployment(deploymentForChain(CHAIN));
-/** A basket token symbol: the mock stack's m-prefixed tokens, or the RHC fork's REAL USDG / WETH. */
-const BASKET_SYMBOL = /^(m[A-Z]+|USDG|WETH)$/;
+/** A basket token symbol: the mock stack's m-prefixed tokens, or the RHC fork's REAL USDG / WETH / PONS. */
+const BASKET_SYMBOL = /^(m[A-Z]+|USDG|WETH|PONS)$/;
+/** The second vault's basket: the fork's [USDG, PONS], or the mock stack's mUSDG + 5 stocks. */
+const OTHER_MARKER = FORK ? 'PONS' : 'mNVDA';
+const OTHER_SIZE = FORK ? 2 : 6;
 
 function renderLive() {
   return render(
@@ -94,7 +97,7 @@ afterEach(cleanup);
 
 describe('vault picker — config-driven, per chain, persisted', () => {
   it('the local stack really has two vaults (precondition)', () => {
-    expect(VAULTS.map((v) => v.key)).toEqual(['demo', 'stocks']);
+    expect(VAULTS.map((v) => v.key)).toEqual(FORK ? ['demo', 'pons'] : ['demo', 'stocks']);
   });
 
   it('renders every vault from config before any chain read, the first one selected', () => {
@@ -103,11 +106,11 @@ describe('vault picker — config-driven, per chain, persisted', () => {
     const radios = within(group()).getAllByRole('radio');
     expect(radios).toHaveLength(2);
     expect(radio(DEMO).getAttribute('aria-checked')).toBe('true');
-    expect(radio(STOCKS).getAttribute('aria-checked')).toBe('false');
+    expect(radio(OTHER).getAttribute('aria-checked')).toBe('false');
     // Receipt symbols and labels come from the registry entry.
-    expect(within(radio(STOCKS)).getByText(STOCKS.receipt.symbol)).toBeDefined();
+    expect(within(radio(OTHER)).getByText(OTHER.receipt.symbol)).toBeDefined();
     expect(within(radio(DEMO)).getByText(DEMO.receipt.symbol)).toBeDefined();
-    expect(STOCKS.receipt.symbol).not.toBe(DEMO.receipt.symbol);
+    expect(OTHER.receipt.symbol).not.toBe(DEMO.receipt.symbol);
     expect(screen.getByRole('heading', { level: 1, name: DEMO.label })).toBeDefined();
   });
 
@@ -116,37 +119,37 @@ describe('vault picker — config-driven, per chain, persisted', () => {
     const reachable = await settled();
     const demoBasket = reachable ? basketSymbols() : [];
 
-    await act(async () => radio(STOCKS).click());
-    expect(radio(STOCKS).getAttribute('aria-checked')).toBe('true');
+    await act(async () => radio(OTHER).click());
+    expect(radio(OTHER).getAttribute('aria-checked')).toBe('true');
     expect(radio(DEMO).getAttribute('aria-checked')).toBe('false');
-    expect(screen.getByRole('heading', { level: 1, name: STOCKS.label })).toBeDefined();
-    expect(JSON.parse(window.localStorage.getItem(VAULT_SELECTION_KEY) ?? '{}')).toEqual({ [CHAIN]: 'stocks' });
+    expect(screen.getByRole('heading', { level: 1, name: OTHER.label })).toBeDefined();
+    expect(JSON.parse(window.localStorage.getItem(VAULT_SELECTION_KEY) ?? '{}')).toEqual({ [CHAIN]: OTHER.key });
 
     if (!reachable) {
       console.warn('vaultpicker.test: local chain unreachable — skipped the chain-read assertions');
       return;
     }
-    // The stocks basket (6 tokens) replaces the demo basket (2 tokens) — nothing of the old one stays.
-    await waitFor(() => expect(basketSymbols()).toContain('mNVDA'), { timeout: 15_000 });
-    const stocksBasket = basketSymbols();
-    expect(stocksBasket).toHaveLength(6);
-    expect(stocksBasket).not.toContain('mWETH');
-    expect(stocksBasket).not.toContain('WETH');
+    // The second basket replaces the demo basket (2 tokens) — nothing of the old one stays.
+    await waitFor(() => expect(basketSymbols()).toContain(OTHER_MARKER), { timeout: 15_000 });
+    const otherBasket = basketSymbols();
+    expect(otherBasket).toHaveLength(OTHER_SIZE);
+    expect(otherBasket).not.toContain('mWETH');
+    expect(otherBasket).not.toContain('WETH');
     expect(demoBasket).toEqual(FORK ? ['USDG', 'WETH'] : ['mUSDG', 'mWETH']);
-    // The receipt symbol shown on the page is the stocks vault's own (chain read agrees with config).
-    await waitFor(() => expect(screen.getByText(`${STOCKS.receipt.symbol} supply`)).toBeDefined(), { timeout: 15_000 });
+    // The receipt symbol shown on the page is the second vault's own (chain read agrees with config).
+    await waitFor(() => expect(screen.getByText(`${OTHER.receipt.symbol} supply`)).toBeDefined(), { timeout: 15_000 });
     expect(screen.queryByText(`${DEMO.receipt.symbol} supply`)).toBeNull();
   });
 
   it('a remembered choice is restored on the next visit', () => {
-    window.localStorage.setItem(VAULT_SELECTION_KEY, JSON.stringify({ [CHAIN]: 'stocks' }));
+    window.localStorage.setItem(VAULT_SELECTION_KEY, JSON.stringify({ [CHAIN]: OTHER.key }));
     renderLive();
-    expect(radio(STOCKS).getAttribute('aria-checked')).toBe('true');
-    expect(screen.getByRole('heading', { level: 1, name: STOCKS.label })).toBeDefined();
+    expect(radio(OTHER).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('heading', { level: 1, name: OTHER.label })).toBeDefined();
   });
 
   it('a stale or garbage stored choice falls back to the first vault, without crashing', () => {
-    for (const stored of [JSON.stringify({ [CHAIN]: 'vanished' }), 'not json', JSON.stringify(['stocks'])]) {
+    for (const stored of [JSON.stringify({ [CHAIN]: 'vanished' }), 'not json', JSON.stringify([OTHER.key])]) {
       window.localStorage.setItem(VAULT_SELECTION_KEY, stored);
       renderLive();
       expect(radio(DEMO).getAttribute('aria-checked')).toBe('true');

@@ -14,17 +14,14 @@ export function Layout() {
   // Demo controls (URL params): ?market=open|closed|auto forces the US market status.
   const [params] = useSearchParams();
   const setOverride = useStore((s) => s.setMarketOverride);
-  const connect = useStore((s) => s.connect);
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
   useEffect(() => {
     const m = params.get('market');
     if (m === 'open' || m === 'closed' || m === 'auto') setOverride(m);
-    // Demo control: ?wallet=demo connects the demo wallet on load.
-    if (params.get('wallet') === 'demo') void connect();
     const t = params.get('theme');
     if (t === 'dark' || t === 'light') setTheme(t);
-  }, [params, setOverride, connect, setTheme]);
+  }, [params, setOverride, setTheme]);
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.34;
 
-import {Script, console2} from "forge-std/Script.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {console2} from "forge-std/Script.sol";
+import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import {MySunVaultUpgradeable} from "contracts/MySunVaultUpgradeable.sol";
+import {DepositSplitEnv} from "./DeployDepositSplit.s.sol";
 
 /**
  * @notice Deploys the UUPS proxy + MySunVaultUpgradeable implementation, validated by the OZ plugin.
@@ -29,8 +30,10 @@ import {MySunVaultUpgradeable} from "contracts/MySunVaultUpgradeable.sol";
  *   GENESIS_SHARES   — K, shares minted by the owner-gated genesis deposit (non-zero, 18-dp raw units;
  *                      set from the team's one-time off-chain valuation so display starts ≈$1/share)
  *   MAX_TOTAL_SUPPLY — receipt-token supply cap (raw units; 0 = uncapped; if set, >= GENESIS_SHARES)
+ *   DEPOSIT_SPLIT    — optional: the chain's DepositSplit (implementation constructor arg, immutable;
+ *                      `script/DeployDepositSplit.s.sol`). Unset = a fresh one is deployed first.
  */
-contract DeployMySunVaultUpgradeable is Script {
+contract DeployMySunVaultUpgradeable is DepositSplitEnv {
     function run() external returns (address proxy) {
         address owner = vm.envAddress("OWNER");
         string memory name = vm.envOr("NAME", string("sunEthLP"));
@@ -42,17 +45,22 @@ contract DeployMySunVaultUpgradeable is Script {
         uint256 maxTotalSupply = vm.envUint("MAX_TOTAL_SUPPLY");
 
         vm.startBroadcast();
+        address depositSplit = _depositSplit();
+        Options memory opts;
+        opts.constructorData = abi.encode(depositSplit);
         proxy = Upgrades.deployUUPSProxy(
             _artifact(),
             abi.encodeCall(
                 MySunVaultUpgradeable(address(0)).initialize,
                 (owner, name, symbol, tokens, treasury, feeBps, genesisShares, maxTotalSupply)
-            )
+            ),
+            opts
         );
         vm.stopBroadcast();
 
         console2.log("MySun vault (proxy) deployed at:", proxy);
         console2.log("  implementation:", Upgrades.getImplementationAddress(proxy), _artifact());
+        console2.log("  deposit splitter:", depositSplit);
         console2.log("  receipt :", name, symbol);
         console2.log("  owner   :", owner);
         console2.log("  treasury:", treasury);

@@ -5,16 +5,19 @@
  * listed — you can go there — but marked so nobody expects a vault.
  */
 import { useEffect, useRef, useState } from 'react';
-import { SUPPORTED_CHAINS, chainShortLabel, hasDeployment, isLocalChain } from '@/chain/chains';
+import { SUPPORTED_CHAINS, chainShortLabel, hasDeployment } from '@/chain/chains';
+import { describeSwitchError } from '@/chain/switchChain';
 import { useSwitchToChain, useTargetChain } from '@/chain/useTargetChain';
 import { Button } from '@/components/ui/Button';
 import { ChainLogo } from '@/components/ui/ChainLogo';
 import { Spinner } from '@/components/ui/Spinner';
 import { cx } from '@/lib/format';
+import { useStore } from '@/store/useStore';
 
 export function ChainSelector() {
   const { chain, hasDeployment: deployed, isWrongChain } = useTargetChain();
   const { switchTo, switching } = useSwitchToChain();
+  const pushToast = useStore((s) => s.pushToast);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -56,10 +59,7 @@ export function ChainSelector() {
           ) : (
             <span className={cx('h-2 w-2 rounded-full shrink-0', warn ? 'bg-warning' : 'bg-success')} aria-hidden />
           )}
-          <span className="inline-flex min-w-0 items-baseline gap-1.5">
-            <span className="max-w-[9rem] truncate">{chainShortLabel(chain.id)}</span>
-            {isLocalChain(chain.id) && <span className="text-2xs font-normal text-weaker">local</span>}
-          </span>
+          <span className="max-w-[9rem] truncate">{chainShortLabel(chain.id)}</span>
           <svg viewBox="0 0 12 12" className="h-3 w-3 text-weaker shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
             <path d="M3 4.5l3 3 3-3" />
           </svg>
@@ -81,7 +81,12 @@ export function ChainSelector() {
                   disabled={switching}
                   onClick={() => {
                     setOpen(false);
-                    void switchTo(c.id).catch(() => {});
+                    void switchTo(c.id).catch((err) => {
+                      // The selector used to swallow this (only the wallet dropdown carried the
+                      // message) — a failed switch must say why, and when only the user can finish
+                      // the job, the parameters to add the network by hand.
+                      pushToast({ title: `Could not switch to ${c.name}`, detail: describeSwitchError(err, c), tone: 'warning' });
+                    });
                   }}
                   className={cx(
                     'w-full rounded px-2.5 py-2 text-left text-xs flex items-center gap-2 hover:bg-background-elevated disabled:cursor-not-allowed',
@@ -93,7 +98,6 @@ export function ChainSelector() {
                     <span className="block truncate">{c.name}</span>
                     <span className="block text-2xs text-weaker num">
                       chain id {c.id}
-                      {c.testnet ? ' · testnet' : ''}
                       {live ? '' : ' · no deployment'}
                     </span>
                   </span>

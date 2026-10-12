@@ -16,4 +16,5 @@ export const CONSTANTS = {
   DEFENSIVE_WIDEN: 1.75,
 } as const;
 
-export const DEMO_ADDRESS = '0x7a3f4c8e2b915d6a0f37c1e84b2d9a5c6e0f9d21';
+/** Shown in the header chip while read-only mode is active. */
+export const READ_ONLY_ADDRESS = '0x7a3f4c8e2b915d6a0f37c1e84b2d9a5c6e0f9d21';

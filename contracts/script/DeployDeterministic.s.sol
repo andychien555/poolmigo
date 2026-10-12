@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.34;
 
-import {Script, console2} from "forge-std/Script.sol";
+import {console2} from "forge-std/Script.sol";
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {MySunVaultUpgradeable} from "contracts/MySunVaultUpgradeable.sol";
 import {PoolmigoCreate3} from "contracts/periphery/PoolmigoCreate3.sol";
+import {DepositSplitEnv} from "./DeployDepositSplit.s.sol";
 
 /**
  * @notice Deterministic vault deployment: the UUPS proxy lands on
@@ -30,9 +31,12 @@ import {PoolmigoCreate3} from "contracts/periphery/PoolmigoCreate3.sol";
  * Env: CREATE3_FACTORY, OWNER, TREASURY, FEE_BPS, TOKENS (comma-separated), GENESIS_SHARES (K, non-zero),
  *      MAX_TOTAL_SUPPLY (0 = uncapped);
  *      NAME / SYMBOL (receipt token, optional, default "sunEthLP" / "sunEthLP");
- *      SALT (bytes32, optional); LABEL (optional log tag, so two runs can be diffed).
+ *      SALT (bytes32, optional); LABEL (optional log tag, so two runs can be diffed);
+ *      DEPOSIT_SPLIT (optional: the chain's DepositSplit, the implementation's constructor arg; unset = deploy one).
+ * The proxy address depends only on deployer + salt (CREATE3), never on the implementation or the splitter; the
+ * factory must still be the deployer's FIRST tx (nonce 0) — a splitter deployed here comes after it.
  */
-contract DeployDeterministic is Script {
+contract DeployDeterministic is DepositSplitEnv {
     struct Params {
         address owner;
         string name;
@@ -62,7 +66,8 @@ contract DeployDeterministic is Script {
         // The proxy address depends on the broadcasting deployer (salt bound to msg.sender at the factory).
         (, address deployer,) = vm.readCallers();
         address predicted = factory.create3Address(deployer, p.salt);
-        implementation = address(new MySunVaultUpgradeable());
+        address depositSplit = _depositSplit();
+        implementation = address(new MySunVaultUpgradeable(depositSplit));
         bytes memory proxyCode = abi.encodePacked(type(ERC1967Proxy).creationCode, abi.encode(implementation, initData));
         proxy = factory.deploy(p.salt, proxyCode);
         vm.stopBroadcast();
@@ -70,6 +75,7 @@ contract DeployDeterministic is Script {
         _verify(p, proxy, implementation, predicted);
         _log(p, proxy, implementation, address(factory), predicted);
         console2.log("[%s] POOLMIGO_DEPLOYER=%s", p.label, deployer);
+        console2.log("[%s] POOLMIGO_DEPOSIT_SPLIT=%s", p.label, depositSplit);
     }
 
     function _readParams() internal view returns (Params memory p) {

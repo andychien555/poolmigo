@@ -48,7 +48,7 @@ if (!window.localStorage) {
   });
 }
 
-const LOCAL = 'Localhost';
+const LOCAL = 'Demo Chain';
 /** A basket token symbol: the mock stack's m-prefixed tokens, or the RHC fork's REAL USDG / WETH. */
 const BASKET_SYMBOL = /^(m[A-Z]+|USDG|WETH)$/;
 const ACCOUNT = '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC';
@@ -130,7 +130,7 @@ describe('network selector — no wallet', () => {
     const list = screen.getByRole('listbox', { name: 'Networks' });
     expect(within(list).getAllByRole('option')).toHaveLength(2);
     expect(within(list).getByText('chain id 4663')).toBeDefined(); // deployed — no "no deployment" marker
-    expect(within(list).getByText('chain id 46630 · testnet')).toBeDefined();
+    expect(within(list).getByText('chain id 46630')).toBeDefined();
 
     // Pick the mainnet chain: no wallet, so this only changes what the page looks at. Reads go to
     // the public RPC — data or the offline state, either way never the no-deployment offer.
@@ -163,6 +163,15 @@ describe('wrong network — wallet on a chain with no deployment', () => {
     expect(await screen.findByText(new RegExp(`Your wallet is on Chain 1\\. Reads below come from ${LOCAL.replace(/[()]/g, '\\$&')}`))).toBeDefined();
     const reachable = await settled();
     expect(screen.queryByText('Local dev tools')).toBeNull();
+
+    // The wallet menu carries the manual-add parameters for the target network, right under the
+    // switch button: a WalletConnect wallet that cannot be moved needs them in front of the user.
+    const walletButton = screen.getByRole('button', { name: /0x3C44/ });
+    await act(async () => walletButton.click());
+    expect(
+      within(walletButton.parentElement as HTMLElement).getByText('Trouble switching? Add the network by hand'),
+    ).toBeDefined();
+    await act(async () => walletButton.click());
 
     wallet.provider.calls.splice(0);
     await act(async () => screen.getAllByRole('button', { name: `Switch to ${LOCAL}` })[0].click());

@@ -21,6 +21,7 @@ import {MockLiquidityAdapter} from "test/mocks/MockLiquidityAdapter.sol";
 import {MockSwapAdapter} from "test/mocks/MockSwapAdapter.sol";
 import {MockV3Factory, MockV3Pool} from "test/mocks/MockV3Pool.sol";
 import {MockPermit2Router} from "test/mocks/MockPermit2Router.sol";
+import {VaultImplArgs} from "test/utils/VaultImplArgs.sol";
 
 /// @dev A position adapter whose `supportsInterface` exists but REVERTS — must derive to mask 0, never block addAdapter.
 contract RevertingErc165Adapter is MockPositionAdapter {
@@ -91,7 +92,8 @@ contract StrategyP3Test is Test {
                 abi.encodeCall(
                     MySunVaultUpgradeable(address(0)).initialize,
                     (owner, "sunEthLP", "sunEthLP", basket, treasury, uint16(1500), GENESIS, uint256(0))
-                )
+                ),
+                VaultImplArgs.proxyOpts()
             )
         );
 

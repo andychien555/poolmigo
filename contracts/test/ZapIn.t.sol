@@ -18,6 +18,7 @@ import {MockToken} from "test/mocks/MockToken.sol";
 import {MockPositionAdapter} from "test/mocks/MockPositionAdapter.sol";
 import {MockPermit2Router} from "test/mocks/MockPermit2Router.sol";
 import {MockV3Factory, MockV3Pool} from "test/mocks/MockV3Pool.sol";
+import {VaultImplArgs} from "test/utils/VaultImplArgs.sol";
 
 /// @dev A concentrated-liquidity position IN the mock pool the zap swaps through (the "coupled vault" of findings
 ///      T1/T5): `position()` reports its liquidity's amounts at the pool's LIVE price, and its liquidity is part of
@@ -1028,7 +1029,9 @@ contract ZapInTest is Test {
             MySunVaultUpgradeable(address(0)).initialize,
             (owner, "sunEthLP", "sunEthLP", tokens_, treasury, 1500, GENESIS, 0)
         );
-        return MySunVaultUpgradeable(address(new ERC1967Proxy(address(new MySunVaultUpgradeable()), init)));
+        return MySunVaultUpgradeable(
+            address(new ERC1967Proxy(address(new MySunVaultUpgradeable(VaultImplArgs.depositSplit())), init))
+        );
     }
 
     /// @dev USDG/`tok` fee-100 pool priced so that `unitTok` of tok = `unitUsd` USDG raw, with liquidity `L`; deep

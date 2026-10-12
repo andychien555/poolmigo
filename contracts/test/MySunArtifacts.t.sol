@@ -18,6 +18,7 @@ import {Create3Dispatcher} from "contracts/periphery/PoolmigoCreate3.sol";
 import {MockToken} from "test/mocks/MockToken.sol";
 import {MockV3Factory} from "test/mocks/MockV3Pool.sol";
 import {MockPermit2Router} from "test/mocks/MockPermit2Router.sol";
+import {VaultImplArgs} from "test/utils/VaultImplArgs.sol";
 
 /**
  * @notice The MySun-named artifacts (notes/NAMING.md → Solidity identifiers) are thin wrappers over the legacy
@@ -36,9 +37,14 @@ contract MySunArtifactsTest is Test {
 
     /// @dev The shipped vault namespace (`erc7201:poolmigo.vault.storage`) — the deployed proxies' storage root.
     bytes32 internal constant VAULT_NAMESPACE_SLOT = 0xac5b1d856d96bdb992e4d284c4f305568246dd601ded20a127e04a49bd0b7b00;
-    /// @dev Excludes solc's CBOR metadata suffix, whose absolute remappings vary with the checkout path.
+    /// @dev The build emits no CBOR metadata (`cbor_metadata = false`, foundry.toml), so the absolute remappings that
+    ///      vary with the checkout path never reach the code: this is the hash of the whole init code — the exact
+    ///      bytes `PoolmigoCreate3` hashes into every dispatcher (and so proxy) address. Re-pinned at deposit-deploy
+    ///      (was 0xf35de960…c31b = the metadata-stripped init code under the old settings): turning the trailer off
+    ///      shortens the embedded runtime, so the constructor's copy-length constant changed; the logic did not, and no
+    ///      factory has been deployed on any chain yet.
     bytes32 internal constant DISPATCHER_EXECUTABLE_HASH =
-        0xf35de960e9a46326d2d15b61974531f7a8a324ba0233a9f7c9c80075f1a3c31b;
+        0x7e2e951ee99dd21ac7fd8901db2692eb4c96f54e258c096825ebdaa89d160ce2;
     /// @dev `PoolmigoCreate3.sol` is byte-identical to the pre-rename baseline.
     bytes32 internal constant POOLMIGO_CREATE3_SOURCE_HASH =
         0x2d1cc60002d6d049ab3f5c010b171382217f9c10b0d24e04425c23bdfdfc0993;
@@ -56,8 +62,9 @@ contract MySunArtifactsTest is Test {
     //////////////////////////////////////////////////////////////*/
 
     function test_MySunVault_DeploysAndInitializesWithSunEthLP() public {
-        MySunVaultUpgradeable vault =
-            MySunVaultUpgradeable(Upgrades.deployUUPSProxy("MySunVaultUpgradeable.sol", _initData("sunEthLP")));
+        MySunVaultUpgradeable vault = MySunVaultUpgradeable(
+            Upgrades.deployUUPSProxy("MySunVaultUpgradeable.sol", _initData("sunEthLP"), VaultImplArgs.proxyOpts())
+        );
 
         assertEq(vault.name(), "sunEthLP");
         assertEq(vault.symbol(), "sunEthLP");
@@ -87,8 +94,9 @@ contract MySunArtifactsTest is Test {
 
     /// @dev The MySun type converts implicitly to both interface names (same surface — a typed alias, no new member).
     function test_MySunVault_IsBothInterfaces() public {
-        MySunVaultUpgradeable vault =
-            MySunVaultUpgradeable(Upgrades.deployUUPSProxy("MySunVaultUpgradeable.sol", _initData("sunEthLP")));
+        MySunVaultUpgradeable vault = MySunVaultUpgradeable(
+            Upgrades.deployUUPSProxy("MySunVaultUpgradeable.sol", _initData("sunEthLP"), VaultImplArgs.proxyOpts())
+        );
         IMySunVault asMySun = vault;
         IPoolmigoVault asLegacy = asMySun;
         assertEq(address(asLegacy), address(vault));
@@ -98,10 +106,10 @@ contract MySunArtifactsTest is Test {
                   BYTECODE / SELECTOR IDENTITY WITH LEGACY
     //////////////////////////////////////////////////////////////*/
 
-    /// @dev Runtime code minus the CBOR metadata trailer is byte-identical, so every dispatch selector, error selector,
-    ///      event topic, storage access and code path is the legacy one. (Artifact runtime code carries zeroed
-    ///      immutables, so the UUPS self-address immutable does not perturb the vault comparison.)
-    function test_RuntimeCode_IdenticalToLegacyModuloMetadata() public view {
+    /// @dev Runtime code is byte-identical (the build emits no CBOR metadata trailer), so every dispatch selector, error
+    ///      selector, event topic, storage access and code path is the legacy one. (Artifact runtime code carries zeroed
+    ///      immutables, so neither the UUPS self-address nor the deposit-splitter immutable perturbs the comparison.)
+    function test_RuntimeCode_IdenticalToLegacy() public view {
         _assertSameRuntime(
             "MySunVaultUpgradeable.sol:MySunVaultUpgradeable", "PoolmigoVaultUpgradeable.sol:PoolmigoVaultUpgradeable"
         );
@@ -145,7 +153,8 @@ contract MySunArtifactsTest is Test {
     /// @dev A legacy-artifact proxy upgrades in place to the MySun implementation with every field intact (the
     ///      receipt keeps its initialized `migoLP` name — on-chain names never change).
     function test_LegacyProxy_UpgradesToMySun_StatePreserved() public {
-        address proxy = Upgrades.deployUUPSProxy("PoolmigoVaultUpgradeable.sol", _initData("migoLP"));
+        address proxy =
+            Upgrades.deployUUPSProxy("PoolmigoVaultUpgradeable.sol", _initData("migoLP"), VaultImplArgs.proxyOpts());
         PoolmigoVaultUpgradeable legacy = PoolmigoVaultUpgradeable(proxy);
         vm.startPrank(owner);
         legacy.setKeeper(keeper, true);
@@ -155,6 +164,7 @@ contract MySunArtifactsTest is Test {
 
         Options memory opts;
         opts.referenceContract = "PoolmigoVaultUpgradeable.sol";
+        opts.constructorData = abi.encode(VaultImplArgs.depositSplit());
         vm.startPrank(owner);
         Upgrades.upgradeProxy(proxy, "MySunVaultUpgradeable.sol", "", opts);
         vm.stopPrank();
@@ -188,8 +198,8 @@ contract MySunArtifactsTest is Test {
         assertEq(zapIn.FACTORY(), address(factory));
         assertEq(zapIn.owner(), owner);
         assertEq(zapIn.FACTORY(), legacyIn.FACTORY());
-        // Same immutables → the deployed runtime code is identical to the legacy zap's apart from the metadata.
-        assertEq(_stripMetadata(address(zapIn).code), _stripMetadata(address(legacyIn).code), "zap-in runtime");
+        // Same immutables → the deployed runtime code is identical to the legacy zap's.
+        assertEq(address(zapIn).code, address(legacyIn).code, "zap-in runtime");
 
         MySunZapOut zapOut = new MySunZapOut(address(router), address(router), owner);
         PoolmigoZapOut legacyOut = new PoolmigoZapOut(address(router), address(router), owner);
@@ -197,7 +207,7 @@ contract MySunArtifactsTest is Test {
         assertEq(address(zapOut.PERMIT2()), address(router));
         assertEq(zapOut.FACTORY(), address(factory));
         assertEq(zapOut.owner(), owner);
-        assertEq(_stripMetadata(address(zapOut).code), _stripMetadata(address(legacyOut).code), "zap-out runtime");
+        assertEq(address(zapOut).code, address(legacyOut).code, "zap-out runtime");
 
         // Constructor guards forwarded unchanged (legacy-named errors, same selectors).
         vm.expectRevert(PoolmigoZapIn.ZapIn__ZeroAddress.selector);
@@ -220,7 +230,7 @@ contract MySunArtifactsTest is Test {
         string memory create3Source = vm.readFile("src/periphery/PoolmigoCreate3.sol");
         assertEq(keccak256(bytes(create3Source)), POOLMIGO_CREATE3_SOURCE_HASH, "CREATE3 source changed");
         assertEq(
-            keccak256(_stripMetadata(type(Create3Dispatcher).creationCode)),
+            keccak256(type(Create3Dispatcher).creationCode),
             DISPATCHER_EXECUTABLE_HASH,
             "dispatcher executable init code"
         );
@@ -249,8 +259,8 @@ contract MySunArtifactsTest is Test {
     }
 
     function _assertSameRuntime(string memory mySun, string memory legacy) internal view {
-        bytes memory a = _stripMetadata(vm.getDeployedCode(mySun));
-        bytes memory b = _stripMetadata(vm.getDeployedCode(legacy));
+        bytes memory a = vm.getDeployedCode(mySun);
+        bytes memory b = vm.getDeployedCode(legacy);
         assertGt(a.length, 0, mySun);
         assertEq(a, b, mySun);
     }
@@ -266,16 +276,6 @@ contract MySunArtifactsTest is Test {
             assertEq(ka[i], kb[i], mySun);
             string memory path = string.concat(".methodIdentifiers['", ka[i], "']");
             assertEq(vm.parseJsonString(ja, path), vm.parseJsonString(jb, path), ka[i]);
-        }
-    }
-
-    /// @dev Drops solc's CBOR metadata trailer (its byte length is the code's last two bytes, big-endian).
-    function _stripMetadata(bytes memory code) internal pure returns (bytes memory out) {
-        uint256 n = code.length;
-        uint256 cbor = (uint256(uint8(code[n - 2])) << 8) | uint8(code[n - 1]);
-        out = new bytes(n - cbor - 2);
-        for (uint256 i; i < out.length; ++i) {
-            out[i] = code[i];
         }
     }
 }

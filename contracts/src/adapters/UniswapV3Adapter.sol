@@ -13,6 +13,7 @@ import {IPositionAdapter} from "contracts/interfaces/IPositionAdapter.sol";
 import {IPoolmigoVault} from "contracts/interfaces/IPoolmigoVault.sol";
 import {ILiquidityAdapter} from "contracts/interfaces/ILiquidityAdapter.sol";
 import {ISwapAdapter} from "contracts/interfaces/ISwapAdapter.sol";
+import {IAdapterFees} from "contracts/interfaces/IAdapterFees.sol";
 import {IUniswapV3PoolMinimal} from "contracts/adapters/uniswap/IUniswapV3PoolMinimal.sol";
 import {IUniswapV3FactoryMinimal} from "contracts/adapters/uniswap/IUniswapV3FactoryMinimal.sol";
 import {INonfungiblePositionManager} from "contracts/adapters/uniswap/INonfungiblePositionManager.sol";
@@ -79,6 +80,7 @@ contract UniswapV3Adapter is
     IPositionAdapter,
     ILiquidityAdapter,
     ISwapAdapter,
+    IAdapterFees,
     ERC165,
     Ownable2Step,
     ReentrancyGuardTransient
@@ -678,10 +680,11 @@ contract UniswapV3Adapter is
         return (id, lower, upper, liquidity, configVersion);
     }
 
-    /// @notice ERC-165: {ILiquidityAdapter} and {ISwapAdapter} (the vault derives its capability bits from these).
+    /// @notice ERC-165: {ILiquidityAdapter} and {ISwapAdapter} (the vault derives its capability bits from these) and
+    ///         the optional {IAdapterFees} view (not a capability — the vault never reads it).
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return interfaceId == type(ILiquidityAdapter).interfaceId || interfaceId == type(ISwapAdapter).interfaceId
-            || super.supportsInterface(interfaceId);
+            || interfaceId == type(IAdapterFees).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /// @inheritdoc IPositionAdapter
@@ -700,16 +703,19 @@ contract UniswapV3Adapter is
     ///      perf fee (fee-at-exit: skimmed whenever fees leave) — what holders can extract; idle and principal
     ///      stay gross.
     function position() external view returns (address[] memory tokens, uint256[] memory amounts) {
-        tokens = _tokens();
-        amounts = new uint256[](2);
-        amounts[0] = TOKEN0.balanceOf(address(this));
-        amounts[1] = TOKEN1.balanceOf(address(this));
-        uint256 id = tokenId;
-        if (id != 0) {
-            (uint256 held0, uint256 held1) = _positionAmounts(id);
-            amounts[0] += held0;
-            amounts[1] += held1;
-        }
+        uint256[] memory feeParts;
+        (tokens, amounts, feeParts) = _report();
+        // fees − floor(fees * bps / 10_000) per token: the same floor as the vault's exit-path `cut`.
+        uint256 bps = IPoolmigoVault(VAULT).performanceFeeBps();
+        amounts[0] -= feeParts[0].mulDiv(bps, BPS_DENOMINATOR);
+        amounts[1] -= feeParts[1].mulDiv(bps, BPS_DENOMINATOR);
+    }
+
+    /// @inheritdoc IAdapterFees
+    /// @dev tokensOwed + the pool accrual since the last poke (gross) — exactly the fee part {position} nets its
+    ///      perf-fee cut out of. A view: never pokes the position (no position → zero; zero liquidity → tokensOwed).
+    function fees() external view returns (address[] memory tokens, uint256[] memory amounts) {
+        (tokens,, amounts) = _report();
     }
 
     /// @notice Arithmetic-mean tick over `twapWindow` (reverts `UniswapV3Adapter__TwapUnavailable` if the pool
@@ -1038,20 +1044,41 @@ contract UniswapV3Adapter is
         ) = POSITION_MANAGER.positions(id);
     }
 
-    /// @dev Principal at spot + fees (tokensOwed + accrued since the position's last poke) NET of the vault's
-    ///      live perf fee: fees − floor(fees * bps / 10_000), the same floor as the vault's exit-path `cut`.
-    function _positionAmounts(uint256 id) internal view returns (uint256 amount0, uint256 amount1) {
+    /// @dev GROSS report shared by {position} and {fees}: `amounts` = idle + principal at spot `slot0` + fees;
+    ///      `feeParts` = fees (tokensOwed + accrued since the position's last poke), the fee part of `amounts`.
+    function _report()
+        internal
+        view
+        returns (address[] memory tokens, uint256[] memory amounts, uint256[] memory feeParts)
+    {
+        tokens = _tokens();
+        amounts = new uint256[](2);
+        feeParts = new uint256[](2);
+        amounts[0] = TOKEN0.balanceOf(address(this));
+        amounts[1] = TOKEN1.balanceOf(address(this));
+        uint256 id = tokenId;
+        if (id != 0) {
+            (uint256 principal0, uint256 principal1, uint256 fee0, uint256 fee1) = _positionAmounts(id);
+            amounts[0] += principal0 + fee0;
+            amounts[1] += principal1 + fee1;
+            (feeParts[0], feeParts[1]) = (fee0, fee1);
+        }
+    }
+
+    /// @dev Principal at spot and the position's GROSS fees (tokensOwed + accrued since its last poke).
+    function _positionAmounts(uint256 id)
+        internal
+        view
+        returns (uint256 amount0, uint256 amount1, uint256 fee0, uint256 fee1)
+    {
         PositionInfo memory p = _readPosition(id);
         (uint160 sqrtSpotX96, int24 spotTick,,,,,) = POOL.slot0();
         (amount0, amount1) = LiquidityAmounts.getAmountsForLiquidity(
             sqrtSpotX96, TickMath.getSqrtRatioAtTick(p.tickLower), TickMath.getSqrtRatioAtTick(p.tickUpper), p.liquidity
         );
-        (uint256 fee0, uint256 fee1) = _pendingFees(p, spotTick);
-        uint256 bps = IPoolmigoVault(VAULT).performanceFeeBps();
+        (fee0, fee1) = _pendingFees(p, spotTick);
         fee0 += p.tokensOwed0;
         fee1 += p.tokensOwed1;
-        amount0 += fee0 - fee0.mulDiv(bps, BPS_DENOMINATOR);
-        amount1 += fee1 - fee1.mulDiv(bps, BPS_DENOMINATOR);
     }
 
     /// @dev Mins for adding `desired` at the current spot: the amounts the expected liquidity needs,

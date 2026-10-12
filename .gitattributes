@@ -1,0 +1,10 @@
+# Paths withheld from `git archive` exports (audit bundle, any snapshot built with git archive).
+# These are internal working documents; the audit package keeps only code + audit docs (+ the evidence
+# reports). Policy context: contracts/audit/README.md ("Content policy") and contracts/audit/make-bundle.sh.
+# The directory-level lines drop the directory entry itself: with only the `/**` lines, `git archive`
+# still emits an empty `notes/` entry (the tree has a subdirectory). Leading `/` anchors to the repo root.
+/notes                  export-ignore
+/contracts/research     export-ignore
+notes/**                export-ignore
+contracts/research/**   export-ignore
+contracts/TASK_*.md     export-ignore

@@ -18,14 +18,14 @@ export type MarketOverride = 'auto' | 'open' | 'closed';
 export type Theme = 'light' | 'dark';
 
 interface AppState {
-  /** True for a real injected wallet OR the demo wallet. Gates every personal surface. */
+  /** True for a real injected wallet OR read-only mode. Gates every personal surface. */
   connected: boolean;
   connecting: boolean;
   initialized: boolean;
-  /** Real wallet address from the wallet layer; null while only the demo wallet is "connected". */
+  /** Real wallet address from the wallet layer; null while only read-only mode is "connected". */
   address: string | null;
-  /** The demo wallet (?wallet=demo / no-browser-wallet fallback) is active. */
-  demoWallet: boolean;
+  /** Read-only mode (the no-browser-wallet fallback) is active. */
+  readOnlyMode: boolean;
   user: UserState;
   /** Instant-claim forfeits added to this week's redistribution pool by the demo user. */
   forfeitsAdded: number;
@@ -33,8 +33,8 @@ interface AppState {
   theme: Theme;
   toasts: Toast[];
 
-  /** Demo wallet only. The real connect flow lives in src/chain/useConnectWallet.ts. */
-  connect: () => Promise<void>;
+  /** Read-only mode only. The real connect flow lives in src/chain/useConnectWallet.ts. */
+  enterReadOnlyMode: () => Promise<void>;
   /** Bridge from src/wallet: a real wallet connected (address) or went away (null). */
   setWallet: (address: string | null) => void;
   disconnect: () => void;
@@ -79,14 +79,14 @@ export const useStore = create<AppState>()(
       connecting: false,
       initialized: false,
       address: null,
-      demoWallet: false,
+      readOnlyMode: false,
       user: emptyUserState(),
       forfeitsAdded: 0,
       marketOverride: 'auto',
       theme: 'light',
       toasts: [],
 
-      connect: async () => {
+      enterReadOnlyMode: async () => {
         if (get().connected || get().connecting) return;
         set({ connecting: true });
         await new Promise((r) => setTimeout(r, 800));
@@ -94,7 +94,7 @@ export const useStore = create<AppState>()(
         set({
           connecting: false,
           connected: true,
-          demoWallet: true,
+          readOnlyMode: true,
           initialized: true,
           user: s.initialized ? { ...s.user, pendingUpdatedAt: Date.now() } : demoUserState(),
         });
@@ -102,7 +102,7 @@ export const useStore = create<AppState>()(
 
       setWallet: (address) =>
         set((s) => {
-          if (!address) return { address: null, connected: s.demoWallet, connecting: false };
+          if (!address) return { address: null, connected: s.readOnlyMode, connecting: false };
           return {
             address,
             connected: true,
@@ -113,10 +113,10 @@ export const useStore = create<AppState>()(
           };
         }),
 
-      disconnect: () => set({ connected: false, address: null, demoWallet: false }),
+      disconnect: () => set({ connected: false, address: null, readOnlyMode: false }),
 
       reset: () =>
-        set({ connected: false, connecting: false, initialized: false, address: null, demoWallet: false, user: emptyUserState(), forfeitsAdded: 0, toasts: [] }),
+        set({ connected: false, connecting: false, initialized: false, address: null, readOnlyMode: false, user: emptyUserState(), forfeitsAdded: 0, toasts: [] }),
 
       setMarketOverride: (o) => set({ marketOverride: o }),
       setTheme: (t) => set({ theme: t }),
@@ -256,12 +256,12 @@ export const useStore = create<AppState>()(
       name: 'mysun-demo-v1',
       storage: createJSONStorage(() => (typeof localStorage !== 'undefined' ? localStorage : memoryStorage)),
       // The real connection is the wallet layer's to restore, so `connected`/`address` are NOT persisted;
-      // only the demo wallet survives a reload (it has no source of truth other than this store).
+      // only read-only mode survives a reload (it has no source of truth other than this store).
       onRehydrateStorage: () => (state) => {
-        if (state) state.connected = state.demoWallet;
+        if (state) state.connected = state.readOnlyMode;
       },
       partialize: (s) => ({
-        demoWallet: s.demoWallet,
+        readOnlyMode: s.readOnlyMode,
         initialized: s.initialized,
         user: s.user,
         forfeitsAdded: s.forfeitsAdded,

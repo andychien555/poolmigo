@@ -2,7 +2,7 @@
  * AUTO-GENERATED — DO NOT EDIT.
  * Source: ../../shared/deployments.json + ../../shared/deployment.local.json + ../../shared/abis/*.json
  * Regenerate with: pnpm sync:shared
- * Generated from 2 registry chains, 3 vaults and 144 vault ABI entries.
+ * Generated from 2 registry chains, 4 vaults and 144 vault ABI entries.
  */
 
 /** Periphery contract addresses for a chain (zaps + the strategy layer's PlanExecutor) — from the registry or the local overlay. */
@@ -65,7 +65,7 @@ export const CHAINS: readonly ChainEntry[] = [
   {
     "chainId": 4663,
     "name": "Robinhood Chain",
-    "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+    "rpcUrl": "https://robinhood.drpc.org",
     "testnet": false,
     "explorerUrl": "https://robinhoodchain.blockscout.com",
     "status": "deployed",
@@ -77,7 +77,7 @@ export const CHAINS: readonly ChainEntry[] = [
   },
   {
     "chainId": 46630,
-    "name": "Localhost",
+    "name": "Demo Chain",
     "rpcUrl": "http://127.0.0.1:8547",
     "testnet": true,
     "status": "deployed",
@@ -85,9 +85,9 @@ export const CHAINS: readonly ChainEntry[] = [
     "fork": true,
     "mintable": false,
     "periphery": {
-      "zapIn": "0x6fc6A5b592406D9ee1e9a4e6BA20E03e73165B3A",
-      "zapOut": "0xBd422978E222C626b94e66f33791a61FbE662115",
-      "planExecutor": "0xaEDA30eC4368181EFa71Ea32fb57c673Ab930f8f"
+      "zapIn": "0xFC846911BdfB3b080F941A4C8425DA915C6397d2",
+      "zapOut": "0xB8E3Ab37DcA1091dBDAC0AE735a6c89DD5c5Bab2",
+      "planExecutor": "0x7215743362Ad8C5343AF6A75D884D97726806F6F"
     }
   }
 ];
@@ -97,7 +97,7 @@ export const DEPLOYMENTS: readonly ChainDeployment[] = [
   {
     "chainId": 4663,
     "name": "Robinhood Chain",
-    "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+    "rpcUrl": "https://robinhood.drpc.org",
     "testnet": false,
     "explorerUrl": "https://robinhoodchain.blockscout.com",
     "status": "deployed",
@@ -115,14 +115,25 @@ export const DEPLOYMENTS: readonly ChainDeployment[] = [
           "symbol": "sunEthLP"
         },
         "vault": "0x6767257AAFfCE82f6ba4B6E96EDBa80e9e1112FC",
-        "implementation": "0xfa82F1bD5c61842D7c9548DA250837b7062A0C38",
+        "implementation": "0x1b8a02FeF41cAA651a6C275d859D1950e08605E8",
+        "keeper": "0x27447D6F3eCAA5f0c6b89a5b3D2FA03ff3392eaa"
+      },
+      {
+        "key": "pons",
+        "label": "PONS / USDG basket (Robinhood Chain — v4 FablesRamp)",
+        "receipt": {
+          "name": "sunPonsLP",
+          "symbol": "sunPonsLP"
+        },
+        "vault": "0x0621252C87307Ed4F07a644F1Ad3a7bb7340c35f",
+        "implementation": "0x5af750fdf74e92fdfd4bcf24e8a576db0a8b5446",
         "keeper": "0x27447D6F3eCAA5f0c6b89a5b3D2FA03ff3392eaa"
       }
     ]
   },
   {
     "chainId": 46630,
-    "name": "Localhost",
+    "name": "Demo Chain",
     "rpcUrl": "http://127.0.0.1:8547",
     "testnet": true,
     "status": "deployed",
@@ -130,32 +141,32 @@ export const DEPLOYMENTS: readonly ChainDeployment[] = [
     "fork": true,
     "mintable": false,
     "periphery": {
-      "zapIn": "0x6fc6A5b592406D9ee1e9a4e6BA20E03e73165B3A",
-      "zapOut": "0xBd422978E222C626b94e66f33791a61FbE662115",
-      "planExecutor": "0xaEDA30eC4368181EFa71Ea32fb57c673Ab930f8f"
+      "zapIn": "0xFC846911BdfB3b080F941A4C8425DA915C6397d2",
+      "zapOut": "0xB8E3Ab37DcA1091dBDAC0AE735a6c89DD5c5Bab2",
+      "planExecutor": "0x7215743362Ad8C5343AF6A75D884D97726806F6F"
     },
     "vaults": [
       {
         "key": "demo",
-        "label": "USDG / WETH basket (RHC fork - real Uniswap v3 + v4)",
+        "label": "USDG / WETH basket (RHC fork - real Uniswap v3 + Fables ETH v4)",
         "receipt": {
           "name": "sunEthLP",
           "symbol": "sunEthLP"
         },
-        "vault": "0x0c269682E71B2Dc923641B948F63b85CFb31E95b",
-        "implementation": "0xF99adD941432EC09B498Ea1B680Be13F2e717D88",
+        "vault": "0x97076CA9EEE0E8637c0373A25d8d14a17f7c6a1e",
+        "implementation": "0x94Eb73BFE32ceD19204aa5ae93D2C75329f59469",
         "keeper": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
         "demoUser": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
       },
       {
-        "key": "stocks",
-        "label": "Stock-pair basket (5 stocks + mUSDG)",
+        "key": "pons",
+        "label": "PONS / USDG basket (RHC fork - real Uniswap v4 FablesRamp)",
         "receipt": {
-          "name": "sun5StocksLP",
-          "symbol": "sun5StocksLP"
+          "name": "sunPonsLP",
+          "symbol": "sunPonsLP"
         },
-        "vault": "0xe0b5452DDB57d5bDd9F49470BAc24BAD879C68E0",
-        "implementation": "0xF99adD941432EC09B498Ea1B680Be13F2e717D88",
+        "vault": "0xDFA3Da3c74b6EE3ebCA2cB62BC99e2B534557Db1",
+        "implementation": "0x3615068c29Cc00fACc14ca07e782D2CE87b2D79E",
         "keeper": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
         "demoUser": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
       }
@@ -182,7 +193,13 @@ export function findVault(chainId: number | undefined, key: string | null | unde
 export const vaultAbi = [
   {
     "type": "constructor",
-    "inputs": [],
+    "inputs": [
+      {
+        "name": "depositSplit_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
     "stateMutability": "nonpayable"
   },
   {

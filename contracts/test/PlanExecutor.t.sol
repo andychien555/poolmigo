@@ -16,6 +16,7 @@ import {MockToken} from "test/mocks/MockToken.sol";
 import {MockLiquidityAdapter} from "test/mocks/MockLiquidityAdapter.sol";
 import {MockSwapAdapter} from "test/mocks/MockSwapAdapter.sol";
 import {MockPlanVault} from "test/mocks/MockPlanVault.sol";
+import {VaultImplArgs} from "test/utils/VaultImplArgs.sol";
 
 /**
  * @notice Strategy layer P3 — {PlanExecutor} unit coverage.
@@ -523,7 +524,8 @@ contract PlanExecutorTest is Test {
                 abi.encodeCall(
                     MySunVaultUpgradeable(address(0)).initialize,
                     (owner, "sunEthLP", "sunEthLP", basket, owner, uint16(1500), 1_000e18, uint256(0))
-                )
+                ),
+                VaultImplArgs.proxyOpts()
             )
         );
         msa = new MockSwapAdapter(basket, address(vault), "MS", bytes32(uint256(3)));

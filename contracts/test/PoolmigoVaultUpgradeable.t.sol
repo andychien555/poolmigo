@@ -15,6 +15,7 @@ import {MockToken} from "test/mocks/MockToken.sol";
 import {MockBehaviorToken} from "test/mocks/MockBehaviorToken.sol";
 import {MockPositionAdapter} from "test/mocks/MockPositionAdapter.sol";
 import {BrokenPositionAdapter} from "test/mocks/BrokenPositionAdapter.sol";
+import {VaultImplArgs} from "test/utils/VaultImplArgs.sol";
 
 contract PoolmigoVaultUpgradeableTest is Test {
     MySunVaultUpgradeable internal vault;
@@ -108,7 +109,7 @@ contract PoolmigoVaultUpgradeableTest is Test {
     }
 
     function test_InitializeValidation() public {
-        MySunVaultUpgradeable impl = new MySunVaultUpgradeable();
+        MySunVaultUpgradeable impl = new MySunVaultUpgradeable(VaultImplArgs.depositSplit());
         address[] memory empty;
         address[] memory dup = new address[](2);
         dup[0] = address(usdg);
@@ -661,6 +662,16 @@ contract PoolmigoVaultUpgradeableTest is Test {
         uint256 bobShares = vault.deposit(basket, _amts(500e6, 0.5e18), 1, bob);
         assertEq(bobShares, 499_999_999_500_000_000_500);
         assertEq(vault.totalSupply(), GENESIS + bobShares);
+        // Deposit-deploy: Bob's pull (500e6 / 0.5e18 + 1 wei) lands 3:2 in the adapters (their holding ratio), floor;
+        // the 1-wei WETH dust stays idle. Holdings: v3 600e6 / 0.6e18 - 3e8, v4 400e6 / 0.4e18 - 2e8, idle 500e6 /
+        // 0.5e18 + 1.
+        (, uint256[] memory h3) = uniV3.position();
+        (, uint256[] memory h4) = uniV4.position();
+        assertEq(h3[0], 600e6);
+        assertEq(h3[1], 599_999_999_700_000_000);
+        assertEq(h4[0], 400e6);
+        assertEq(h4[1], 399_999_999_800_000_000);
+        assertEq(weth.balanceOf(address(vault)), 0.5e18 + 1);
 
         // Adapters are asked for sharesWad = floor(shares * 1e18 / S) — a third, to 1e-18.
         uint256 supply = vault.totalSupply();
@@ -671,12 +682,13 @@ contract PoolmigoVaultUpgradeableTest is Test {
         // floor(holding * sharesWad / 1e18) per adapter + the vault's exact idle slice; preview mirrors redeem
         // (exact on the linear mock adapters).
         assertEq(owed[0], 499_999_998);
-        assertEq(owed[1], 499_999_999_500_000_000);
-        // Versus exact pro-rata of the whole basket (floor(shares * T_i / S)): 1 raw unit short on USDG, exact on
-        // WETH. Under the former whole-bps fraction (3333 bps) the USDG shortfall was 16_666 units.
+        assertEq(owed[1], 499_999_999_499_999_998);
+        // Versus exact pro-rata of the whole basket (floor(shares * T_i / S)): 1 raw unit short on USDG, 2 on WETH
+        // (two adapter floors; exact before deposit-deploy, when Bob's WETH sat idle). Under the former whole-bps
+        // fraction (3333 bps) the USDG shortfall was 16_666 units.
         (, uint256[] memory totalsBefore) = vault.totalTokens();
         assertEq((bobShares * totalsBefore[0]) / supply - owed[0], 1);
-        assertEq((bobShares * totalsBefore[1]) / supply, owed[1]);
+        assertEq((bobShares * totalsBefore[1]) / supply - owed[1], 2);
 
         uint256 bobUsdgBefore = usdg.balanceOf(bob);
         uint256 bobWethBefore = weth.balanceOf(bob);
@@ -696,14 +708,14 @@ contract PoolmigoVaultUpgradeableTest is Test {
         // Adapters shrank by floor(holding * sharesWad / 1e18) each; remaining holders keep exactly the rest.
         (, uint256[] memory a3) = uniV3.position();
         (, uint256[] memory a4) = uniV4.position();
-        assertEq(a3[0], 300e6 - (300e6 * sharesWad) / 1e18);
-        assertEq(a4[1], 0.2e18 - (0.2e18 * sharesWad) / 1e18);
-        assertEq(a3[0], 200_000_001);
-        assertEq(a4[1], 133_333_333_377_777_778);
+        assertEq(a3[0], h3[0] - (h3[0] * sharesWad) / 1e18);
+        assertEq(a4[1], h4[1] - (h4[1] * sharesWad) / 1e18);
+        assertEq(a3[0], 400_000_001);
+        assertEq(a4[1], 266_666_666_622_222_223);
         // Rounding dust (a few raw units, no longer ~1bp of the adapter holdings) stays for the remaining holders.
         (, uint256[] memory totals) = vault.totalTokens();
         assertEq(totals[0], 1_000_000_002);
-        assertEq(totals[1], 1_000_000_000_000_000_001);
+        assertEq(totals[1], 1_000_000_000_000_000_003);
     }
 
     function test_RedeemFullSupplyDrainsEverything() public {
@@ -1295,6 +1307,7 @@ contract PoolmigoVaultUpgradeableTest is Test {
         // "missing-initializer-call" check for this known-safe reinitializer pattern.
         Options memory opts;
         opts.unsafeAllow = "missing-initializer,missing-initializer-call";
+        opts.constructorData = abi.encode(VaultImplArgs.depositSplit());
         vm.startPrank(owner);
         Upgrades.upgradeProxy(
             address(vault),
@@ -1350,7 +1363,7 @@ contract PoolmigoVaultUpgradeableTest is Test {
     }
 
     function test_UpgradeOnlyOwner() public {
-        MySunVaultUpgradeExample newImpl = new MySunVaultUpgradeExample();
+        MySunVaultUpgradeExample newImpl = new MySunVaultUpgradeExample(VaultImplArgs.depositSplit());
         vm.prank(alice);
         vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, alice));
         vault.upgradeToAndCall(address(newImpl), "");
@@ -1389,6 +1402,16 @@ contract PoolmigoVaultUpgradeableTest is Test {
         assertEq(shares, pShares);
         assertEq(u0 - usdg.balanceOf(bob), req[0]);
         assertEq(w0 - weth.balanceOf(bob), req[1]);
+        // Deposit-deploy: uniV3 is the only holder (splitBps > 0), so the whole pull joined it — the adapter holding H
+        // at redeem time is BOOT * splitBps / BPS + req per token; with splitBps == 0 nothing holds (bootstrap: the
+        // pull stays idle) and H = 0.
+        (, uint256[] memory h) = uniV3.position();
+        if (splitBps == 0) {
+            assertEq(h[0] + h[1], 0);
+        } else {
+            assertEq(h[0], (BOOT_USDG * splitBps) / BPS + req[0]);
+            assertEq(h[1], (BOOT_WETH * splitBps) / BPS + req[1]);
+        }
 
         vm.prank(bob);
         (, uint256[] memory sent) = vault.redeem(shares, bob);
@@ -1399,9 +1422,10 @@ contract PoolmigoVaultUpgradeableTest is Test {
         // Rounding dust stays in the vault for the remaining holders. Bound (x = exact pro-rata shares * T'_i / S'):
         //   req - x < 2 (ceil on deposit + the VA haircut, < shares / (S + shares) < 1);
         //   x - sent < H / 1e18 + 2 (adapter: floor of sharesWad costs < H / 1e18, floor of the slice < 1;
-        //   idle: floor < 1) — so req - sent <= H / 1e18 + 3 (was H / 10_000 + 2 under the bps fraction).
-        assertApproxEqAbs(sent[0], req[0], ((BOOT_USDG * splitBps) / BPS) / 1e18 + 3);
-        assertApproxEqAbs(sent[1], req[1], ((BOOT_WETH * splitBps) / BPS) / 1e18 + 3);
+        //   idle: floor < 1) — so req - sent <= H / 1e18 + 3 (was H / 10_000 + 2 under the bps fraction), H = the
+        //   adapter's holding at redeem time.
+        assertApproxEqAbs(sent[0], req[0], h[0] / 1e18 + 3);
+        assertApproxEqAbs(sent[1], req[1], h[1] / 1e18 + 3);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -1775,7 +1799,8 @@ contract PoolmigoVaultUpgradeableTest is Test {
         MySunVaultUpgradeable v = MySunVaultUpgradeable(
             Upgrades.deployUUPSProxy(
                 "MySunVaultUpgradeable.sol",
-                _initData(owner, "sun5StocksLP", "sun5StocksLP", basket, treasury, FEE_BPS, GENESIS, 0)
+                _initData(owner, "sun5StocksLP", "sun5StocksLP", basket, treasury, FEE_BPS, GENESIS, 0),
+                VaultImplArgs.proxyOpts()
             )
         );
         assertEq(v.name(), "sun5StocksLP");
@@ -1784,7 +1809,7 @@ contract PoolmigoVaultUpgradeableTest is Test {
 
         // Name and symbol are independent params; interior/edge whitespace is kept verbatim (only a
         // blank string is rejected).
-        MySunVaultUpgradeable impl = new MySunVaultUpgradeable();
+        MySunVaultUpgradeable impl = new MySunVaultUpgradeable(VaultImplArgs.depositSplit());
         MySunVaultUpgradeable w = MySunVaultUpgradeable(
             address(
                 new ERC1967ProxyLite(
@@ -1797,7 +1822,7 @@ contract PoolmigoVaultUpgradeableTest is Test {
     }
 
     function test_EmptyReceiptNameReverts() public {
-        MySunVaultUpgradeable impl = new MySunVaultUpgradeable();
+        MySunVaultUpgradeable impl = new MySunVaultUpgradeable(VaultImplArgs.depositSplit());
         string[4] memory blanks = ["", " ", "   ", "\t\n\r \x0b\x0c"];
         for (uint256 i; i < blanks.length; ++i) {
             vm.expectRevert(IPoolmigoVault.PoolmigoVault__EmptyReceiptName.selector);
@@ -1809,7 +1834,7 @@ contract PoolmigoVaultUpgradeableTest is Test {
     }
 
     function test_EmptyReceiptSymbolReverts() public {
-        MySunVaultUpgradeable impl = new MySunVaultUpgradeable();
+        MySunVaultUpgradeable impl = new MySunVaultUpgradeable(VaultImplArgs.depositSplit());
         string[4] memory blanks = ["", " ", "   ", "\t\n\r \x0b\x0c"];
         for (uint256 i; i < blanks.length; ++i) {
             vm.expectRevert(IPoolmigoVault.PoolmigoVault__EmptyReceiptSymbol.selector);
@@ -1833,7 +1858,10 @@ contract PoolmigoVaultUpgradeableTest is Test {
         MySunVaultUpgradeable b = MySunVaultUpgradeable(
             Upgrades.deployUUPSProxy(
                 "MySunVaultUpgradeable.sol",
-                _initData(owner, "sun5StocksLP", "sun5StocksLP", stockBasket, treasury, FEE_BPS, genesisB, 1_000_000e18)
+                _initData(
+                    owner, "sun5StocksLP", "sun5StocksLP", stockBasket, treasury, FEE_BPS, genesisB, 1_000_000e18
+                ),
+                VaultImplArgs.proxyOpts()
             )
         );
         address[] memory pair = new address[](2);
@@ -2009,6 +2037,8 @@ contract PoolmigoVaultUpgradeableTest is Test {
         vm.stopPrank();
         vm.prank(bob);
         uint256 bobShares = vault.deposit(basket, _amts(100e6, 0.1e18), 1, bob);
+        // Deposit-deploy: Bob's pull (100e6 USDG, binding; 0.1e18 - 1e8 WETH after the virtual-asset haircut) went 3:2
+        // into uniV3 / broken — broken now holds 240e6 USDG / 0.2e18 + 0.4 * (0.1e18 - 1e8) WETH.
 
         // (1) withdrawProportional reverts: every redemption is blocked (deposits still work); removeAdapter
         //     cannot help — the adapter still reports holdings.
@@ -2022,7 +2052,7 @@ contract PoolmigoVaultUpgradeableTest is Test {
         vm.prank(owner);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IPoolmigoVault.PoolmigoVault__AdapterStillFunded.selector, address(broken), address(usdg), 200e6
+                IPoolmigoVault.PoolmigoVault__AdapterStillFunded.selector, address(broken), address(usdg), 240e6
             )
         );
         vault.removeAdapter(IPositionAdapter(address(broken)));
@@ -2066,8 +2096,8 @@ contract PoolmigoVaultUpgradeableTest is Test {
             assertLe(sent[i], (bobShares * reach[i]) / supply);
             assertLe((bobShares * reach[i]) / supply - sent[i], 2); // one funded adapter + idle floors
         }
-        assertEq(usdg.balanceOf(address(broken)), 200e6, "stranded in the removed adapter");
-        assertEq(weth.balanceOf(address(broken)), 0.2e18);
+        assertEq(usdg.balanceOf(address(broken)), 240e6, "stranded in the removed adapter");
+        assertEq(weth.balanceOf(address(broken)), 239_999_999_960_000_000);
         vm.prank(alice);
         assertGt(vault.deposit(basket, _amts(100e6, 0.1e18), 1, alice), 0, "deposits work again");
 
@@ -2077,8 +2107,8 @@ contract PoolmigoVaultUpgradeableTest is Test {
         vm.prank(owner);
         vault.addAdapter(IPositionAdapter(address(broken)));
         (, uint256[] memory afterReAdd) = vault.totalTokens();
-        assertEq(afterReAdd[0] - beforeReAdd[0], 200e6);
-        assertEq(afterReAdd[1] - beforeReAdd[1], 0.2e18);
+        assertEq(afterReAdd[0] - beforeReAdd[0], 240e6);
+        assertEq(afterReAdd[1] - beforeReAdd[1], 239_999_999_960_000_000);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -2088,7 +2118,7 @@ contract PoolmigoVaultUpgradeableTest is Test {
     /// @dev The K-13 scenario: the proxy is upgraded with EMPTY call data, so the reinitializer is still unspent.
     ///      A third party cannot consume it; the owner can, exactly once.
     function test_InitializeExampleOnlyOwnerAfterEmptyUpgrade() public {
-        MySunVaultUpgradeExample impl = new MySunVaultUpgradeExample();
+        MySunVaultUpgradeExample impl = new MySunVaultUpgradeExample(VaultImplArgs.depositSplit());
         vm.prank(owner);
         vault.upgradeToAndCall(address(impl), "");
         MySunVaultUpgradeExample upgraded = MySunVaultUpgradeExample(address(vault));
@@ -2343,7 +2373,9 @@ contract PoolmigoVaultUpgradeableTest is Test {
 
     function _deployVaultWith(address[] memory tokens_, uint256 genesis, uint256 cap) internal returns (address) {
         return Upgrades.deployUUPSProxy(
-            "MySunVaultUpgradeable.sol", _initData(owner, NAME, SYMBOL, tokens_, treasury, FEE_BPS, genesis, cap)
+            "MySunVaultUpgradeable.sol",
+            _initData(owner, NAME, SYMBOL, tokens_, treasury, FEE_BPS, genesis, cap),
+            VaultImplArgs.proxyOpts()
         );
     }
 

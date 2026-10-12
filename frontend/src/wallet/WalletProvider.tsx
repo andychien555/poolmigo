@@ -150,6 +150,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   );
 
   const adopt = useCallback((option: WalletOption, provider: EIP1193Provider, accounts: readonly string[], chainId: number) => {
+    setError(null); // a connection that worked must not leave an older failure on screen
     setConn({ option, provider, address: getAddress(accounts[0]), chainId });
     setStatus('connected');
     writeLastWallet(option.id);

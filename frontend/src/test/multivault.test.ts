@@ -295,11 +295,13 @@ describe('generated helpers — vaultsForChain / defaultVault / findVault', () =
   });
 
   it('findVault: exact key on that chain only — no fallback', () => {
-    expect(findVault(localId, 'stocks')?.receipt.symbol).toBe(LOCAL.vaults.find((v) => v.key === 'stocks')?.receipt.symbol);
+    // The second local vault: "pons" on the RHC fork stack, "stocks" on the all-mock one.
+    const other = LOCAL.vaults[1].key;
+    expect(findVault(localId, other)?.receipt.symbol).toBe(LOCAL.vaults.find((v) => v.key === other)?.receipt.symbol);
     expect(findVault(localId, 'demo')?.receipt.symbol).toBe(LOCAL.vaults.find((v) => v.key === 'demo')?.receipt.symbol);
-    expect(findVault(localId, 'stocks')?.receipt.symbol).not.toBe(findVault(localId, 'demo')?.receipt.symbol);
+    expect(findVault(localId, other)?.receipt.symbol).not.toBe(findVault(localId, 'demo')?.receipt.symbol);
     expect(findVault(localId, 'nope')).toBeUndefined();
-    expect(findVault(localId, 'STOCKS')).toBeUndefined();
+    expect(findVault(localId, other.toUpperCase())).toBeUndefined();
     expect(findVault(localId, '')).toBeUndefined();
     expect(findVault(localId, null)).toBeUndefined();
     expect(findVault(localId, undefined)).toBeUndefined();
@@ -361,9 +363,9 @@ describe('vault selection — per chain, default = first, anything invalid falls
     expect(parseVaultSelection('')).toEqual({});
     expect(parseVaultSelection('not json')).toEqual({});
     expect(parseVaultSelection('[]')).toEqual({});
-    expect(parseVaultSelection('"stocks"')).toEqual({});
+    expect(parseVaultSelection('"pons"')).toEqual({});
     expect(parseVaultSelection('null')).toEqual({});
-    expect(parseVaultSelection(JSON.stringify({ [localId]: 'stocks' }))).toEqual({ [localId]: 'stocks' });
+    expect(parseVaultSelection(JSON.stringify({ [localId]: 'pons' }))).toEqual({ [localId]: 'pons' });
     expect(
       parseVaultSelection(JSON.stringify({ [localId]: 5, abc: 'demo', '0x1': 'demo', '046630': 'demo', '1': 'Bad_Key', '10': 'ok-key' })),
     ).toEqual({ '10': 'ok-key' });

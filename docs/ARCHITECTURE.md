@@ -3,7 +3,7 @@
 MySun is an **in-kind LP vault**: depositors supply the vault's basket tokens, and the vault
 manages liquidity positions across multiple DEX venues behind a single generic adapter interface.
 This document describes the moving parts at a conceptual level; it does not contain market-specific
-configuration.
+configuration. Live deployment addresses (Robinhood Chain 4663): see [Deployments](DEPLOYMENTS.md).
 
 ## Receipt token — `sun<Strategy>LP`
 
@@ -44,6 +44,11 @@ Properties worth stating explicitly:
 - `IPositionAdapter` is the venue boundary: an adapter knows how to move in-kind amounts into its
   venue, report its current position as (tokens, amounts), and withdraw in kind.
 - The vault holds idle balances plus N adapters; total assets = idle balances + adapter positions.
+- A deposit is put to work in the same transaction: after minting, the vault deploys the pulled amounts
+  across its adapters, per token in proportion to what each adapter currently holds of it (rounded down;
+  the rounding dust, and any token no adapter holds yet, stays idle). If any adapter refuses the deploy
+  (for example a venue price guard), the whole deposit reverts. The split itself is computed by a small
+  stateless helper contract; the vault still approves and funds every deploy itself.
 - A permissioned **keeper** executes `deployTo` / `pullFrom` / `rebalance`, moving capital between idle and
   adapters. Rebalance settles accrued venue fees/rewards back into the basket, and the performance
   fee is charged **only on fees/rewards, in kind — never on principal** — whenever accrued fees leave a

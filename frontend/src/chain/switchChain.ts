@@ -107,12 +107,15 @@ function hasMovableRpc(chain: Chain): boolean {
  * user added by hand, but a wallet that added the network for this site can update its own entry
  * (MetaMask asks before doing so), which is what turns "press switch" into "the network RPC is
  * current again". Failure is ignored on purpose — the switch itself already succeeded, and the
- * UI's manual fallback covers the wallets that refuse.
+ * UI's manual fallback covers the wallets that refuse. The wait is bounded too: an unanswered
+ * prompt is abandoned, never waited on.
  */
 async function refreshChainEntry(client: Client<Transport, Chain | undefined>, chain: Chain): Promise<void> {
   if (!hasMovableRpc(chain)) return;
   try {
-    await addEthereumChain(client, chain);
+    // The switch itself already succeeded: the refresh must never hold the switch UI hostage, so a
+    // prompt the user leaves unanswered is abandoned after a short budget.
+    await withTimeout(addEthereumChain(client, chain), REFRESH_ANSWER_TIMEOUT_MS, () => new Error('unanswered refresh'));
   } catch {
     // Ignored on purpose — see above.
   }
@@ -152,13 +155,63 @@ export function isUserRejected(err: unknown): boolean {
   return false;
 }
 
+/** How long a switch may wait for the wallet's answer before the app stops waiting. */
+export const SWITCH_ANSWER_TIMEOUT_MS = 60_000;
+/** A refresh of an entry the wallet already holds is best-effort: a short budget, then move on. */
+const REFRESH_ANSWER_TIMEOUT_MS = 20_000;
+
 /**
- * One sentence for a failed switch/add. A rejection is the common case and says so; anything else
- * ends with the manual parameters, because at that point only the user can add the network — an
- * add never overwrites an entry the wallet already stores.
+ * The wallet did not answer a switch within the budget. Nothing is cancelled — the wallet may
+ * still confirm later, and its `chainChanged` keeps the app in step — the app just stops waiting,
+ * so a prompt nobody answers can never pin the switch UI (the selector disables every row while a
+ * switch is in flight).
+ */
+export class WalletSwitchTimeoutError extends Error {
+  constructor() {
+    super('The wallet did not answer the network switch in time.');
+    this.name = 'WalletSwitchTimeoutError';
+  }
+}
+
+/** Was this the bounded-wait timeout? Walks the cause chain like the other matchers. */
+export function isWalletSwitchTimeout(err: unknown): boolean {
+  const seen = new Set<unknown>();
+  let node: unknown = err;
+  while (node && typeof node === 'object' && !seen.has(node)) {
+    seen.add(node);
+    const e = node as { name?: unknown; cause?: unknown; data?: { originalError?: unknown } };
+    if (e.name === 'WalletSwitchTimeoutError') return true;
+    node = e.cause ?? e.data?.originalError;
+  }
+  return false;
+}
+
+/**
+ * Resolve with `promise`, or reject with `onTimeout()` after `ms`. The underlying promise keeps
+ * running — `Promise.race` holds handlers on it, so a late rejection cannot surface as unhandled.
+ */
+export function withTimeout<T>(promise: Promise<T>, ms: number, onTimeout: () => Error): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(onTimeout()), ms);
+    }),
+  ]).finally(() => {
+    if (timer !== undefined) clearTimeout(timer);
+  });
+}
+
+/**
+ * One sentence for a failed switch/add. A rejection and a bounded-wait timeout say so; anything
+ * else ends with the manual parameters, because at that point only the user can add the network —
+ * an add never overwrites an entry the wallet already stores.
  */
 export function describeSwitchError(err: unknown, chain: Chain): string {
   if (isUserRejected(err)) return `The ${chain.name} switch was rejected in your wallet — press the button again when ready.`;
+  if (isWalletSwitchTimeout(err)) {
+    return `No answer from your wallet for the ${chain.name} switch — if a confirmation is waiting there, confirm it, then press the button again.`;
+  }
   const e = err as { shortMessage?: string; message?: string } | null | undefined;
   const short = (e?.shortMessage ?? e?.message ?? String(err)).trim().replace(/[.\s]+$/, '');
   const p = manualNetworkParams(chain);

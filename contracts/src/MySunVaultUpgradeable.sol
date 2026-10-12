@@ -26,8 +26,9 @@ import {IMySunVault} from "contracts/interfaces/IMySunVault.sol";
  * @custom:security-contact security@mysun.example
  */
 contract MySunVaultUpgradeable is PoolmigoVaultUpgradeable, IMySunVault {
-    /// @dev Empty on purpose: the inherited constructor locks the implementation (`_disableInitializers`). Declared
-    ///      so the ABI matches the legacy artifact's entry for entry (it carries the same `constructor()`).
+    /// @dev Forwarding only: the inherited constructor pins the {IDepositSplit} immutable and locks the implementation
+    ///      (`_disableInitializers`). Same `constructor(address)` as the legacy artifact, so the ABIs match entry for
+    ///      entry.
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {}
+    constructor(address depositSplit_) PoolmigoVaultUpgradeable(depositSplit_) {}
 }

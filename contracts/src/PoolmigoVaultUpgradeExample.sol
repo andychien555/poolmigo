@@ -27,6 +27,10 @@ contract PoolmigoVaultUpgradeExample is PoolmigoVaultUpgradeable {
     bytes32 private constant POOLMIGO_VAULT_UPGRADE_EXAMPLE_STORAGE_LOCATION =
         0xe88dea7c083e01e012518ef491c72a038543b8c9c30533bcc68d869cfab1fa00;
 
+    /// @dev Forwards the {IDepositSplit} address to the base (its immutable; the fixture adds no constructor logic).
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor(address depositSplit_) PoolmigoVaultUpgradeable(depositSplit_) {}
+
     function _example() private pure returns (PoolmigoVaultUpgradeExampleStorage storage $) {
         assembly {
             $.slot := POOLMIGO_VAULT_UPGRADE_EXAMPLE_STORAGE_LOCATION

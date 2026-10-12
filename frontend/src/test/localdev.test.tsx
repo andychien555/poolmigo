@@ -121,14 +121,14 @@ describe('LocalDevPanel — mint rows gated on mintable, the fork funds instead'
     expect(screen.getByText('Keeper')).toBeDefined();
   });
 
-  it('demo wallet: the fork CTA still offers the real connect path, and says why funding needs one', () => {
-    // The reported state: the demo wallet survives reloads and the header chip shows its address,
+  it('read-only mode: the fork CTA still offers the real connect path, and says why funding needs one', () => {
+    // The reported state: read-only mode survives reloads and the header chip shows its address,
     // so the page "looks connected" — the button must still be the live connect path, not a dead one.
-    useStore.setState({ connected: true, demoWallet: true });
+    useStore.setState({ connected: true, readOnlyMode: true });
     renderPanel(deployment({ fork: true, mintable: false }), ['USDG', 'WETH']);
     const fund = screen.getByRole('button', { name: 'Connect wallet' }) as HTMLButtonElement;
     expect(fund.disabled).toBe(false);
-    expect(screen.getByText(/demo wallet is read-only/)).toBeDefined();
-    useStore.setState({ connected: false, demoWallet: false });
+    expect(screen.getByText(/Read-only mode cannot fund or sign/)).toBeDefined();
+    useStore.setState({ connected: false, readOnlyMode: false });
   });
 });

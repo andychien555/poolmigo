@@ -44,7 +44,7 @@ cd ../frontend && pnpm sync:shared && pnpm dev
 
 Then in your wallet (MetaMask, Rabby, Coinbase Wallet, Brave, Phantom … — see **Wallets** below):
 
-1. **Add network** — pick "Localhost" in the header network selector (or
+1. **Add network** — pick "Demo Chain" in the header network selector (or
    press **Switch to …** on the live page) and approve the wallet's add-network prompt. By hand:
    RPC `http://127.0.0.1:8547`, chain id `46630`, currency `ETH`.
 2. **Import account** → Anvil account #2 private key
@@ -63,7 +63,7 @@ Then in your wallet (MetaMask, Rabby, Coinbase Wallet, Brave, Phantom … — se
      shows the computed shares, the per-token pull and your `minShares` floor.
    - **Redeem** — enter the vault's receipt token (or Max), check the in-kind breakdown, redeem.
 
-Without a wallet extension the picker offers a **demo wallet** instead: the prototype flows stay
+Without a wallet extension the picker offers **read-only mode** instead: the prototype flows stay
 usable, the live vault stays read-only. Without a running chain the live page says so and everything
 else keeps working.
 
@@ -71,7 +71,7 @@ If the demo stack is redeployed, re-run `pnpm sync:shared` (addresses are never 
 
 **Fork demo:** `contracts/script/fork-demo-up.sh` deploys the same stack on Robinhood Chain state
 (real USDG / WETH, real Uniswap v3 + v4 adapters on `demo`; `deployment.local.json` gets `"fork": true,
-"mintable": false`) — Local dev tools then hide the mint rows (wallets #0 / #2 are funded at deploy
+"mintable": false`) — Local dev tools then hide the mint rows (wallets #200 / #2 are funded at deploy
 time) and offer **Fund my wallet**: your wallet is topped up to 1 ETH for gas (`anvil_setBalance`)
 and the basket tokens are sent — every token by an anvil-impersonated call from the pool (a real
 token transfers, a mock mints; local node only, no wallet prompts either way); `pnpm e2e:local`
@@ -79,8 +79,9 @@ asserts those balances instead of minting; runbook in `contracts/README.md`.
 
 **Demo wallets:** every local stack runs on Anvil's standard test accounts — Foundry's public default
 mnemonic `test test test test test test test test test test test junk` (**world-known test keys:
-local demo only, never on a real network or with real value**). #0 `0xf39F…2266` and #2
-`0x3C44…93BC` (= `demoUser`) are funded at deploy time; #1 `0x7099…79C8` is the keeper. Import the
+local demo only, never on a real network or with real value**). On the fork demo, #200 `0xCD56…2083` (the
+deployer / vault owner) and #2 `0x3C44…93BC` (= `demoUser`) are funded at deploy time (the all-mock
+`DemoLocal.s.sol` stack still deploys from #0 `0xf39F…2266`); #1 `0x7099…79C8` is the keeper. Import the
 mnemonic in a wallet to act as one of them, or connect any wallet and top up with **Fund my wallet**
 — it supplies the basket tokens **and** gas (any wallet is raised to 1 ETH on the local node).
 
@@ -195,7 +196,7 @@ demand, so it costs a visitor who connects with a browser extension nothing.
 
 | Control | How |
 |---|---|
-| Connect the demo wallet | `?wallet=demo` on any URL, or **Use demo wallet** in the wallet picker |
+| Enter read-only mode | **Read-only mode** in the wallet picker |
 | Reset demo state | Click the **MySun** wordmark 5 times within 2.5 s |
 | Force US market status | `?market=closed` / `?market=open` / `?market=auto` (persists until changed) |
 | Open the deposit modal on Explore | `/?deposit=tsla-usdc` |

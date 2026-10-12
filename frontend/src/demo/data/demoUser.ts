@@ -4,7 +4,7 @@ import { VAULT_BY_ID } from './vaults';
 const DAY = 86_400_000;
 
 /**
- * Demo wallet state loaded on first connect — MOCK-DATA-SPEC §5.
+ * Prototype user state, loaded on first connect — MOCK-DATA-SPEC §5.
  * Cost basis is set so total Net PnL = +$412 (+3.4%).
  */
 export function demoUserState(now = Date.now()): UserState {

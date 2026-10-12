@@ -87,7 +87,9 @@ describe('app renders without a wallet', () => {
     } else {
       // Real reads landed: the basket table, the adapter labels and the receipt symbol are all live.
       expect(screen.getAllByText(BASKET_SYMBOL).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/uniswap-v/).length).toBeGreaterThan(0);
+      // Adapter positions arrive in a second read round (adapters → per-adapter position()); with
+      // small RPC batches that round lands later than the basket table, so wait for it.
+      await waitFor(() => expect(screen.getAllByText(/uniswap-v/).length).toBeGreaterThan(0), { timeout: 10_000 });
     }
   });
 });

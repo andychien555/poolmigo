@@ -1,0 +1,18 @@
+# Echidna run recipe for the RewardFarm property harness (test/echidna/RewardFarmEchidna.sol).
+# From contracts/ (crytic-compile on PATH):
+#   FOUNDRY_DYNAMIC_TEST_LINKING=false \
+#     echidna test/echidna/RewardFarmEchidna.sol --contract RewardFarmEchidna --config echidna.yaml
+# The env var is required: with forge's default dynamic test linking the build-info references generated
+# `foundry-pp/DeployHelper*.sol` files that crytic-compile 0.3.11 rejects ("Unknown file").
+# crytic-compile runs `forge clean` + a partial build: run `forge clean && forge build` before the next `forge test`.
+testMode: property
+prefix: "echidna_"
+testLimit: 50000
+seqLen: 100
+shrinkLimit: 5000
+coverage: false
+# Time also advances via the harness's own `warp` wrapper; keep Echidna's per-tx delay modest on top of it.
+maxTimeDelay: 604800
+maxBlockDelay: 60480
+# Compile through Foundry (remappings, solc 0.8.34, cancun) instead of a bare solc invocation.
+cryticArgs: ["--compile-force-framework", "foundry"]

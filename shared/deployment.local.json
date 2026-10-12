@@ -3,35 +3,35 @@
   "fork": true,
   "mintable": false,
   "periphery": {
-    "planExecutor": "0xaEDA30eC4368181EFa71Ea32fb57c673Ab930f8f",
-    "zapIn": "0x6fc6A5b592406D9ee1e9a4e6BA20E03e73165B3A",
-    "zapOut": "0xBd422978E222C626b94e66f33791a61FbE662115"
+    "planExecutor": "0x7215743362Ad8C5343AF6A75D884D97726806F6F",
+    "zapIn": "0xFC846911BdfB3b080F941A4C8425DA915C6397d2",
+    "zapOut": "0xB8E3Ab37DcA1091dBDAC0AE735a6c89DD5c5Bab2"
   },
   "rpcUrl": "http://127.0.0.1:8547",
   "vaults": [
     {
       "demoUser": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-      "implementation": "0xF99adD941432EC09B498Ea1B680Be13F2e717D88",
+      "implementation": "0x94Eb73BFE32ceD19204aa5ae93D2C75329f59469",
       "keeper": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
       "key": "demo",
-      "label": "USDG / WETH basket (RHC fork - real Uniswap v3 + v4)",
+      "label": "USDG / WETH basket (RHC fork - real Uniswap v3 + Fables ETH v4)",
       "receipt": {
         "name": "sunEthLP",
         "symbol": "sunEthLP"
       },
-      "vault": "0x0c269682E71B2Dc923641B948F63b85CFb31E95b"
+      "vault": "0x97076CA9EEE0E8637c0373A25d8d14a17f7c6a1e"
     },
     {
       "demoUser": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-      "implementation": "0xF99adD941432EC09B498Ea1B680Be13F2e717D88",
+      "implementation": "0x3615068c29Cc00fACc14ca07e782D2CE87b2D79E",
       "keeper": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-      "key": "stocks",
-      "label": "Stock-pair basket (5 stocks + mUSDG)",
+      "key": "pons",
+      "label": "PONS / USDG basket (RHC fork - real Uniswap v4 FablesRamp)",
       "receipt": {
-        "name": "sun5StocksLP",
-        "symbol": "sun5StocksLP"
+        "name": "sunPonsLP",
+        "symbol": "sunPonsLP"
       },
-      "vault": "0xe0b5452DDB57d5bDd9F49470BAc24BAD879C68E0"
+      "vault": "0xDFA3Da3c74b6EE3ebCA2cB62BC99e2B534557Db1"
     }
   ],
   "version": 2

@@ -23,7 +23,8 @@ the vault's basket order — and parallel to each other.
 - **`Redeemed(address indexed sender, address indexed receiver, uint256 shares, address[] tokens,
   uint256[] amounts)`** — an in-kind redemption; `amounts` is what was paid out.
 - **`Deployed(address indexed keeper, address indexed adapter, address[] tokens, uint256[] amounts)`** —
-  keeper `deployTo`: capital sent vault → adapter.
+  capital sent vault → adapter: by a keeper `deployTo`, or by a `deposit`'s automatic deploy (one per
+  adapter that received a non-zero slice, emitted before `Deposited`; `keeper` is then the depositor).
 - **`PulledFrom(address indexed keeper, address indexed adapter, uint256 sharesBps, address[] tokens,
   uint256[] amounts)`** — keeper `pullFrom`: `amounts` received adapter → vault (`sharesBps` = the
   fraction requested).

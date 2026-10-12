@@ -8,6 +8,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {PoolmigoCreate3, Create3Dispatcher} from "contracts/periphery/PoolmigoCreate3.sol";
 import {MySunVaultUpgradeable} from "contracts/MySunVaultUpgradeable.sol";
 import {MockToken} from "test/mocks/MockToken.sol";
+import {VaultImplArgs} from "test/utils/VaultImplArgs.sol";
 
 /// @notice CREATE3 factory + deterministic vault deployment. The cross-chain half of the proof
 ///         (two fresh anvils, shifted nonces, same deployer) lives in script/deterministic-address-check.sh.
@@ -189,7 +190,7 @@ contract Create3Test is Test {
         );
         Options memory opts;
         Upgrades.validateImplementation("MySunVaultUpgradeable.sol", opts);
-        address implementation = address(new MySunVaultUpgradeable());
+        address implementation = address(new MySunVaultUpgradeable(VaultImplArgs.depositSplit()));
 
         address predicted = factory.create3Address(address(this), SALT);
         bytes memory proxyCode = abi.encodePacked(type(ERC1967Proxy).creationCode, abi.encode(implementation, initData));

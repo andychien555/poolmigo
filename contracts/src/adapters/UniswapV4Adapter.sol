@@ -14,6 +14,7 @@ import {IPositionAdapter} from "contracts/interfaces/IPositionAdapter.sol";
 import {IPoolmigoVault} from "contracts/interfaces/IPoolmigoVault.sol";
 import {ILiquidityAdapter} from "contracts/interfaces/ILiquidityAdapter.sol";
 import {ISwapAdapter} from "contracts/interfaces/ISwapAdapter.sol";
+import {IAdapterFees} from "contracts/interfaces/IAdapterFees.sol";
 import {IUniswapV3PoolMinimal} from "contracts/adapters/uniswap/IUniswapV3PoolMinimal.sol";
 import {IUniswapV3FactoryMinimal} from "contracts/adapters/uniswap/IUniswapV3FactoryMinimal.sol";
 import {INonfungiblePositionManager} from "contracts/adapters/uniswap/INonfungiblePositionManager.sol";
@@ -104,6 +105,7 @@ contract UniswapV4Adapter is
     IPositionAdapter,
     ILiquidityAdapter,
     ISwapAdapter,
+    IAdapterFees,
     ERC165,
     Ownable2Step,
     ReentrancyGuardTransient
@@ -443,8 +445,9 @@ contract UniswapV4Adapter is
         // Idle slice (banked fees included), snapshotted before any principal flows in. The bank shrinks by its
         // own floor(sharesWad/1e18) slice, so it always stays <= the idle balance left behind.
         (tokens, amounts) = _vectors();
-        amounts[0] = _token0().balanceOf(address(this)).mulDiv(sharesWad, WAD);
-        amounts[1] = _token1().balanceOf(address(this)).mulDiv(sharesWad, WAD);
+        (amounts[0], amounts[1]) = _balances();
+        amounts[0] = amounts[0].mulDiv(sharesWad, WAD);
+        amounts[1] = amounts[1].mulDiv(sharesWad, WAD);
         fees = new uint256[](2);
         fees[0] = bankedFees0.mulDiv(sharesWad, WAD);
         fees[1] = bankedFees1.mulDiv(sharesWad, WAD);
@@ -507,8 +510,7 @@ contract UniswapV4Adapter is
         }
 
         (tokens, amounts) = _vectors();
-        amounts[0] = _token0().balanceOf(address(this));
-        amounts[1] = _token1().balanceOf(address(this));
+        (amounts[0], amounts[1]) = _balances();
         _send(to, amounts[0], amounts[1]);
         emit Unwound(to, amounts[0], amounts[1]);
     }
@@ -732,10 +734,11 @@ contract UniswapV4Adapter is
         return (id, lower, upper, liquidity, configVersion);
     }
 
-    /// @notice ERC-165: {ILiquidityAdapter} and {ISwapAdapter} (the vault derives its capability bits from these).
+    /// @notice ERC-165: {ILiquidityAdapter} and {ISwapAdapter} (the vault derives its capability bits from these) and
+    ///         the optional {IAdapterFees} view (not a capability — the vault never reads it).
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return interfaceId == type(ILiquidityAdapter).interfaceId || interfaceId == type(ISwapAdapter).interfaceId
-            || super.supportsInterface(interfaceId);
+            || interfaceId == type(IAdapterFees).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /// @inheritdoc IPositionAdapter
@@ -755,26 +758,22 @@ contract UniswapV4Adapter is
     ///      The fee part (bank + accrual) is NET of the vault's perf fee (fee-at-exit: skimmed whenever fees
     ///      leave) — what holders can extract; free idle and principal stay gross.
     function position() external view returns (address[] memory tokens, uint256[] memory amounts) {
-        (tokens, amounts) = _vectors();
-        amounts[0] = _token0().balanceOf(address(this));
-        amounts[1] = _token1().balanceOf(address(this));
-        uint256 fees0 = bankedFees0;
-        uint256 fees1 = bankedFees1;
-        uint256 id = tokenId;
-        if (id != 0) {
-            (uint256 principal0, uint256 principal1, uint256 accrued0, uint256 accrued1) = _positionAmounts(id);
-            amounts[0] += principal0 + accrued0;
-            amounts[1] += principal1 + accrued1;
-            fees0 += accrued0;
-            fees1 += accrued1;
-        }
+        uint256[] memory feeParts;
+        (tokens, amounts, feeParts) = _report();
         // ONE cut per token on the SUM of its fee parts (bank + accrual): gross − floor(fees * bps / 10_000) =
         // free idle + principal + (fees − cut). A whole-fee exit (harvest / full pull / unwind: accrual settled into
         // the bank, the bank reported as `fees`) gets the vault's identical `cut`; a partial redeem floors its bank
         // slice separately (≤1 wei per token apart).
         uint256 bps = IPoolmigoVault(VAULT).performanceFeeBps();
-        amounts[0] -= fees0.mulDiv(bps, BPS_DENOMINATOR);
-        amounts[1] -= fees1.mulDiv(bps, BPS_DENOMINATOR);
+        amounts[0] -= feeParts[0].mulDiv(bps, BPS_DENOMINATOR);
+        amounts[1] -= feeParts[1].mulDiv(bps, BPS_DENOMINATOR);
+    }
+
+    /// @inheritdoc IAdapterFees
+    /// @dev The bank + the PoolManager accrual (gross) — exactly the fee part {position} nets its perf-fee cut out of.
+    ///      A view: never pokes the position (no position / zero liquidity → the bank only).
+    function fees() external view returns (address[] memory tokens, uint256[] memory amounts) {
+        (tokens,, amounts) = _report();
     }
 
     /// @notice Arithmetic-mean tick of REF_POOL over `twapWindow` (reverts `UniswapV4Adapter__TwapUnavailable` if
@@ -907,16 +906,16 @@ contract UniswapV4Adapter is
         }
         params[1] = abi.encode(address(_token0()), address(_token1()));
 
-        uint256 before0 = _token0().balanceOf(address(this));
-        uint256 before1 = _token1().balanceOf(address(this));
+        (uint256 before0, uint256 before1) = _balances();
         _approvePermit2(_token0(), address(_positionManager()), max0);
         _approvePermit2(_token1(), address(_positionManager()), max1);
         _modifyLiquidities(actions, params);
         // Never leave a standing allowance on Permit2 or the PositionManager.
         _revokePermit2(_token0(), address(_positionManager()));
         _revokePermit2(_token1(), address(_positionManager()));
-        used0 = before0 - _token0().balanceOf(address(this));
-        used1 = before1 - _token1().balanceOf(address(this));
+        (uint256 after0, uint256 after1) = _balances();
+        used0 = before0 - after0;
+        used1 = before1 - after1;
     }
 
     /// @dev Collect the live position's accrued fees ONLY (`DECREASE_LIQUIDITY` 0 + `TAKE_PAIR` to this adapter)
@@ -965,11 +964,11 @@ contract UniswapV4Adapter is
         internal
         returns (uint256 received0, uint256 received1)
     {
-        uint256 before0 = _token0().balanceOf(address(this));
-        uint256 before1 = _token1().balanceOf(address(this));
+        (uint256 before0, uint256 before1) = _balances();
         _modifyLiquidities(actions, params);
-        received0 = _token0().balanceOf(address(this)) - before0;
-        received1 = _token1().balanceOf(address(this)) - before1;
+        (received0, received1) = _balances();
+        received0 -= before0;
+        received1 -= before1;
     }
 
     function _modifyLiquidities(bytes memory actions, bytes[] memory params) internal {
@@ -1190,10 +1189,40 @@ contract UniswapV4Adapter is
         amounts = new uint256[](2);
     }
 
+    /// @dev GROSS report shared by {position} and {fees}: `amounts` = balances (incl. the bank) + principal at the v4
+    ///      spot + the PoolManager accrual; `feeParts` = bank + accrual, the fee part of `amounts`. Read-only (the
+    ///      accrual is computed from feeGrowthInside, the position is never poked).
+    function _report()
+        internal
+        view
+        returns (address[] memory tokens, uint256[] memory amounts, uint256[] memory feeParts)
+    {
+        (tokens, amounts) = _vectors();
+        (amounts[0], amounts[1]) = _balances();
+        feeParts = new uint256[](2);
+        feeParts[0] = bankedFees0;
+        feeParts[1] = bankedFees1;
+        uint256 id = tokenId;
+        if (id != 0) {
+            (uint256 principal0, uint256 principal1, uint256 accrued0, uint256 accrued1) = _positionAmounts(id);
+            amounts[0] += principal0 + accrued0;
+            amounts[1] += principal1 + accrued1;
+            feeParts[0] += accrued0;
+            feeParts[1] += accrued1;
+        }
+    }
+
+    /// @dev This adapter's `[token0, token1]` balances (one copy of the pair of reads — EIP-170 budget).
+    function _balances() private view returns (uint256 balance0, uint256 balance1) {
+        balance0 = _token0().balanceOf(address(this));
+        balance1 = _token1().balanceOf(address(this));
+    }
+
     /// @dev Balances minus banked fees: what deploy may swap / add as principal, and the idle-refund amount.
     function _freeBalances() internal view returns (uint256 free0, uint256 free1) {
-        free0 = _token0().balanceOf(address(this)) - bankedFees0;
-        free1 = _token1().balanceOf(address(this)) - bankedFees1;
+        (free0, free1) = _balances();
+        free0 -= bankedFees0;
+        free1 -= bankedFees1;
     }
 
     function _lessOneWei(uint256 amount) internal pure returns (uint256) {

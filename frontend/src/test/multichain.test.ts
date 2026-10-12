@@ -5,7 +5,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createClient, custom, numberToHex, type Chain } from 'viem';
 import { CHAINS, DEPLOYMENTS } from '@/config/generated';
 import {
@@ -155,8 +155,8 @@ describe('chains.ts — registry-driven helpers', () => {
   });
 
   it('labels', () => {
-    expect(chainLabel(46630)).toBe('Localhost');
-    expect(chainShortLabel(46630)).toBe('Localhost');
+    expect(chainLabel(46630)).toBe('Demo Chain');
+    expect(chainShortLabel(46630)).toBe('Demo Chain');
     expect(chainLabel(4663)).toBe('Robinhood Chain');
     expect(chainLabel(1)).toBe('Chain 1');
     expect(chainLabel(undefined)).toBe('Unknown network');
@@ -187,7 +187,7 @@ describe('addEthereumChainParams — EIP-3085 shape', () => {
     const params = addEthereumChainParams(chainFor(46630)!);
     expect(params).toEqual({
       chainId: '0xb626',
-      chainName: 'Localhost',
+      chainName: 'Demo Chain',
       nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
       rpcUrls: [LOCAL.rpcUrl],
     });
@@ -198,7 +198,7 @@ describe('addEthereumChainParams — EIP-3085 shape', () => {
     expect(addEthereumChainParams(chainFor(4663)!)).toMatchObject({
       chainId: '0x1237',
       chainName: 'Robinhood Chain',
-      rpcUrls: ['https://rpc.mainnet.chain.robinhood.com'],
+      rpcUrls: ['https://robinhood.drpc.org'],
     });
   });
 
@@ -215,7 +215,7 @@ describe('addEthereumChainParams — EIP-3085 shape', () => {
 });
 
 /** An EIP-1193 wallet that knows some chains, and records every request. */
-function fakeWallet(known: number[], opts: { reject?: boolean; nested?: boolean; refuseRefresh?: boolean } = {}) {
+function fakeWallet(known: number[], opts: { reject?: boolean; nested?: boolean; refuseRefresh?: boolean; refreshNeverAnswers?: boolean } = {}) {
   const knows = new Set(known);
   const calls: { method: string; params?: unknown }[] = [];
   let current = known[0] ?? 1;
@@ -235,6 +235,8 @@ function fakeWallet(known: number[], opts: { reject?: boolean; nested?: boolean;
         return null;
       }
       if (method === 'wallet_addEthereumChain') {
+        // `refreshNeverAnswers`: a prompt the user never touches (bounded by the app).
+        if (opts.refreshNeverAnswers) return await new Promise<never>(() => {});
         // `refuseRefresh`: a wallet that will not touch an entry it already holds (hand-added, or
         // no dapp-update support) — the known-chain refresh must survive that refusal.
         if (opts.refuseRefresh) throw Object.assign(new Error('Invalid params.'), { code: -32602 });
@@ -264,6 +266,20 @@ describe('switchWalletChain — switch, or add then switch', () => {
     const w = fakeWallet([4663, 46630], { refuseRefresh: true });
     await expect(switchWalletChain(w.client, local)).resolves.toBe('switched');
     expect(w.current()).toBe(46630);
+  });
+
+  it('a refresh the wallet never answers cannot hold the switch (bounded wait)', async () => {
+    vi.useFakeTimers();
+    try {
+      const w = fakeWallet([4663, 46630], { refreshNeverAnswers: true });
+      const pending = switchWalletChain(w.client, local);
+      await vi.advanceTimersByTimeAsync(0); // let the chain reach the refresh's wait
+      await vi.advanceTimersByTimeAsync(20_000); // the bounded refresh wait elapses (20s)
+      await expect(pending).resolves.toBe('switched');
+      expect(w.current()).toBe(46630);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('a hosted chain is switched without a refresh attempt (its RPC URL is permanent)', async () => {
@@ -437,7 +453,7 @@ describe('manual network params + switch failure text', () => {
 
   it('manualNetworkParams is exactly what a visitor would type into a wallet', () => {
     expect(manualNetworkParams(local)).toEqual({
-      chainName: 'Localhost',
+      chainName: 'Demo Chain',
       chainId: 46630,
       rpcUrl: 'http://127.0.0.1:8547',
       currencySymbol: 'ETH',
@@ -454,5 +470,16 @@ describe('manual network params + switch failure text', () => {
     expect(msg).toContain('Invalid params.');
     expect(msg).toContain('http://127.0.0.1:8547');
     expect(msg).toContain('46630');
+  });
+
+  it('describeSwitchError: a bounded-wait timeout says so, without the manual params', () => {
+    const timeout = Object.assign(new Error('The wallet did not answer the network switch in time.'), {
+      name: 'WalletSwitchTimeoutError',
+    });
+    const msg = describeSwitchError(timeout, local);
+    expect(msg).toContain('No answer from your wallet');
+    expect(msg).not.toContain('RPC');
+    // Same walker style as the other matchers: a nested copy still matches.
+    expect(describeSwitchError({ message: 'x', cause: timeout }, local)).toContain('No answer');
   });
 });
