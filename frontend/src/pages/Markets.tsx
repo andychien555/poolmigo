@@ -101,7 +101,7 @@ export function Markets() {
           </div>
         </div>
 
-        <div className={cx('eyebrow hidden items-center gap-x-6 border-b border-stroke-strong px-4 pb-2.5 lg:grid', COLS)}>
+        <div className={cx('eyebrow hidden items-center border-b border-stroke-strong px-4 pb-2.5 lg:grid', COLS)}>
           <span>Vault</span>
           <span>Price within its range</span>
           <span className="justify-self-end"><SortHead label="APR" active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} /></span>
@@ -131,8 +131,10 @@ export function Markets() {
 type SortKey = 'tvl' | 'apr' | 'vol';
 
 // Columns: vault, its range, APR, TVL, 24h volume, action
-// A row only fits from lg; below that it stacks as on a phone.
-const COLS = 'lg:grid-cols-[minmax(190px,1.15fr)_minmax(220px,1.7fr)_96px_92px_104px_104px]';
+// A row only fits from lg; below that it stacks as on a phone. Up to xl the figure columns and gaps
+// are tighter, so the longest pair name keeps clear of the range meter's low price.
+const COLS =
+  'lg:grid-cols-[minmax(250px,1.15fr)_minmax(200px,1.7fr)_88px_76px_76px_76px] lg:gap-x-4 xl:grid-cols-[minmax(190px,1.15fr)_minmax(220px,1.7fr)_96px_92px_104px_104px] xl:gap-x-6';
 
 function VaultRow({ vault: v, tvl, market, onDeposit }: { vault: Vault; tvl: number; market: MarketStatus; onDeposit: () => void }) {
   const navigate = useNavigate();
