@@ -59,7 +59,7 @@ export function Markets() {
           {d.connected ? (
             <>
               <p className="eyebrow !text-weak">Your deposits</p>
-              <div className="display num !font-light text-[clamp(48px,6vw,80px)] leading-none tracking-[-0.02em]">{fmtUsd(d.depositsUsd, { compact: false })}</div>
+              <div className="display text-[clamp(48px,6vw,80px)] leading-none tracking-[-0.02em]">{fmtUsd(d.depositsUsd, { compact: false })}</div>
             </>
           ) : (
             <Welcome />
@@ -161,7 +161,7 @@ function VaultRow({ vault: v, tvl, market, onDeposit }: { vault: Vault; tvl: num
       {/* The 26px pair is centred on the name's first line, so a name that wraps on a phone does not pull it down */}
       <div className="flex min-w-0 items-start gap-3.5 [grid-area:pair] [--name:calc(23px*1.1)] lg:[grid-area:auto]">
         <span className="flex shrink-0 mt-[calc((var(--name)-26px)/2)]"><TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} /></span>
-        <div className="min-w-0 font-serif text-[23px] font-light leading-[var(--name)] text-strong lg:whitespace-nowrap">{vaultName(v)}</div>
+        <div className="min-w-0 font-serif text-[23px] font-normal leading-[var(--name)] text-strong lg:whitespace-nowrap">{vaultName(v)}</div>
       </div>
       <div className="min-w-0 [grid-area:meter] lg:[grid-area:auto]"><RangeMeter vault={v} market={market} /></div>
       <div ref={aprCell} className="justify-self-end whitespace-nowrap [grid-area:apr] lg:[grid-area:auto]" onMouseEnter={onEnter} onMouseLeave={() => setHover(false)}>

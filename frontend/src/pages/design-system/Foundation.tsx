@@ -39,8 +39,8 @@ const SCALE: Array<{ cls: string; use: string }> = [
 ];
 
 const WEIGHTS: Array<{ cls: string; face?: string; note: string }> = [
-  { cls: 'font-light', face: 'font-serif', note: 'Every title, in Newsreader' },
-  { cls: 'font-normal', note: 'Body, and every reading' },
+  { cls: 'font-light', face: 'font-serif', note: 'Page, card and dialog titles, in Newsreader' },
+  { cls: 'font-normal', note: 'Body, every reading, and vault names in Newsreader' },
   { cls: 'font-medium', note: 'Emphasis: labels, buttons' },
   { cls: 'font-semibold', note: 'Same as medium. Geist carries emphasis at 500' },
   { cls: 'font-bold', note: 'The ceiling. Rare' },

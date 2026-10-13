@@ -59,7 +59,7 @@ export function DepositCard({ vault: v, initialAmount, showVaultLink = true }: P
         {showVaultLink && (
           <div className="flex items-center gap-3">
             <TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} />
-            <span className="min-w-0 flex-1 font-serif text-xl font-light leading-tight text-strong">{vaultName(v)}</span>
+            <span className="min-w-0 flex-1 font-serif text-xl font-normal leading-tight text-strong">{vaultName(v)}</span>
             <Link to={`/vault/${v.id}`} className="shrink-0 text-xs text-weaker hover:text-strong">View vault →</Link>
           </div>
         )}

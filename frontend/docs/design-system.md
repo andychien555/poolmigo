@@ -193,7 +193,7 @@ const pal = usePalette();
 
 | Class | Face | Use |
 |---|---|---|
-| `font-serif` | Newsreader | Every title: page titles, vault names, card and dialog titles. Light (300) only, never bold |
+| `font-serif` | Newsreader | Every title: page titles, card and dialog titles at light (300); vault names at regular (400). Never bold |
 | `font-sans` | Geist | Everything read or operated |
 | `font-display` | Geist | Same stack as `font-sans`; used for readings (`display num`) |
 | `font-mono` | Geist Mono | Addresses, hashes, code |
@@ -210,7 +210,7 @@ comes from Fontshare; its licence does not allow the files in a public repositor
 | Class | What it is |
 |---|---|
 | `title` | Page-level title: serif, light, tight |
-| `display` | UI title (a card, a dialog, a panel): the same serif, light |
+| `display` | UI title (a card, a dialog, a panel), and the deposits total on Earn: the same serif, light |
 | `display num` | A reading: the sans stack at regular, so its figures are Switzer |
 | `eyebrow` | The small caps label that names a reading |
 | `wordmark` | The name in the header |
@@ -236,7 +236,7 @@ comes from Fontshare; its licence does not allow the files in a public repositor
 ### Weights
 
 `font-light` 300, `font-normal` 400, `font-medium` 500, `font-semibold` 500, `font-bold` 600. The serif is
-set at light only. Geist carries emphasis at 500, so `semibold` is mapped to it; 600 is the ceiling.
+set at light, and at regular for vault names. Geist carries emphasis at 500, so `semibold` is mapped to it; 600 is the ceiling.
 
 ---
 
