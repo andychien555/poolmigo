@@ -41,9 +41,9 @@ export function Tooltip({ content, children, side = 'top', align = 'center', cla
   );
 }
 
-export function InfoDot({ tip, wide }: { tip: ReactNode; wide?: boolean }) {
+export function InfoDot({ tip, wide, align }: { tip: ReactNode; wide?: boolean; align?: Props['align'] }) {
   return (
-    <Tooltip content={tip} wide={wide}>
+    <Tooltip content={tip} wide={wide} align={align}>
       <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-sm border border-stroke-stronger text-[9px] leading-none text-weaker cursor-help">
         i
       </span>

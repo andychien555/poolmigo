@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { VAULTS, VAULT_BY_ID, vaultName } from '@/demo/data/vaults';
+import { VAULTS, VAULT_BY_ID, VOLUME_SNAPSHOT_DATE, vaultName } from '@/demo/data/vaults';
 import { CHAINS, type ChainId } from '@/demo/data/chains';
 import { ChainFilter } from '@/components/ui/ChainFilter';
 import * as m from '@/demo/math';
@@ -14,6 +14,8 @@ import { Stat, StatRow } from '@/components/ui/Stat';
 import { TokenPair } from '@/components/ui/TokenIcon';
 import { BoostedApr } from '@/components/ui/BoostedApr';
 import { Button } from '@/components/ui/Button';
+import { DemoBadge } from '@/components/ui/DataBadge';
+import { InfoDot } from '@/components/ui/Tooltip';
 import { AprBreakdown } from '@/components/vault/AprBreakdown';
 import { DepositModal } from '@/components/deposit/DepositModal';
 import { Welcome } from '@/components/layout/Welcome';
@@ -82,7 +84,10 @@ export function Markets() {
       {/* The plaza: every vault as an instrument */}
       <div className="wrap pt-[52px] pb-[120px]">
         <div className="mb-[22px] flex flex-wrap items-end justify-between gap-x-7 gap-y-[18px]">
-          <h1 className="title text-[clamp(32px,3.6vw,46px)]">Vaults</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="title text-[clamp(32px,3.6vw,46px)]">Vaults</h1>
+            <DemoBadge />
+          </div>
           <div className="flex w-full flex-wrap items-center gap-x-[22px] gap-y-3.5 sm:w-auto">
             <ChainFilter value={chain} onChange={setChain} />
             <label className="flex h-10 w-full items-center gap-2 rounded border border-stroke-strong px-3 text-weaker focus-within:border-stroke-strongest sm:w-[220px]">
@@ -106,13 +111,13 @@ export function Markets() {
           <span>Price within its range</span>
           <span className="justify-self-end"><SortHead label="APR" active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} /></span>
           <span className="justify-self-end"><SortHead label="TVL" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} /></span>
-          <span className="justify-self-end"><SortHead label="1D Vol" active={sort.key === 'vol'} dir={sort.dir} onClick={() => toggleSort('vol')} /></span>
+          <span className="inline-flex items-center gap-1.5 justify-self-end"><SortHead label="1D Vol" active={sort.key === 'vol'} dir={sort.dir} onClick={() => toggleSort('vol')} /><VolumeNote /></span>
           <span />
         </div>
         <div className="eyebrow flex justify-end gap-[18px] px-3 lg:hidden">
           <SortHead label="APR" active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} />
           <SortHead label="TVL" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} />
-          <SortHead label="1D Vol" active={sort.key === 'vol'} dir={sort.dir} onClick={() => toggleSort('vol')} />
+          <span className="inline-flex items-center gap-1.5"><SortHead label="1D Vol" active={sort.key === 'vol'} dir={sort.dir} onClick={() => toggleSort('vol')} /><VolumeNote /></span>
         </div>
         <ul>
           {rows.map(({ v, tvl }) => (
@@ -132,7 +137,8 @@ type SortKey = 'tvl' | 'apr' | 'vol';
 
 // Columns: vault, its range, APR, TVL, 24h volume, action
 // A row only fits from lg; below that it stacks as on a phone. Up to xl the figure columns and gaps
-// are tighter, so the longest pair name keeps clear of the range meter's low price.
+// are tighter, so the longest pair name keeps clear of the range meter's low price. A longer name is
+// cut with an ellipsis rather than run into it: every row is its own grid, so the column cannot size to it.
 const COLS =
   'lg:grid-cols-[minmax(250px,1.15fr)_minmax(200px,1.7fr)_88px_76px_76px_76px] lg:gap-x-4 xl:grid-cols-[minmax(190px,1.15fr)_minmax(220px,1.7fr)_96px_92px_104px_104px] xl:gap-x-6';
 
@@ -161,7 +167,7 @@ function VaultRow({ vault: v, tvl, market, onDeposit }: { vault: Vault; tvl: num
       {/* The 26px pair is centred on the name's first line, so a name that wraps on a phone does not pull it down */}
       <div className="flex min-w-0 items-start gap-3.5 [grid-area:pair] [--name:calc(23px*1.1)] lg:[grid-area:auto]">
         <span className="flex shrink-0 mt-[calc((var(--name)-26px)/2)]"><TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} /></span>
-        <div className="min-w-0 font-serif text-[23px] font-normal leading-[var(--name)] text-strong lg:whitespace-nowrap">{vaultName(v)}</div>
+        <div className="min-w-0 font-serif text-[23px] font-normal leading-[var(--name)] text-strong lg:truncate" title={vaultName(v)}>{vaultName(v)}</div>
       </div>
       <div className="min-w-0 [grid-area:meter] lg:[grid-area:auto]"><RangeMeter vault={v} market={market} /></div>
       <div ref={aprCell} className="justify-self-end whitespace-nowrap [grid-area:apr] lg:[grid-area:auto]" onMouseEnter={onEnter} onMouseLeave={() => setHover(false)}>
@@ -192,10 +198,22 @@ function VaultRow({ vault: v, tvl, market, onDeposit }: { vault: Vault; tvl: num
 
 function SortHead({ label, active, dir, onClick }: { label: string; active: boolean; dir: 'asc' | 'desc'; onClick: () => void }) {
   return (
-    <button onClick={onClick} className={cx('inline-flex items-center gap-[5px] uppercase tracking-label hover:text-strong', active && 'text-strong')} aria-sort={active ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'}>
+    <button onClick={onClick} className={cx('inline-flex items-center gap-[5px] whitespace-nowrap uppercase tracking-label hover:text-strong', active && 'text-strong')}>
       {label}
-      {/* Only the sorted column shows its arrow. The others keep the arrow's place, so a label never shifts */}
-      <span aria-hidden className={cx(!active && 'invisible')}>{active && dir === 'asc' ? '↑' : '↓'}</span>
+      {/* The sorted column shows its direction, the others a quieter ↕, so every label reads as one that sorts */}
+      <span aria-hidden className={cx(!active && 'opacity-50')}>{active ? (dir === 'desc' ? '↓' : '↑') : '↕'}</span>
+      {/* aria-sort is only read on a column header, and these rows are a list, not a table: the state goes in the name */}
+      <span className="sr-only">{active ? `, sorted ${dir === 'desc' ? 'descending' : 'ascending'}` : ', sortable'}</span>
     </button>
+  );
+}
+
+/** What the 1D Vol figure is: the whole pool's, from one day's snapshot, not the vault's own and not live. */
+function VolumeNote() {
+  return (
+    <InfoDot
+      align="end"
+      tip={<span className="normal-case tracking-normal">The whole pool's trading volume over 24 hours, not this vault's share. Snapshot from {VOLUME_SNAPSHOT_DATE}, not updated live.</span>}
+    />
   );
 }

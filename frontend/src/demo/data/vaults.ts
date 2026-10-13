@@ -43,6 +43,9 @@ function pairPrice(token0: string, token1: string): number {
  * demo figures until the vaults are live. 24h volume is each pool's 1D volume as listed on the
  * Robinhood Chain pools page on 2026-10-05.
  */
+/** The day `volume24h` was read, as the Earn table says it. Change it with the figures. */
+export const VOLUME_SNAPSHOT_DATE = 'Oct 5, 2026';
+
 export const VAULTS: Vault[] = [
   {
     id: 'eth-usdg',

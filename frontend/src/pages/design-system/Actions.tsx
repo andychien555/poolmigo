@@ -10,7 +10,7 @@ type Variant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
 
 const VARIANTS: Array<{ variant: Variant; label: string; use: string }> = [
   { variant: 'primary', label: 'Deposit', use: 'The standard action. Sand, so it never competes with the price.' },
-  { variant: 'accent', label: 'Connect wallet', use: 'The opening call to action. One in view at a time.' },
+  { variant: 'accent', label: 'Connect wallet', use: 'The one main action on a screen: the opening call to action, the deposit card\'s submit. Never two in view.' },
   { variant: 'secondary', label: 'Withdraw', use: 'The other action beside a primary one, or the action that takes value out.' },
   { variant: 'ghost', label: 'Cancel', use: 'Stepping back inside a panel or dialog.' },
   { variant: 'danger', label: 'Remove', use: 'Destructive and irreversible. Outlined, never filled.' },

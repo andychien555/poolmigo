@@ -52,11 +52,11 @@ function Typography() {
       id="typography"
       title="Typography"
       source="tailwind.config.ts · src/index.css"
-      lede="Four faces, each with one job. The serif sets every title, Geist carries the interface, and every figure is set in Switzer so a column of numbers reads as one hand."
+      lede="Four faces, each with one job. The serif sets every title, Geist carries the interface, and every figure in a reading is set in Switzer so a column of numbers reads as one hand."
     >
       <SubSection title="Families">
         <div className="divide-y divide-stroke-weak border-y border-stroke-weak">
-          <Family name="Newsreader" cls="font-serif" role="Every title: the page title, vault names, card and dialog titles. Light only, never bold. Italic marks one word.">
+          <Family name="Newsreader" cls="font-serif" role="Every title: the page title, vault names, card and dialog titles. Light, with vault names at regular; never bold. Italic marks one word.">
             <p className="title text-[clamp(38px,5vw,64px)] leading-[1.02]">Markets move. Your range <em>follows.</em></p>
           </Family>
           <Family name="Geist" cls="font-sans" role="Everything read or operated: labels, body, controls.">
@@ -74,7 +74,7 @@ function Typography() {
       <SubSection title="Roles" note="A handful of utility classes carry the repeated treatments, so a page asks for a role rather than rebuilding it from sizes and weights.">
         <div className="divide-y divide-stroke-weak border-y border-stroke-weak">
           <Role cls=".title" note="Page-level titles: the serif, light, tight"><span className="title text-2xl">Vault token price</span></Role>
-          <Role cls=".display" note="UI titles: the same serif, light, a size down"><span className="display text-md">Price range</span></Role>
+          <Role cls=".display" note="UI titles, a size down, and the deposits total on Earn: the same serif, light"><span className="display text-md">Price range</span></Role>
           <Role cls=".display.num" note="A reading: the sans stack at regular, so the figures are Switzer"><span className="display num text-[22px] leading-7">$2.4M</span></Role>
           <Role cls=".eyebrow" note="The small caps label that names a reading"><span className="eyebrow">Total TVL</span></Role>
           <Role cls=".wordmark" note="The name in the header"><span className="wordmark">{BRAND.name}</span></Role>
@@ -289,7 +289,7 @@ function Surfaces() {
       id="surfaces"
       title="Surfaces & depth"
       source="tailwind.config.ts"
-      lede="Depth is tonal. A surface gets lighter as it comes forward, an edge is a hairline, and only what floats above the page casts a shadow."
+      lede="Depth is tonal. The page is Night, cards and the side sheet are Dusk, menus are Mauve; an edge is a hairline, and only what floats above the page casts a shadow."
     >
       <SubSection title="The stack">
         <div className="rounded-lg border border-stroke-weak bg-background-base p-4 sm:p-6">

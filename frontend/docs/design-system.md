@@ -98,7 +98,7 @@ The utility picks the family.
 | `text-weak` | `sand-700` | Supporting text, labels beside a value |
 | `text-weaker` | `sand-500` | Eyebrows, hints, placeholders, axis ticks |
 | `text-disabled` | `sand-500` | Text on a disabled control |
-| `text-inverse-strong` | `plum-950` | Text on a sand fill: primary button, tooltip, selected segment |
+| `text-inverse-strong` | `plum-950` | Text on a sand fill: primary button, tooltip |
 | `text-on-accent` | `plum-950` | Text on a sun fill |
 | `text-accent` | `sun-1000` | The price, reward amounts, text links |
 | `text-accent-bright` | `sun-bright` | Price readout, hovered text link |
@@ -122,8 +122,8 @@ loss have their own colours and always come with words or a sign, never colour a
 | `bg-background-elevated` | `plum-900` | Cards, dialogs, toasts |
 | `bg-background-popover` | `plum-700` | Menus and popovers |
 
-Depth is tonal: the page is Night, and a surface gets lighter as it comes forward, cards in Dusk and menus
-in Mauve. A well (`fill-recessed`) goes back down to Night.
+Depth is tonal: the page is Night; cards, dialogs and the side sheet are Dusk; menus and popovers are
+Mauve. A well (`fill-recessed`) goes back down to Night.
 
 ## Fill colours
 
@@ -135,7 +135,7 @@ in Mauve. A well (`fill-recessed`) goes back down to Night.
 | `bg-fill-selected` | `plum-700` | The chosen chip |
 | `bg-fill-disabled` | `plum-700` | A disabled filled button |
 | `bg-fill-track` | `sand-120` | Switch off, progress and slider tracks |
-| `bg-fill-primary` | `sand-1000` | Selected segment, switch on, slider thumb |
+| `bg-fill-primary` | `sand-1000` | Switch on, slider thumb |
 | `bg-fill-primary-hover` | `sand-bright` | The highlight on a primary key |
 | `bg-fill-primary-shade` | `sand-700` | The body of a primary key, under its highlight |
 | `bg-fill-accent` | `sun-1000` | The one main action on a screen |
@@ -159,7 +159,7 @@ separate tokens because they are separate roles; pick by role, not by what looks
 
 | Class | Points at | Use |
 |---|---|---|
-| `border-stroke-weak` | `plum-700` | Dividers, quiet edges. The default border colour |
+| `border-stroke-weak` | `sand-120` | Dividers, quiet edges. The default border colour |
 | `border-stroke-strong` | `sand-240` | Card edges, control boundaries, rulers |
 | `border-stroke-stronger` | `sand-500` | A boundary on hover |
 | `border-stroke-strongest` | `sand-700` | An outlined button on hover |
@@ -175,6 +175,9 @@ separate tokens because they are separate roles; pick by role, not by what looks
 
 The four neutral steps are named by weight, not by state, because the same weight serves hover in one
 place and rest in another. `border` with no colour class resolves to `stroke-weak`.
+
+Inside a popover (`background-popover`, Mauve) a divider or an inner edge is `stroke-strong`: `stroke-weak`
+sits too close to Mauve to read there. The APR breakdown and the wallet menu follow this.
 
 ### Chart colours
 
@@ -199,7 +202,8 @@ const pal = usePalette();
 | `font-mono` | Geist Mono | Addresses, hashes, code |
 
 **Figures.** A face named "Switzer Figures" leads both sans stacks. Its `unicode-range` covers only the
-digits and `$ % + , . −`, so every figure is set in Switzer and every letter in Geist, with no class.
+digits and `$ % + , . −`, so every figure in a reading is set in Switzer and every letter in Geist, with no
+class. A figure set as a title (the deposits total on Earn, a `display` with no `num`) takes the serif's own.
 Figures are tabular everywhere (`body` sets `tnum`); `num` restates it where needed.
 
 **Fonts are served from CDNs.** Newsreader, Geist and Geist Mono come from Google Fonts (OFL). Switzer
@@ -276,7 +280,7 @@ Depth comes from tone and hairlines. Only what leaves the page plane casts a sha
 | `shadow-well` | A recess cut into a surface: shade under its top edge, the bottom rim catching the light. Applied by `well` |
 
 Cards and panels take none. Keys and glass carry their own stacks of shadows in `index.css`
-(`btn-key`, `btn-glass`, `seg-thumb-key`); they are part of the material, not tokens.
+(`btn-key`, `btn-glass`, `seg-thumb-glass`); they are part of the material, not tokens.
 
 ## Motion
 
@@ -335,11 +339,9 @@ component picks a material by class; the colours come from tokens.
 | `btn-glass` | Dark glass: a 5% tint of `--glass` (default `strong`) with a lit top edge |
 | `btn-glass-danger` | Glass in `error` |
 | `btn-glass-warning` | Glass in `warning`. The header's network and wallet buttons add it when the wallet is on the wrong network |
-| `seg` | A glass track for a segmented control. Unused: Segmented is a `groove` |
-| `seg-thumb` + `seg-thumb-key` | The sand key that sits under the chosen segment of a `seg`. Unused, as `seg` |
-| `seg-thumb` + `seg-thumb-glass` | The same key in glass, opaque underneath so it reads the same over anything |
+| `seg-thumb` + `seg-thumb-glass` | The glass key under the chosen option of a `groove`, opaque underneath so it reads the same over anything |
 | `well` | A recess cut into a surface: `fill-recessed` at 60% with `shadow-well`. The field an amount is typed into |
-| `groove` | A `well` that holds a choice: the options sit in the recess and the chosen one is raised out of it as a glass key. Segmented and the deposit card's token choice |
+| `groove` | A `well` that holds a choice: the options sit in the recess and the chosen one is raised out of it as a glass key. A `stroke-strong` hairline inside its edge keeps it visible on a ground of its own colour. Segmented and the deposit card's token choice |
 
 Every state of a key is the same stack of shadows in the same order, so a state change only fades layers
 in and out. A state that drops a layer keeps it at zero alpha. Keep that order when adding a state, or
@@ -385,12 +387,12 @@ choice. The key is a single element, `SlidingKey`, that measures the chosen item
 (300ms, `ease-dusk`) when the choice changes. Its first placement is not animated. It re-measures after
 every render and when the track resizes, so a label changing width keeps it in place.
 
-`SlidingKey` can be used on any track that has relative positioning and is a `seg` or a `groove`:
+`SlidingKey` can be used on any `groove`:
 
 ```tsx
 const track = useRef<HTMLDivElement>(null);
 <div ref={track} className="well groove grid">
-  <SlidingKey track={track} chosen='[aria-pressed="true"]' tone="glass" />
+  <SlidingKey track={track} chosen='[aria-pressed="true"]' />
   {options.map((o) => <button aria-pressed={value === o.id} … />)}
 </div>
 ```
@@ -399,14 +401,12 @@ const track = useRef<HTMLDivElement>(null);
 |---|---|---|
 | `track` | `RefObject<HTMLElement>` | The track the key is rendered inside |
 | `chosen` | `string` | A selector for the chosen item inside the track, e.g. `[aria-selected="true"]` |
-| `tone` | `'key' \| 'glass'` | `key` (default) is the lit sand key; `glass` is the secondary button's material |
 
 Render it as the track's first child, before the options. The options carry the label colour
-(`text-inverse-strong` on a sand key, `text-strong` on glass); the key draws nothing but itself.
+(`text-strong` on the chosen one); the key draws nothing but itself.
 
-Segmented and the deposit card's token choice are both the `groove` + `glass` form. Segmented sizes to
-its labels; the token choice uses equal columns, so three or four options share one row. Nothing uses
-the `seg` track or the `key` tone at the moment.
+Segmented and the deposit card's token choice are both grooves. Segmented sizes to its labels; the
+token choice uses equal columns, so three or four options share one row.
 
 ## Component inventory
 
@@ -461,8 +461,8 @@ not a bug in the token layer.
   field use `stroke-strong`, and the vault search uses `stroke-strongest`. One of these should be the rule.
 - **A disabled `danger` button keeps its red label.** The glass drops to the plain disabled edge, but the
   label stays `text-error` where every other variant turns `text-disabled`.
-- **Keys and wells are rounded.** Buttons (10px, 8px at `xs`), segmented tracks (8px) and wells (11px)
-  set their radius in `index.css`, outside the radius scale and against "everything structural is
+- **Keys and wells are rounded.** Buttons (10px, 8px at `xs`), wells and grooves (11px, the key inside a
+  groove 8px) set their radius in `index.css`, outside the radius scale and against "everything structural is
   square-cut". Cards, chips and menus are still 3–4px.
 - **Tokens the keys left behind.** Since buttons and segments became keys, `stroke-primary-hover`,
   `stroke-accent-hover` and `fill-selected` are used by no component. The keys draw from

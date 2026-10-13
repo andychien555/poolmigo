@@ -20,7 +20,7 @@ export function Segmented<T extends string>({ value, onChange, options, size = '
 
   return (
     <div ref={track} className={cx('well groove inline-flex', className)} role="tablist">
-      <SlidingKey track={track} chosen='[aria-selected="true"]' tone="glass" />
+      <SlidingKey track={track} chosen='[aria-selected="true"]' />
       {options.map((o) => (
         <button
           key={o.value}

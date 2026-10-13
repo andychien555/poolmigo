@@ -85,7 +85,6 @@ function ToggleSection() {
             { name: 'checked', type: 'boolean', note: 'On or off.' },
             { name: 'onChange', type: '(v: boolean) => void', note: 'Called with the new value.' },
             { name: 'label', type: 'string', note: 'The accessible name. Always pass it; the visible text beside the switch is not linked to it.' },
-            { name: 'tone', type: "'primary' | 'accent'", def: "'primary'", note: 'No setting uses accent today.' },
           ]}
         />
       </SubSection>

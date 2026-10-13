@@ -17,7 +17,8 @@ export function AprBreakdown({ vault, compact, className }: Props) {
         <span className="text-weak">Total APR</span>
         <span className={cx('display num', compact ? 'text-lg' : 'text-2xl')}>{fmtPct(b.totalApr)}</span>
       </div>
-      <div className="my-2 border-t border-stroke-weak" />
+      {/* Always shown in a popover: on Mauve, stroke-weak is too close to the ground to read */}
+      <div className="my-2 border-t border-stroke-strong" />
       <div className="flex items-center justify-between py-1">
         <span className="text-weak">Fee APR (7d avg)</span>
         <span className="font-medium text-strong">{fmtPct(b.feeApr)}</span>

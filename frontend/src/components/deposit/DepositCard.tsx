@@ -147,7 +147,7 @@ function TokenChoice({ options, value, onChange }: { options: Array<{ id: string
   const track = useRef<HTMLDivElement>(null);
   return (
     <div ref={track} className="well groove grid w-full" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
-      <SlidingKey track={track} chosen='[aria-pressed="true"]' tone="glass" />
+      <SlidingKey track={track} chosen='[aria-pressed="true"]' />
       {options.map((o) => (
         <button
           key={o.id}
