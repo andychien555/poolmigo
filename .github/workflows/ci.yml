@@ -29,7 +29,16 @@ jobs:
         run: forge fmt --check
 
       - name: Build (with sizes)
-        run: forge build --sizes
+        # Full sizes table for the log only: `forge build --sizes` fails on ANY oversize artifact, and test-only
+        # artifacts are oversize by design (the invariant handlers; the upgrade fixtures inherit the whole vault).
+        # Enforcement is the next step.
+        run: forge build --sizes || true
+
+      - name: Size gate (deployable contracts only)
+        # EIP-170 / EIP-3860 for every `contract` under src/, minus the documented test-only exemptions
+        # (MySunVaultUpgradeExample / PoolmigoVaultUpgradeExample — upgrade-path fixtures, never deployed live;
+        # since deposit-deploy they exceed EIP-170). A missing artifact also fails (silent compile failure).
+        run: script/sizes-gate.sh
 
       - name: Clean build info (OZ upgrades plugin requirement)
         run: forge clean

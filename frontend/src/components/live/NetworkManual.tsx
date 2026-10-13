@@ -4,16 +4,18 @@
  * `wallet_addEthereumChain` is best-effort — wallets can refuse plain-http LAN RPCs, not implement
  * the method over WalletConnect (the request then never resolves), or already store this network
  * pointing at an address that has since changed (an add never overwrites an existing entry). The
- * app cannot fix any of that from here, so the visitor always gets the parameters — and the one
- * hint that actually bites on the demo stack: the RPC follows the machine serving the page.
+ * app cannot fix any of that from here, so the visitor always gets the parameters. The LAN-address
+ * reminder is for the demo stack only: its RPC follows the machine serving the page, while a
+ * hosted chain's RPC never moves.
  */
-import { chainFor } from '@/chain/chains';
+import { chainEntry, chainFor } from '@/chain/chains';
 import { manualNetworkParams } from '@/chain/switchChain';
 
 export function NetworkManual({ chainId }: { chainId: number }) {
   const chain = chainFor(chainId);
   if (!chain) return null;
   const params = manualNetworkParams(chain);
+  const movableRpc = chainEntry(chain.id)?.local === true;
   const rows: [string, string][] = [
     ['Network name', params.chainName],
     ['RPC URL', params.rpcUrl],
@@ -31,10 +33,12 @@ export function NetworkManual({ chainId }: { chainId: number }) {
           </div>
         ))}
       </dl>
-      <p className="mt-1.5 leading-snug">
-        Already added this network to your wallet? Update its RPC URL to the one above — the demo stack's LAN address
-        changes with the network.
-      </p>
+      {movableRpc && (
+        <p className="mt-1.5 leading-snug">
+          Already added this network to your wallet? Update its RPC URL to the one above — the demo stack's LAN address
+          changes with the network.
+        </p>
+      )}
     </details>
   );
 }

@@ -17,6 +17,7 @@ import {IPoolmigoVault} from "contracts/interfaces/IPoolmigoVault.sol";
 import {IPositionAdapter} from "contracts/interfaces/IPositionAdapter.sol";
 import {ILiquidityAdapter} from "contracts/interfaces/ILiquidityAdapter.sol";
 import {ISwapAdapter} from "contracts/interfaces/ISwapAdapter.sol";
+import {IDepositSplit} from "contracts/interfaces/IDepositSplit.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 /**
@@ -97,6 +98,15 @@ contract PoolmigoVaultUpgradeable is
     uint8 public constant CAP_SWAP = 2;
 
     /*//////////////////////////////////////////////////////////////
+                               IMMUTABLES
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev The stateless deposit-deploy splitter ({IDepositSplit}): set per implementation at construction, read by
+    ///      every proxy through the implementation's code — no storage slot. Changing it = a new implementation.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    IDepositSplit private immutable DEPOSIT_SPLIT;
+
+    /*//////////////////////////////////////////////////////////////
                         ERC-7201 NAMESPACED STORAGE
     //////////////////////////////////////////////////////////////*/
 
@@ -144,8 +154,13 @@ contract PoolmigoVaultUpgradeable is
                              INITIALIZATION
     //////////////////////////////////////////////////////////////*/
 
+    /// @param depositSplit_ The {IDepositSplit} every {deposit} asks for its per-adapter deploy split (non-zero).
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(address depositSplit_) {
+        if (depositSplit_ == address(0)) {
+            revert PoolmigoVault__ZeroAddress();
+        }
+        DEPOSIT_SPLIT = IDepositSplit(depositSplit_);
         _disableInitializers(); // lock the implementation; only proxies get initialized
     }
 
@@ -241,6 +256,11 @@ contract PoolmigoVaultUpgradeable is
      *        1-wei dust donation. The former dust exemption (optional iff the draw rounds to 0 wei) was
      *        removed: k merged deposits composed sub-wei roundings into >= 1 wei at redeem (K-14 reread,
      *        issue #2). Tokens with T_i == 0 are optional and pull 0.
+     *      Deploy (both branches, after the mint): the pulled amounts are deployed atomically across the adapters,
+     *      per token in proportion to each adapter's reported holding of it (floor; dust and tokens no adapter holds
+     *      stay idle) — see {_deployDeposit}. Any deploy failure reverts the whole deposit; `Deployed` is emitted per
+     *      adapter actually deployed into (`keeper` = the depositor). Share pricing is unaffected: it reads
+     *      `totalTokens()` before the pull, and a deploy moves value between idle and positions only.
      *      Reverts `PoolmigoVault__SupplyCapExceeded` if a non-zero `maxTotalSupply` would be exceeded
      *      (genesis included).
      *      Reverts with `PoolmigoVault__InsufficientSharesOut` when the computable `shares` is below
@@ -282,6 +302,7 @@ contract PoolmigoVaultUpgradeable is
             }
         }
         _mint(receiver, shares);
+        _deployDeposit(tokens_, required);
 
         emit Deposited(msg.sender, receiver, tokens_, required, shares);
     }
@@ -364,15 +385,7 @@ contract PoolmigoVaultUpgradeable is
         _requireOpenAdapter(adapter);
 
         (address[] memory t,) = _positionOf(adapter);
-        uint256 n = t.length;
-        if (amounts.length != n) {
-            revert PoolmigoVault__LengthMismatch();
-        }
-        _approveFunded(adapter, t, amounts);
-        adapter.deploy(amounts);
-        _approveAll(adapter, t, new uint256[](n));
-
-        emit Deployed(msg.sender, address(adapter), t, amounts);
+        _deployInto(adapter, t, amounts);
     }
 
     /**
@@ -431,7 +444,7 @@ contract PoolmigoVaultUpgradeable is
         _approveFunded(adapter, t, caps);
         (uint256 id, uint128 added, uint256 spent0, uint256 spent1, uint256 refunded0, uint256 refunded1) =
             ILiquidityAdapter(address(adapter)).addLiquidity(p);
-        _approveAll(adapter, t, new uint256[](2));
+        _revokeAll(adapter, t);
 
         emit LiquidityAdded(msg.sender, address(adapter), id, added, spent0, spent1, refunded0, refunded1);
     }
@@ -897,6 +910,39 @@ contract PoolmigoVaultUpgradeable is
         }
     }
 
+    /**
+     * @dev {deposit}'s atomic proportional deploy: ONE {IDepositSplit-split} call over the pulled `required`, then each
+     *      adapter with a non-empty frame gets its slice through {_deployInto} (same gates as {deployTo}). Strict: any
+     *      failure — the split, a gate, an adapter's `deploy` — reverts the whole deposit (no fallback to idle). No
+     *      adapter holding a pulled token (bootstrap) = all-zero frames = everything stays idle; floor dust stays idle.
+     *
+     *      Frame walk, IN PLACE (no copy): `flat` is `[f_0][f_1]..` with one frame per registered adapter, in
+     *      `_s().adapters` order (the splitter read the same `adapters()` in this call, before any deploy).
+     *      `amounts` starts at `flat`'s first data word; a frame's first word is its length n (0 = skip), so
+     *      `amounts` IS a valid memory `uint256[]` over that frame, and the next frame starts n + 1 words later.
+     *      Only reads: nothing is written through `amounts` (memory-safe), and the walk is bounded by the adapter
+     *      count. {_deployInto} re-checks each frame's length against the adapter's own `position()` tokens, so a
+     *      misframed split reverts instead of deploying.
+     */
+    function _deployDeposit(address[] calldata tokens_, uint256[] memory required) private {
+        uint256[] memory flat = DEPOSIT_SPLIT.split(tokens_, required);
+        uint256[] memory amounts;
+        assembly ("memory-safe") {
+            amounts := add(flat, 0x20)
+        }
+        uint256 len = _s().adapters.length;
+        for (uint256 i; i < len; ++i) {
+            if (amounts.length != 0) {
+                IPositionAdapter adapter = _adapterAt(i);
+                (address[] memory t,) = _positionOf(adapter);
+                _deployInto(adapter, t, amounts);
+            }
+            assembly ("memory-safe") {
+                amounts := add(amounts, shl(5, add(mload(amounts), 1)))
+            }
+        }
+    }
+
     /// @dev Shared role write ({setKeeper} / {setRiskManager}): non-zero account.
     function _setFlag(mapping(address => bool) storage flags, address account, bool allowed) private {
         if (account == address(0)) {
@@ -984,6 +1030,25 @@ contract PoolmigoVaultUpgradeable is
             _requireFundable(adapter, t[i], amounts[i]);
         }
         _approveAll(adapter, t, amounts);
+    }
+
+    /// @dev The one deploy path ({deployTo} / {deposit}): `amounts` must align to `t` (the adapter's own `position()`
+    ///      tokens, `PoolmigoVault__LengthMismatch`), then funded exact approvals, `adapter.deploy(amounts)`, every
+    ///      approval zeroed, and `Deployed` (its `keeper` is `msg.sender` — the depositor on the {deposit} path).
+    function _deployInto(IPositionAdapter adapter, address[] memory t, uint256[] memory amounts) private {
+        if (amounts.length != t.length) {
+            revert PoolmigoVault__LengthMismatch();
+        }
+        _approveFunded(adapter, t, amounts);
+        adapter.deploy(amounts);
+        _revokeAll(adapter, t);
+
+        emit Deployed(msg.sender, address(adapter), t, amounts);
+    }
+
+    /// @dev Zero every approval of `t` to `adapter`.
+    function _revokeAll(IPositionAdapter adapter, address[] memory t) private {
+        _approveAll(adapter, t, new uint256[](t.length));
     }
 
     /// @dev Force-approve `amounts[i]` of `t[i]` to `adapter` (all-zero `amounts` = revoke every approval).

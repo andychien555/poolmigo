@@ -14,10 +14,10 @@ function derived() {
 describe('store — cross-page consistency after actions (checklist §7)', () => {
   beforeEach(async () => {
     useStore.getState().reset();
-    await useStore.getState().connect();
+    await useStore.getState().enterReadOnlyMode();
   });
 
-  it('connect loads the demo user', () => {
+  it('read-only mode loads the demo user', () => {
     const { s, deposits } = derived();
     expect(s.connected).toBe(true);
     expect(deposits).toBeCloseTo(12_398, 0);

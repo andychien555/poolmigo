@@ -20,6 +20,7 @@ import {MockLiquidityAdapter} from "test/mocks/MockLiquidityAdapter.sol";
 import {MockV3Factory, MockV3Pool} from "test/mocks/MockV3Pool.sol";
 import {MockPermit2Router} from "test/mocks/MockPermit2Router.sol";
 import {UniversalRouterSwapExecutor} from "contracts/swap/UniversalRouterSwapExecutor.sol";
+import {VaultImplArgs} from "test/utils/VaultImplArgs.sol";
 
 /**
  * @notice Strategy layer P1 — unit coverage of the precise-liquidity surface (`notes/EXECUTION-PLANS.md` §P1).
@@ -71,7 +72,8 @@ contract LiquidityOpsTest is Test {
                 abi.encodeCall(
                     MySunVaultUpgradeable(address(0)).initialize,
                     (owner, "sunEthLP", "sunEthLP", basket, treasury, uint16(1500), GENESIS, uint256(0))
-                )
+                ),
+                VaultImplArgs.proxyOpts()
             )
         );
 

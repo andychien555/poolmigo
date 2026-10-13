@@ -96,35 +96,48 @@ forge clean && forge build
 forge script script/DemoLocal.s.sol --rpc-url http://127.0.0.1:8547 --broadcast --private-key $ANVIL_DEV_KEY
 ```
 
-### Fork demo — real USDG / WETH + real Uniswap v3 / v4 adapters
+### Fork demo — two real vaults: USDG / WETH and USDG / PONS
 
 `script/DemoLocalFork.s.sol` is the RHC-fork sibling (the all-mock `DemoLocal.s.sol` stays for offline
-work). Same two vaults, same port and chain id (46630), but `demo` holds the REAL RHC USDG / WETH and runs
-the REAL `UniswapV3Adapter` (USDG/WETH fee-100 pool) and `UniswapV4Adapter` (fee 500 / spacing 10, TWAP
-reference + swap venue = the v3 fee-100 pool; range ±300, TWAP 1800 s, slippage 100 bps — as the fork
-suites). `stocks` stays mock. The JSON gains two optional root flags, `"fork": true, "mintable": false`
+work). Same port and chain id (46630), TWO real vaults:
+- `demo` (`sunEthLP`) — REAL RHC USDG / WETH: ONE `UniswapV3Adapter` (USDG/WETH fee-100 pool; range ±300,
+  TWAP 1800 s, slippage 100 bps) + EIGHT identical `UniswapV4NativeEthAdapter`s on the native ETH/USDG v4 pool
+  behind FablesRampETH (poolId `0xbac3…e551`; TWAP reference = the v3 fee-100 pool; swap venue = the native pool
+  through a dedicated `UniversalRouterNativeSwapExecutor`; range ±600, TWAP 1800 s, slippage 200 bps). The basket
+  holds WETH — the native leg is bridged inside the PositionManager calls / the executor;
+- `pons` (`sunPonsLP`) — REAL RHC USDG / PONS: EIGHT identical `UniswapV4HookedAdapter`s on the FablesRamp-hooked
+  PONS/USDG v4 pool (TWAP reference = the v3 PONS/USDG fee-10000 pool; swap venue = the hooked pool).
+The keeper seeds every adapter of a vault with an equal slice, so a deposit splits across all of them.
+Opt-in sections (env, default OFF): `DEMO_DEPLOY_STOCKS=true` adds the mock `stocks` vault (registry entry between
+`demo` and `pons`); `DEMO_DEPLOY_V4_HOOKLESS=true` adds the hookless `UniswapV4Adapter` (fee 500 / spacing 10) to
+`demo`. The JSON gains two optional root flags, `"fork": true, "mintable": false`
 (absent — the mock script — means not a fork / `MockToken.mint` available): the frontend hides its mint
 rows and `e2e:local` / the keeper suite assert pre-funded balances and real-venue behaviour instead.
 
 One command does it all (~4 min):
 
 ```bash
-export ANVIL_DEV_KEY=<anvil account #0 key>   # public Anvil default — LOCAL ONLY
-script/fork-demo-up.sh                         # then: cd ../frontend && pnpm sync:shared
+script/fork-demo-up.sh   # then: cd ../frontend && pnpm sync:shared
 ```
 
 1. starts a live fork (`anvil --fork-url https://rpc.mainnet.chain.robinhood.com --chain-id 46630
    --host 0.0.0.0 --port 8547`, replacing whatever anvil holds the port);
 2. **warm-up** (`script/fork-demo-freeze.mjs warm`, batched): reads every upstream value the demo relies on
-   later — USDG / WETH metadata and balances, the fee-100 pool's state, observations, tick bitmap ±2 words
-   and every initialized tick in them (~800 reads);
-3. funds OWNER (#0), DEMO_USER (#2) and TRADER (#3) with real USDG / WETH by impersonating the fee-100
-   pool (the dev accounts already have ETH for gas; topped up if not);
+   later — USDG / WETH / PONS metadata and balances; for the fee-100 pool and the v3 PONS reference: state,
+   observations, tick bitmap ±2 words and every initialized tick in them; both v4 pools' state, bitmap and ticks in
+   the PoolManager (`extsload`); both hooks' per-pool views + their `beforeSwap` simulated as the PoolManager; the
+   native leg's plumbing — the PositionManager's `WETH9()` / `permit2()`, WETH's implementation slot and the native
+   ETH balances of every account a flow touches (~4,500 reads);
+3. funds OWNER (#200), DEMO_USER (#2) and TRADER (#3) with real USDG / WETH by impersonating the fee-100
+   pool, and with real PONS by impersonating `0x…dEaD` (ETH for gas set where below 100). The deployer / OWNER
+   is anvil **#200** of the public test mnemonic (key derived by the script — LOCAL ONLY), not #0: #0's key is
+   used by third parties on RHC mainnet, so its nonce at the fork block drifts and every stack address with it;
+   #200 is unused on RHC (nonce 0), and the script refuses to deploy if that ever changes;
 4. `evm_increaseTime 1800` + `evm_mine` — the adapters' spot≈TWAP guard: one window forward makes the
    pool's TWAP equal its spot;
 5. `forge clean && forge build && forge script script/DemoLocalFork.s.sol` — genesis in kind, keeper
-   `deployTo` into both real adapters (real swaps, real LP NFTs — the script `require`s each NFT is owned
-   by its adapter), then `cast` spot checks;
+   `deployTo` into every real adapter (real swaps, real LP NFTs — the script `require`s each NFT is owned
+   by its adapter, the pools, the totals and that no allowance / no native ETH stands), then `cast` spot checks;
 6. **freezes** the fork into a standalone anvil (`fork-demo-freeze.mjs dump` / `merge`; state in
    `~/.mysun/fork-demo/state.json`, persisted on exit) and re-runs the warm-up reads on the frozen node:
    they must answer byte for byte as on the live fork, else the script fails.

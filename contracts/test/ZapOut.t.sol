@@ -16,6 +16,7 @@ import {MockToken} from "test/mocks/MockToken.sol";
 import {MockPositionAdapter} from "test/mocks/MockPositionAdapter.sol";
 import {MockPermit2Router} from "test/mocks/MockPermit2Router.sol";
 import {MockV3Factory, MockV3Pool} from "test/mocks/MockV3Pool.sol";
+import {VaultImplArgs} from "test/utils/VaultImplArgs.sol";
 
 /// @dev A position that DELIVERS one raw unit less than its pro-rata slice of each token (like a concentrated-
 ///      liquidity adapter whose venue rounds the released amounts down) but REPORTS the full slice back to the
@@ -900,7 +901,9 @@ contract ZapOutTest is Test {
             MySunVaultUpgradeable(address(0)).initialize,
             (owner, "sunEthLP", "sunEthLP", tokens_, treasury, 1500, GENESIS, 0)
         );
-        v = MySunVaultUpgradeable(address(new ERC1967Proxy(address(new MySunVaultUpgradeable()), init)));
+        v = MySunVaultUpgradeable(
+            address(new ERC1967Proxy(address(new MySunVaultUpgradeable(VaultImplArgs.depositSplit())), init))
+        );
         vm.startPrank(owner);
         for (uint256 i; i < tokens_.length; ++i) {
             MockToken(tokens_[i]).mint(owner, amounts[i]);

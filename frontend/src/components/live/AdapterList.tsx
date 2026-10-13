@@ -4,6 +4,10 @@
  * Uniswap adapters — see dexLabel / poolIdLabel); `position()` is the venue's spot report.
  * `deployed(i)` / `harvestable(i)` only exist on MockPositionAdapter — requested opportunistically,
  * absent (not an error) against a real adapter.
+ *
+ * Only adapters that hold something are listed: one with no live position and no idle balance is a
+ * registered slot the keeper has not used yet, not a position (the registered count lives on the
+ * Deposits stat). A `position()` that failed to report is kept — it may hold funds.
  */
 import { dexLabel, formatAmount, poolIdLabel, shortHex } from '@/chain/amounts';
 import type { AdapterReport, TokenMeta } from '@/chain/useVault';
@@ -11,13 +15,20 @@ import { Card } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Badge';
 
 export function AdapterList({ adapters, tokens }: { adapters: AdapterReport[]; tokens: TokenMeta[] }) {
+  const funded = adapters.filter((a) => a.reportFailed || a.position.some((v) => v > 0n));
+  const idle = adapters.length - funded.length;
+
   return (
-    <Card title={`Positions (${adapters.length})`} action={<span className="text-2xs text-weaker">One adapter = one pool on one DEX</span>}>
-      {adapters.length === 0 ? (
-        <p className="text-sm text-weaker">No adapters registered. All basket tokens sit idle in the vault.</p>
+    <Card title={`Positions (${funded.length})`} action={<span className="text-2xs text-weaker">One adapter = one pool on one DEX</span>}>
+      {funded.length === 0 ? (
+        <p className="text-sm text-weaker">
+          {adapters.length === 0
+            ? 'No adapters registered. All basket tokens sit idle in the vault.'
+            : `No funded positions yet. ${adapters.length} registered adapter slot${adapters.length === 1 ? '' : 's'} idle — the keeper opens positions in them.`}
+        </p>
       ) : (
         <div className="space-y-3">
-          {adapters.map((a) => (
+          {funded.map((a) => (
             <div key={a.address} className="rounded-md border border-stroke-weak bg-fill-recessed p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
@@ -70,6 +81,9 @@ export function AdapterList({ adapters, tokens }: { adapters: AdapterReport[]; t
               )}
             </div>
           ))}
+          {idle > 0 && (
+            <p className="text-2xs text-weaker">Not shown: {idle} registered slot{idle === 1 ? '' : 's'} holding no funds.</p>
+          )}
         </div>
       )}
     </Card>

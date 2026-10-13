@@ -20,6 +20,7 @@ interface, and deposits, redemptions and performance-fee harvesting are all sett
 | `frontend/` | Web app — multi-wallet connect (viem: EIP-6963 + WalletConnect); deposits, redemptions, position views |
 | `backend/` | Keeper service — executes keeper-gated `deployTo` / `rebalance` (`pullFrom` when operated manually) |
 | `shared/` | Shared ABIs + local deployment config consumed by frontend and backend |
+| `docs/` | Public guides and [current deployment addresses](docs/DEPLOYMENTS.md) |
 
 ## Quick start
 

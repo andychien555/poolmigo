@@ -12,11 +12,12 @@
  *        every other step and assertion is identical.
  *   7    every vault: name()/symbol() agree with the registry receipt, totalTokens() reads
  *   7b   (fork only) the "Fund my wallet" faucet: the real basket classifies transfer-only, the
- *        stocks six classify as mints, and every token lands via an impersonated pool send — no
+ *        stocks six (when that vault exists) classify as mints, and every token lands via an impersonated pool send — no
  *        wallet prompt on either path (src/chain/faucet.ts)
  *   7c   the ETH top-up: a zero-ETH address is raised to exactly 1 ETH through anvil_setBalance, an
  *        account already above the floor is left untouched, a second call is a no-op
- *   8    the `stocks` vault: mint its six basket tokens → approve → deposit all six in strict
+ *   8    the `stocks` vault (all-mock DemoLocal.s.sol stack, or the fork with DEMO_DEPLOY_STOCKS=true; skipped
+ *        when absent — the default fork stack is "demo" + "pons"): mint its six basket tokens → approve → deposit all six in strict
  *        proportion → redeem part — and its receipt token is the registry's own symbol, isolated from the default
  *   9    (stacks with zap periphery) the single-asset facets on the default vault, the app's own math
  *        (src/chain/zap.ts): 9a zap deposit USDG only — minted ≈ previewZap, the offer consumed with
@@ -80,12 +81,9 @@ const DEFAULT_VAULT: VaultEntry = (() => {
   if (!v) throw new Error(`no vaults for chain ${LOCAL_CHAIN_ID}`);
   return v;
 })();
-/** The second basket on the local stack (5 stocks + mUSDG). */
-const STOCKS_VAULT: VaultEntry = (() => {
-  const v = findVault(LOCAL_CHAIN_ID, 'stocks');
-  if (!v) throw new Error(`no "stocks" vault on chain ${LOCAL_CHAIN_ID} — is shared/deployment.local.json from the two-vault DemoLocal.s.sol?`);
-  return v;
-})();
+/** The mock "stocks" basket (5 stocks + mUSDG): on the all-mock DemoLocal.s.sol stack, and on the fork stack only with
+ *  DEMO_DEPLOY_STOCKS=true. Absent from the default fork stack ("demo" + "pons") — steps 7b (mint half) and 8 skip. */
+const STOCKS_VAULT: VaultEntry | undefined = findVault(LOCAL_CHAIN_ID, 'stocks');
 
 /** False on the RHC fork stack: the default vault's tokens are real, `MockToken.mint` does not exist. */
 const MINTABLE = canMintMocks(LOCAL_DEPLOYMENT);
@@ -487,6 +485,7 @@ async function faucetCheck(meta: readonly { address: Address; symbol: string; de
   };
   for (const t of meta) await deliver(t, 'transfer'); // the default basket: real tokens
   // The stocks basket is mock tokens: the faucet mints them from the pool too — still zero prompts.
+  if (!STOCKS_VAULT) return; // the default fork stack has no mock basket
   const stocksTokens = (await publicClient.readContract({ address: STOCKS_VAULT.vault as Address, abi: vaultAbi, functionName: 'tokens' })) as readonly Address[];
   for (const token of stocksTokens) {
     const [symbol, decimals] = await Promise.all([
@@ -520,14 +519,19 @@ async function ethTopUpCheck(): Promise<void> {
 /* --------------------------------- 8. stocks vault round trip -------------------------------- */
 
 async function stocksRoundTrip(): Promise<void> {
-  const target = { address: STOCKS_VAULT.vault as Address, abi: vaultAbi } as const;
+  if (!STOCKS_VAULT) {
+    section('8. stocks vault — not on this stack (default fork stack: "demo" + "pons"), skipped');
+    return;
+  }
+  const stocks: VaultEntry = STOCKS_VAULT;
+  const target = { address: stocks.vault as Address, abi: vaultAbi } as const;
   const defaultTarget = { address: VAULT, abi: vaultAbi } as const;
   const balanceOf = async (token: Address) =>
     (await publicClient.readContract({ address: token, abi: mockTokenAbi, functionName: 'balanceOf', args: [account.address] })) as bigint;
   const sharesOf = async (vault: { address: Address; abi: typeof vaultAbi }) =>
     (await publicClient.readContract({ ...vault, functionName: 'balanceOf', args: [account.address] })) as bigint;
 
-  section(`8. ${STOCKS_VAULT.key} vault — deposit all six in strict proportion, redeem part`);
+  section(`8. ${stocks.key} vault — deposit all six in strict proportion, redeem part`);
   const [symbol, decimals, tokens, totalsBefore, supplyBefore, paused] = await Promise.all([
     publicClient.readContract({ ...target, functionName: 'symbol' }) as Promise<string>,
     publicClient.readContract({ ...target, functionName: 'decimals' }) as Promise<number>,
@@ -638,8 +642,8 @@ async function stocksRoundTrip(): Promise<void> {
 
   const symbolAfter = (await publicClient.readContract({ ...target, functionName: 'symbol' })) as string;
   assert(
-    symbolAfter === STOCKS_VAULT.receipt.symbol && symbolAfter !== DEFAULT_VAULT.receipt.symbol,
-    `the receipt symbol comes back as the registry's ${STOCKS_VAULT.receipt.symbol}, distinct from the default vault's`,
+    symbolAfter === stocks.receipt.symbol && symbolAfter !== DEFAULT_VAULT.receipt.symbol,
+    `the receipt symbol comes back as the registry's ${stocks.receipt.symbol}, distinct from the default vault's`,
     symbolAfter,
   );
 }

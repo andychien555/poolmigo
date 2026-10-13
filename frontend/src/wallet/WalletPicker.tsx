@@ -3,7 +3,7 @@
  *
  * Names and icons are whatever the wallet announced over EIP-6963 — nothing here is a hardcoded
  * list of "supported" wallets, which is the point of the rework. WalletConnect appears only when a
- * project id is configured, and the demo wallet stays available so the prototype works on a laptop
+ * project id is configured, and read-only mode stays available so the prototype works on a laptop
  * with no extension at all.
  */
 import { useStore } from '@/store/useStore';
@@ -15,7 +15,7 @@ import type { WalletOption } from './types';
 
 export function WalletPicker() {
   const { pickerOpen, closePicker, options, connect, status, error, pendingId } = useWallet();
-  const demoConnect = useStore((s) => s.connect);
+  const enterReadOnlyMode = useStore((s) => s.enterReadOnlyMode);
   const connecting = status === 'connecting';
 
   return (
@@ -49,7 +49,7 @@ export function WalletPicker() {
       <div className="mt-4 pt-3 border-t border-stroke-weak">
         <div className="flex items-start justify-between gap-3">
           <p className="text-2xs text-weaker leading-snug">
-            No wallet, or just looking around? The demo wallet opens every prototype surface with
+            No wallet, or just looking around? Read-only mode opens every prototype surface with
             demo data — the live vault stays read-only.
           </p>
           <Button
@@ -57,11 +57,11 @@ export function WalletPicker() {
             size="sm"
             className="shrink-0"
             onClick={() => {
-              void demoConnect();
+              void enterReadOnlyMode();
               closePicker();
             }}
           >
-            Use demo wallet
+            Read-only mode
           </Button>
         </div>
         <WalletConnectHint />

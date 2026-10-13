@@ -11,6 +11,12 @@ optimizer = true
 # (at 200 runs the upgrade fixture exceeded it once the exact-delivery check landed). Gas delta is
 # a few percent on hot paths; correctness identical. Revisit if a gas-sensitive surface appears.
 optimizer_runs = 100
+# Size budget (deposit-deploy, T2d): no CBOR metadata tail and no metadata hash in the runtime code. The tail is
+# pure bytes (~53 B per contract) that the vault's EIP-170 margin needs; source verification works without it
+# (explorers match on the standard-JSON input). Bytecode is no longer self-describing — record the compiler
+# settings (this file) with every deployment.
+cbor_metadata = false
+bytecode_hash = "none"
 via_ir = false
 ffi = true
 ast = true

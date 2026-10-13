@@ -34,7 +34,7 @@ export type WriteRequest<
 
 export interface WalletContextValue {
   status: WalletStatus;
-  /** The connected account, or undefined when only the demo wallet (or nothing) is active. */
+  /** The connected account, or undefined when only read-only mode (or nothing) is active. */
   address?: Address;
   /** The chain the WALLET is on — not necessarily the chain the vault is deployed on. */
   chainId?: number;

@@ -12,6 +12,7 @@ import {ILiquidityAdapter} from "contracts/interfaces/ILiquidityAdapter.sol";
 import {MockToken} from "test/mocks/MockToken.sol";
 import {MockPositionAdapter} from "test/mocks/MockPositionAdapter.sol";
 import {MockLiquidityAdapter} from "test/mocks/MockLiquidityAdapter.sol";
+import {VaultImplArgs} from "test/utils/VaultImplArgs.sol";
 
 /**
  * @notice Fee-at-exit (owner ruling 2026-10-03): whenever accrued position fees leave a position the vault skims
@@ -47,7 +48,7 @@ contract FeeAtExitTest is Test {
         basket.push(address(usdg));
         basket.push(address(weth));
 
-        MySunVaultUpgradeable impl = new MySunVaultUpgradeable();
+        MySunVaultUpgradeable impl = new MySunVaultUpgradeable(VaultImplArgs.depositSplit());
         vault = MySunVaultUpgradeable(
             address(
                 new ERC1967Proxy(

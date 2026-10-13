@@ -130,7 +130,7 @@ export function chainLabel(chainId: number | undefined): string {
   return chainId === undefined ? 'Unknown network' : `Chain ${chainId}`;
 }
 
-/** "Base (testnet)" → "Base": drops a trailing parenthetical, for tight spots that tag `local` separately. */
+/** "Base (testnet)" → "Base": drops a trailing parenthetical for tight spots. */
 export function chainShortLabel(chainId: number | undefined): string {
   return chainLabel(chainId).replace(/\s*\([^)]*\)\s*$/, '');
 }

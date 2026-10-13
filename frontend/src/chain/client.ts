@@ -26,7 +26,11 @@ export function publicClientFor(chainId: number): Client<Transport, Chain> {
   if (!client) {
     const chain = chainFor(chainId);
     if (!chain) throw new Error(`Chain ${chainId} is not in the registry (shared/deployments.json).`);
-    client = createClient({ chain, transport: http(chain.rpcUrls.default.http[0], { batch: true }) });
+    // batchSize 3: the RHC mainnet registry RPC (robinhood.drpc.org) rejects JSON-RPC batches of more
+    // than 3 requests on its free tier (JSON-RPC error 31), which turned page renders into "RPC did
+    // not answer". Capping batches at 3 keeps calls grouped without tripping it; the local chain just
+    // gets a few more same-origin requests, which costs nothing.
+    client = createClient({ chain, transport: http(chain.rpcUrls.default.http[0], { batch: { batchSize: 3 } }) });
     clients.set(chainId, client);
   }
   return client;

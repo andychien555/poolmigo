@@ -2,9 +2,10 @@
 pragma solidity ^0.8.34;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {MySunVaultUpgradeable} from "contracts/MySunVaultUpgradeable.sol";
+import {DepositSplit} from "contracts/periphery/DepositSplit.sol";
 import {MockPositionAdapter} from "test/mocks/MockPositionAdapter.sol";
 import {MockToken} from "test/mocks/MockToken.sol";
 
@@ -56,6 +57,7 @@ contract DemoLocal is Script {
 
     struct DemoVault {
         address vault;
+        address depositSplit; // the implementation's DepositSplit (not written to deployment.local.json)
         address[] basket;
         MockPositionAdapter adapterV3;
         MockPositionAdapter adapterV4;
@@ -118,12 +120,17 @@ contract DemoLocal is Script {
         a.basket[0] = address(usdg);
         a.basket[1] = address(weth);
 
+        // The stateless deposit splitter the implementation pins (immutable); shared by both vaults' proxies.
+        a.depositSplit = address(new DepositSplit());
+        Options memory opts;
+        opts.constructorData = abi.encode(a.depositSplit);
         a.vault = Upgrades.deployUUPSProxy(
             "MySunVaultUpgradeable.sol",
             abi.encodeCall(
                 MySunVaultUpgradeable(address(0)).initialize,
                 (OWNER, "sunEthLP", "sunEthLP", a.basket, OWNER, FEE_BPS, GENESIS_SHARES, MAX_TOTAL_SUPPLY)
-            )
+            ),
+            opts
         );
 
         a.adapterV3 = new MockPositionAdapter(a.basket, a.vault, bytes32("uniswap-v3"), bytes32("mUSDG/mWETH 0.05%"));
@@ -287,6 +294,7 @@ contract DemoLocal is Script {
 
     function _logDemo(DemoVault memory a) internal view {
         _logVault("-- vault [demo] --", a.vault);
+        console2.log("deposit splitter :", a.depositSplit);
         console2.log("adapter (v3 mock):", address(a.adapterV3));
         console2.log("adapter (v4 mock):", address(a.adapterV4));
     }

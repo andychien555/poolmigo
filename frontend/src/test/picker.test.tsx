@@ -115,14 +115,15 @@ describe('wallet picker', () => {
     expect(screen.getByText('Rabby Wallet')).toBeDefined();
   });
 
-  it('always keeps the demo wallet reachable', async () => {
+  it('always keeps read-only mode reachable', async () => {
     await openPicker();
-    expect(screen.getByRole('button', { name: 'Use demo wallet' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Read-only mode' })).toBeDefined();
   });
 
   it('explains how to enable WalletConnect when no project id is configured', async () => {
     await openPicker();
-    // The test env sets no VITE_WALLETCONNECT_PROJECT_ID, so the option must be hidden…
+    // The suite pins VITE_WALLETCONNECT_PROJECT_ID off in setup (a developer's .env.local must
+    // not flip this), so the option must be hidden…
     expect(screen.queryByText('WalletConnect')).toBeNull();
     // …but not silently.
     expect(screen.getByText(/VITE_WALLETCONNECT_PROJECT_ID/)).toBeDefined();

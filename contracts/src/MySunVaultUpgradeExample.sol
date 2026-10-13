@@ -26,6 +26,10 @@ contract MySunVaultUpgradeExample is MySunVaultUpgradeable {
     bytes32 private constant MYSUN_VAULT_UPGRADE_EXAMPLE_STORAGE_LOCATION =
         0xcca7159ac201d617b51ce7033b4f9c4a1b9f7200d111d0202b4a866e29c27b00;
 
+    /// @dev Forwards the {IDepositSplit} address to the base (its immutable; the fixture adds no constructor logic).
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor(address depositSplit_) MySunVaultUpgradeable(depositSplit_) {}
+
     function _example() private pure returns (MySunVaultUpgradeExampleStorage storage $) {
         assembly {
             $.slot := MYSUN_VAULT_UPGRADE_EXAMPLE_STORAGE_LOCATION

@@ -19,5 +19,7 @@ export default defineConfig({
     // Logic tests run in node; the render smoke test opts into jsdom with a per-file pragma.
     environment: 'node',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    // Deterministic env for the suite: see the setup file for why WalletConnect is pinned off.
+    setupFiles: ['./src/test/setup.ts'],
   },
 } as any);

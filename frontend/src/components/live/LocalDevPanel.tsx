@@ -30,7 +30,7 @@ const DEFAULT_MINT = '1000';
 export function LocalDevPanel({ vault, user }: { vault: LiveVault; user: UserBasket }) {
   const { address, write } = useWallet();
   const { connectWallet, isPending: connecting } = useConnectWallet();
-  const demoWallet = useStore((s) => s.demoWallet);
+  const readOnlyMode = useStore((s) => s.readOnlyMode);
   const pushToast = useStore((s) => s.pushToast);
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [pending, setPending] = useState<string | null>(null);
@@ -183,9 +183,9 @@ export function LocalDevPanel({ vault, user }: { vault: LiveVault; user: UserBas
             anvil-impersonated call from the pool (transfer for a real token, mint for a mock), local node
             only, no wallet prompts.
           </p>
-          {!address && demoWallet && (
+          {!address && readOnlyMode && (
             <p className="mt-2 text-2xs text-weaker">
-              The demo wallet is read-only: it cannot fund or sign. Connect a browser wallet to fund it.
+              Read-only mode cannot fund or sign. Connect a browser wallet to fund it.
             </p>
           )}
           {error && <div className="mt-2"><Message tone="error">{error}</Message></div>}
