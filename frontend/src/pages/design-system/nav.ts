@@ -21,7 +21,7 @@ export const TABS: TabConfig[] = [
     id: 'foundation',
     label: 'Foundation',
     items: [
-      { id: 'typography', label: 'Typography', keywords: ['font', 'type scale', 'zodiak', 'geist', 'switzer', 'figures', 'weight'] },
+      { id: 'typography', label: 'Typography', keywords: ['font', 'type scale', 'newsreader', 'geist', 'switzer', 'figures', 'weight'] },
       { id: 'base-colors', label: 'Base colors', keywords: ['primitive', 'palette', 'ramp', 'plum', 'sand', 'sun'] },
       { id: 'semantic-colors', label: 'Semantic colors', keywords: ['token', 'text', 'fill', 'stroke', 'background', 'border'] },
       { id: 'surfaces', label: 'Surfaces & depth', keywords: ['elevation', 'shadow', 'layer'] },

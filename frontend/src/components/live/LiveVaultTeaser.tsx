@@ -19,7 +19,7 @@ export function LiveVaultTeaser() {
     <section className="bg-background-elevated border border-stroke-weak rounded-lg p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 min-w-0">
-          <h2 className="display text-sm font-semibold">{vault.entry?.label ?? vault.name ?? `${BRAND.name} vault`}</h2>
+          <h2 className="display text-sm">{vault.entry?.label ?? vault.name ?? `${BRAND.name} vault`}</h2>
           <LiveBadge />
           <span className="text-2xs text-weaker num truncate">
             {chainName}

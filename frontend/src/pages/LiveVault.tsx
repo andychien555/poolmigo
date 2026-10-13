@@ -52,7 +52,7 @@ export function LiveVault() {
     <div className="wrap py-6 space-y-6">
       <header className="flex flex-wrap items-center gap-3">
         <Link to="/" className="text-xs text-weaker hover:text-weak mr-1">← Earn</Link>
-        <h1 className="display text-2xl font-semibold">{vault.entry?.label ?? vault.name ?? `${BRAND.name} vault`}</h1>
+        <h1 className="display text-2xl">{vault.entry?.label ?? vault.name ?? `${BRAND.name} vault`}</h1>
         <LiveBadge />
         {vault.hasDeployment && (
           <span

@@ -259,7 +259,7 @@ function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?
         </div>
       </Field>
 
-      <Button block onClick={onSubmit} disabled={cta.disabled} loading={busy || connecting}>{cta.label}</Button>
+      <Button block variant="accent" onClick={onSubmit} disabled={cta.disabled} loading={busy || connecting}>{cta.label}</Button>
 
       <div className="text-xs num">
         <button onClick={() => setDetails(!details)} aria-expanded={details} className="w-full flex items-center justify-between gap-2.5 py-0.5 text-left text-weaker hover:text-weak">

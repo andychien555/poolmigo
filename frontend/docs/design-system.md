@@ -6,7 +6,8 @@
 > The live gallery is at `/design-system` when the app is running. It renders the real components, so it
 > shows what the app does; this file says what to write.
 
-This is the Dusk direction: a dark ground, sand type, one amber for the price. It is dark only.
+The colours are the brand guideline's (v2, sampled from the brand photographs): a plum ground, limestone
+type, one pale gold Sun for the price and the main action. It is dark only.
 
 ---
 
@@ -14,8 +15,8 @@ This is the Dusk direction: a dark ground, sand type, one amber for the price. I
 
 **Every component uses semantic classes. A hardcoded colour is a bug.**
 
-- Not allowed: `bg-[#2A1B20]`, `text-[rgb(239_227_209)]`, any arbitrary colour value
-- Not possible: `text-sand-700`, `bg-plum-800`. Base colours have no utility class
+- Not allowed: `bg-[#17121A]`, `text-[rgb(237_224_210)]`, any arbitrary colour value
+- Not possible: `text-sand-700`, `bg-plum-900`. Base colours have no utility class
 - Correct: `bg-background-elevated`, `text-weak`, `border-stroke-strong`
 - Correct: `bg-fill-error/10`, `border-stroke-error/40` (opacity as a modifier on a semantic token)
 
@@ -34,7 +35,7 @@ Colour comes in two layers, both declared in `src/lib/tokens.ts`.
    primitive.
 
 `tailwind.config.ts` reads that file and does two things. Its plugin writes both layers to `:root` as CSS
-variables (`--color-sand-1000: 239 227 209`, `--color-strong: var(--color-sand-1000)`). Its `colors` map
+variables (`--color-sand-1000: 237 224 210`, `--color-strong: var(--color-sand-1000)`). Its `colors` map
 contains the semantic names only, so only semantic names become utilities. That is what enforces the
 core rule: there is nothing to type that reaches a primitive.
 
@@ -46,28 +47,33 @@ To change what a role looks like, change the `ref` of its token. No component is
 
 | Token | Value | What it is |
 |---|---|---|
-| `plum-950` | `#150D10` | Night |
-| `plum-900` | `#1F1418` | Dusk |
-| `plum-800` | `#2A1B20` | Raised dusk |
-| `plum-700` | `#36242A` | High dusk |
-| `sand-bright` | `#FFF6E8` | Sand, lit |
-| `sand-1000` | `#EFE3D1` | Sand |
-| `sand-700` | `#C4B19D` | Sand 2 |
-| `sand-500` | `#9C8878` | Sand 3 |
-| `sand-240` | `#49403E` | Sand at 24% on night |
-| `sand-120` | `#2F2727` | Sand at 12% on night |
-| `sun-bright` | `#FFE3A3` | Sun core |
-| `sun-1000` | `#FFAE3D` | Sun |
-| `sun-ink` | `#2A1606` | Ink on sun |
+| `plum-950` | `#17121A` | Night |
+| `plum-900` | `#221A24` | Dusk |
+| `plum-700` | `#3A2C38` | Mauve |
+| `sand-bright` | `#FDF3E9` | Limestone, lit (derived) |
+| `sand-1000` | `#EDE0D2` | Limestone |
+| `sand-700` | `#C9B4A6` | Stone |
+| `sand-500` | `#A08CA0` | Haze |
+| `sand-240` | `#4A4346` | Limestone at 24% on night (derived) |
+| `sand-120` | `#312B30` | Limestone at 12% on night (derived) |
+| `sun-bright` | `#FDE4B6` | Sun, lit (derived) |
+| `sun-1000` | `#FBC97E` | Sun |
 | `green-1000` | `#92D6A6` | Gain |
 | `red-1000` | `#FF8A8F` | Loss |
-| `tan-1000` | `#E0B07A` | Caution |
-| `rose-1000` | `#B36D5F` | Rose |
+| `tan-1000` | `#BF9470` | Caution (derived) |
+| `lavender-1000` | `#8D7087` | Lavender |
 | `black` | `#000000` | Black |
 
+The named colours (Night, Dusk, Mauve, Limestone, Stone, Haze, Sun, Lavender) are the guideline's. A
+primitive marked "derived" is not in the guideline: it is worked out from the guideline's colours to fill a
+step the product needs (a hover tint, a hairline).
+
 Plum is the ground and gets darker as the number rises. Sand is everything written or ruled; `240` and
-`120` are sand at 24% and 12% over night, kept as solid colours so a hairline looks the same on any
+`120` are limestone at 24% and 12% over night, kept as solid colours so a hairline looks the same on any
 surface. The tan is dull on purpose, so caution is never mistaken for the sun.
+
+The guideline's marketing colours (Rose, Peach) never enter the product. Lavender is the exception the
+guideline makes for charts: it is the secondary chart series, and the text selection.
 
 ### Which family a class takes
 
@@ -93,17 +99,18 @@ The utility picks the family.
 | `text-weaker` | `sand-500` | Eyebrows, hints, placeholders, axis ticks |
 | `text-disabled` | `sand-500` | Text on a disabled control |
 | `text-inverse-strong` | `plum-950` | Text on a sand fill: primary button, tooltip, selected segment |
-| `text-on-accent` | `sun-ink` | Text on a sun fill |
+| `text-on-accent` | `plum-950` | Text on a sun fill |
 | `text-accent` | `sun-1000` | The price, reward amounts, text links |
 | `text-accent-bright` | `sun-bright` | Price readout, hovered text link |
 | `text-success` | `green-1000` | Gain, in range, confirmed |
 | `text-error` | `red-1000` | Loss, out of range, failed |
 | `text-warning` | `tan-1000` | Caution, demo data, paused |
 
-`--color-chart-secondary` (`rose-1000`) is a CSS variable only: a chart series with no meaning of its
+`--color-chart-secondary` (`lavender-1000`) is a CSS variable only: a chart series with no meaning of its
 own, read through `usePalette()`.
 
-**The sun means price.** `accent` is the price and the reward that follows it, nothing else. Gain and
+**The sun means price.** `accent` is the price and the reward that follows it, and as a fill, the one main
+action on a screen (see [Buttons](#button)). Nothing else. Gain and
 loss have their own colours and always come with words or a sign, never colour alone.
 
 ## Background colours
@@ -112,10 +119,11 @@ loss have their own colours and always come with words or a sign, never colour a
 |---|---|---|
 | `bg-background-base` | `plum-950` | The page, the header |
 | `bg-background-sheet` | `plum-900` | Side sheet, scene ground |
-| `bg-background-elevated` | `plum-800` | Cards, dialogs, toasts |
+| `bg-background-elevated` | `plum-900` | Cards, dialogs, toasts |
 | `bg-background-popover` | `plum-700` | Menus and popovers |
 
-Depth is tonal: a surface gets lighter as it comes forward.
+Depth is tonal: the page is Night, and a surface gets lighter as it comes forward, cards in Dusk and menus
+in Mauve. A well (`fill-recessed`) goes back down to Night.
 
 ## Fill colours
 
@@ -127,18 +135,18 @@ Depth is tonal: a surface gets lighter as it comes forward.
 | `bg-fill-selected` | `plum-700` | The chosen chip |
 | `bg-fill-disabled` | `plum-700` | A disabled filled button |
 | `bg-fill-track` | `sand-120` | Switch off, progress and slider tracks |
-| `bg-fill-primary` | `sand-1000` | Primary action, selected segment, switch on |
-| `bg-fill-primary-hover` | `sand-bright` | Primary action, hovered |
+| `bg-fill-primary` | `sand-1000` | Selected segment, switch on, slider thumb |
+| `bg-fill-primary-hover` | `sand-bright` | The highlight on a primary key |
 | `bg-fill-primary-shade` | `sand-700` | The body of a primary key, under its highlight |
-| `bg-fill-accent` | `sun-1000` | The opening call to action |
-| `bg-fill-accent-hover` | `sun-bright` | The opening call to action, hovered |
+| `bg-fill-accent` | `sun-1000` | The one main action on a screen |
+| `bg-fill-accent-hover` | `sun-bright` | The highlight on the main action |
 | `bg-fill-inverse` | `sand-1000` | Tooltips |
 | `bg-fill-success` | `green-1000` | Success tint (use `/10`) |
 | `bg-fill-error` | `red-1000` | Error tint (use `/10`) |
 | `bg-fill-warning` | `tan-1000` | Warning tint (use `/10`) |
 | `bg-fill-overlay` | `black` at 60% | Scrim behind a dialog or sheet |
 
-`fill-overlay` carries its own opacity, so it takes no modifier. `--color-fill-selection` (`rose-1000`) is a
+`fill-overlay` carries its own opacity, so it takes no modifier. `--color-fill-selection` (`lavender-1000`) is a
 CSS variable only, used for `::selection` at 35%.
 
 The keys (see [Keys, glass and wells](#keys-glass-and-wells)) read `fill-primary-shade`, `fill-primary-hover`,
@@ -151,7 +159,7 @@ separate tokens because they are separate roles; pick by role, not by what looks
 
 | Class | Points at | Use |
 |---|---|---|
-| `border-stroke-weak` | `sand-120` | Dividers, quiet edges. The default border colour |
+| `border-stroke-weak` | `plum-700` | Dividers, quiet edges. The default border colour |
 | `border-stroke-strong` | `sand-240` | Card edges, control boundaries, rulers |
 | `border-stroke-stronger` | `sand-500` | A boundary on hover |
 | `border-stroke-strongest` | `sand-700` | An outlined button on hover |
@@ -185,25 +193,25 @@ const pal = usePalette();
 
 | Class | Face | Use |
 |---|---|---|
-| `font-serif` | Zodiak | Page titles and vault names. Thin (100) at the largest sizes, light (300) below, never bold |
+| `font-serif` | Newsreader | Every title: page titles, vault names, card and dialog titles. Light (300) only, never bold |
 | `font-sans` | Geist | Everything read or operated |
-| `font-display` | Geist | Same stack as `font-sans`; names the emphasis role |
+| `font-display` | Geist | Same stack as `font-sans`; used for readings (`display num`) |
 | `font-mono` | Geist Mono | Addresses, hashes, code |
 
 **Figures.** A face named "Switzer Figures" leads both sans stacks. Its `unicode-range` covers only the
 digits and `$ % + , . −`, so every figure is set in Switzer and every letter in Geist, with no class.
 Figures are tabular everywhere (`body` sets `tnum`); `num` restates it where needed.
 
-**Fonts are served from CDNs.** Zodiak and Switzer come from Fontshare; their licence does not allow
-the files in a public repository. Do not commit them.
+**Fonts are served from CDNs.** Newsreader, Geist and Geist Mono come from Google Fonts (OFL). Switzer
+comes from Fontshare; its licence does not allow the files in a public repository. Do not commit it.
 
 ### Role classes (`src/index.css`)
 
 | Class | What it is |
 |---|---|
-| `title` | Page-level title: serif, light, tight. Add `font-thin` for the title a page opens with |
-| `display` | UI title: Geist medium |
-| `display num` | A reading: one weight lighter than a title |
+| `title` | Page-level title: serif, light, tight |
+| `display` | UI title (a card, a dialog, a panel): the same serif, light |
+| `display num` | A reading: the sans stack at regular, so its figures are Switzer |
 | `eyebrow` | The small caps label that names a reading |
 | `wordmark` | The name in the header |
 | `wrap` | The page container (see [Layout](#layout)) |
@@ -227,8 +235,8 @@ the files in a public repository. Do not commit them.
 
 ### Weights
 
-`font-thin` 100, `font-light` 300, `font-normal` 400, `font-medium` 500, `font-semibold` 500,
-`font-bold` 600. Geist carries emphasis at 500, so `semibold` is mapped to it; 600 is the ceiling.
+`font-light` 300, `font-normal` 400, `font-medium` 500, `font-semibold` 500, `font-bold` 600. The serif is
+set at light only. Geist carries emphasis at 500, so `semibold` is mapped to it; 600 is the ceiling.
 
 ---
 
@@ -348,8 +356,8 @@ colour. It changes at once, partway through the body's transition (`--label-dela
 
 | Variant | Material | Label | Hover | Disabled | Use |
 |---|---|---|---|---|---|
-| `primary` | `btn-key btn-key-primary` | `text-inverse-strong` | The light beneath spreads | Body `fill-disabled`, a `stroke-strong` edge, no light; label `text-disabled` | The standard action |
-| `accent` | `btn-key btn-key-accent` | `text-on-accent` | The light beneath spreads | As primary | The opening call to action. One in view |
+| `primary` | `btn-key btn-key-primary` | `text-inverse-strong` | The light beneath spreads | Body `fill-disabled`, a `stroke-strong` edge, no light; label `text-disabled` | The standard action; any filled action that is not the screen's main one |
+| `accent` | `btn-key btn-key-accent` | `text-on-accent` | The light beneath spreads | As primary | The one main action on a screen: the opening call to action, the deposit card's submit. Never two in view |
 | `secondary` | `btn-glass` | `text-strong` | Tint 5% → 10%, edge brighter | Transparent, a `stroke-strong` edge; label `text-disabled` | The other action beside a primary one; the header's network and wallet buttons |
 | `ghost` | None | `text-weak` | `bg-fill-hover text-strong` | `text-disabled` | Stepping back inside a panel or dialog |
 | `danger` | `btn-glass btn-glass-danger` | `text-error` | As secondary, in `error` | As secondary, but the label stays `text-error` | Destructive, irreversible |
@@ -457,11 +465,13 @@ not a bug in the token layer.
   set their radius in `index.css`, outside the radius scale and against "everything structural is
   square-cut". Cards, chips and menus are still 3–4px.
 - **Tokens the keys left behind.** Since buttons and segments became keys, `stroke-primary-hover`,
-  `stroke-accent-hover` and `fill-selected` are used by no component. `fill-primary`'s use still reads
-  "primary action, selected segment", but those are now drawn from `fill-primary-shade` and
-  `fill-primary-hover`; `fill-primary` remains for the switch, the slider thumb and the live page.
+  `stroke-accent-hover` and `fill-selected` are used by no component. The keys draw from
+  `fill-primary-shade` and `fill-primary-hover`; `fill-primary` remains for the switch, the slider thumb
+  and the live page.
 - **Error edges use three opacities** (`/40`, `/60`, `/70`) for the same role.
 - **Layering is unnamed.** `z-40`, `z-50`, `z-[70]` are raw values.
 - **Illustration colours are literals.** The 3D scene and the price range drawing (`PriceRange.tsx`,
   `Scene.tsx`, `duskScene.ts`) carry their own hex values for stone, sky and light. They are artwork,
-  not interface tokens, and are outside this system for now.
+  not interface tokens, and are outside this system for now. They were retuned by hand to the
+  guideline's photographs (a plum sky, a rose-grey horizon, a pale gold sun the colour of `sun-1000`);
+  keep new values in that family.

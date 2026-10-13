@@ -250,13 +250,13 @@ alive (`components/brand/SkyScene.tsx`): the sun drifts and the stones slide to 
 gap. It is a three.js scene (`duskScene.ts`) loaded on demand, so three.js stays out of the main bundle; the still
 drawing in `Scene.tsx` shows first and remains when WebGL is unavailable. Readings sit on an engraved rule (`StatRow`).
 
-Type: Geist (UI and numerals, tabular; emphasis at 500) and Geist Mono via Google Fonts; Zodiak (page titles, vault
-names; light, never bold) from the Fontshare CDN. Zodiak's licence does not allow its font files in a public repository,
-so it is loaded by `<link>` in `index.html` and never committed. Every action target is at least 36 px tall (44 px for
+Type: Newsreader (every title, page and UI; light, never bold), Geist (UI; emphasis at 500) and Geist Mono via Google
+Fonts; Switzer for the figures from the Fontshare CDN. Switzer's licence does not allow its font files in a public
+repository, so it is loaded from the CDN in `src/index.css` and never committed. Every action target is at least 36 px tall (44 px for
 primary CTAs).
 
 ## Design tokens
 
 Tailwind config is the token source: surfaces `deep` / `dusk` / `panel` / `line`, action `aqua`, semantic `up` / `down` /
-`amber`, price and rewards `sun` / `tide`. `font-display` is Geist for numbers and UI titles, `font-serif` (class `title`)
-is Zodiak for page-level titles. Chart libraries that cannot read CSS variables take the same colours from `src/lib/theme.ts`.
+`amber`, price and rewards `sun` / `tide`. `font-display` is the sans stack for readings, `font-serif` (classes `title` and
+`display`) is Newsreader for every title. Chart libraries that cannot read CSS variables take the same colours from `src/lib/theme.ts`.

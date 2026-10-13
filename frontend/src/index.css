@@ -220,10 +220,11 @@
 
 @layer utilities {
   .num { font-variant-numeric: tabular-nums; }
-  .display { @apply font-display font-medium; letter-spacing: -0.01em; }
-  /* A reading is one weight lighter than a title: figures at regular, titles at medium */
-  .display.num { font-weight: 400; }
-  /* Page-level titles: the display serif, light, never bold */
+  /* UI titles (a card, a dialog, a panel): the same serif as page titles, light, a size down */
+  .display { @apply font-serif font-light; letter-spacing: -0.01em; }
+  /* A reading stays in the sans stack, so its figures are Switzer: regular */
+  .display.num { @apply font-display; font-weight: 400; }
+  /* Page-level titles: the serif, light, never bold */
   .title { @apply font-serif font-light; letter-spacing: -0.015em; line-height: 1; }
   .title em { font-style: italic; }
   /* Small caps label that names a reading */

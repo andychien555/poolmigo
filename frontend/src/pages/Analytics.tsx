@@ -69,7 +69,7 @@ export function Analytics() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="display text-2xl font-semibold">Protocol analytics</h1>
+              <h1 className="display text-2xl">Protocol analytics</h1>
               <DemoBadge />
             </div>
             <p className="text-sm text-weak mt-1">{BRAND.name} vaults across Ethereum, Robinhood Chain and Arc.</p>
@@ -129,7 +129,7 @@ function BarCard({ title, data, k, color }: { title: string; data: Week[]; k: Me
   return (
     <section className="bg-background-elevated border border-stroke-weak rounded-lg p-5">
       <div className="flex items-baseline justify-between">
-        <h3 className="display text-md font-semibold">{title}</h3>
+        <h3 className="display text-md">{title}</h3>
         <span className="text-sm text-weak num">{fmtUsd(total)} <span className="text-weaker text-xs">8 weeks</span></span>
       </div>
       <div className="h-40 mt-4">

@@ -39,10 +39,9 @@ const SCALE: Array<{ cls: string; use: string }> = [
 ];
 
 const WEIGHTS: Array<{ cls: string; face?: string; note: string }> = [
-  { cls: 'font-thin', face: 'font-serif', note: 'Zodiak only: the largest titles' },
-  { cls: 'font-light', face: 'font-serif', note: 'Zodiak titles' },
+  { cls: 'font-light', face: 'font-serif', note: 'Every title, in Newsreader' },
   { cls: 'font-normal', note: 'Body, and every reading' },
-  { cls: 'font-medium', note: 'Emphasis: labels, buttons, UI titles' },
+  { cls: 'font-medium', note: 'Emphasis: labels, buttons' },
   { cls: 'font-semibold', note: 'Same as medium. Geist carries emphasis at 500' },
   { cls: 'font-bold', note: 'The ceiling. Rare' },
 ];
@@ -53,12 +52,12 @@ function Typography() {
       id="typography"
       title="Typography"
       source="tailwind.config.ts · src/index.css"
-      lede="Four faces, each with one job. The serif speaks for the page, Geist carries the interface, and every figure is set in Switzer so a column of numbers reads as one hand."
+      lede="Four faces, each with one job. The serif sets every title, Geist carries the interface, and every figure is set in Switzer so a column of numbers reads as one hand."
     >
       <SubSection title="Families">
         <div className="divide-y divide-stroke-weak border-y border-stroke-weak">
-          <Family name="Zodiak" cls="font-serif" role="Page titles and vault names. Thin at the largest sizes, light below, never bold. Italic marks one word.">
-            <p className="title font-thin text-[clamp(38px,5vw,64px)] leading-[1.02]">Markets move. Your range <em className="font-light">follows.</em></p>
+          <Family name="Newsreader" cls="font-serif" role="Every title: the page title, vault names, card and dialog titles. Light only, never bold. Italic marks one word.">
+            <p className="title text-[clamp(38px,5vw,64px)] leading-[1.02]">Markets move. Your range <em>follows.</em></p>
           </Family>
           <Family name="Geist" cls="font-sans" role="Everything read or operated: labels, body, controls.">
             <p className="max-w-[46ch] text-md text-strong">Deposits and rebalancing are paused by the vault owner. Redeem stays available.</p>
@@ -75,9 +74,8 @@ function Typography() {
       <SubSection title="Roles" note="A handful of utility classes carry the repeated treatments, so a page asks for a role rather than rebuilding it from sizes and weights.">
         <div className="divide-y divide-stroke-weak border-y border-stroke-weak">
           <Role cls=".title" note="Page-level titles: the serif, light, tight"><span className="title text-2xl">Vault token price</span></Role>
-          <Role cls=".title.font-thin" note="The title a page opens with"><span className="title font-thin text-4xl">ETH / USDG</span></Role>
-          <Role cls=".display" note="UI titles: Geist, medium"><span className="display text-md">Price range</span></Role>
-          <Role cls=".display.num" note="A reading: one weight lighter than a title"><span className="display num text-[22px] leading-7">$2.4M</span></Role>
+          <Role cls=".display" note="UI titles: the same serif, light, a size down"><span className="display text-md">Price range</span></Role>
+          <Role cls=".display.num" note="A reading: the sans stack at regular, so the figures are Switzer"><span className="display num text-[22px] leading-7">$2.4M</span></Role>
           <Role cls=".eyebrow" note="The small caps label that names a reading"><span className="eyebrow">Total TVL</span></Role>
           <Role cls=".wordmark" note="The name in the header"><span className="wordmark">{BRAND.name}</span></Role>
         </div>
@@ -167,10 +165,10 @@ function WeightTile({ cls, face = 'font-sans', note }: { cls: string; face?: str
 // ── Base colours ──────────────────────────────────────────────────────
 
 const RAMPS: Array<{ title: string; note: string; names: PrimitiveName[] }> = [
-  { title: 'Plum', note: 'The ground. Four tones, darker as the number rises.', names: ['plum-950', 'plum-900', 'plum-800', 'plum-700'] },
-  { title: 'Sand', note: 'Everything written or ruled. 240 and 120 are sand at 24% and 12% over night, kept as solid colours.', names: ['sand-bright', 'sand-1000', 'sand-700', 'sand-500', 'sand-240', 'sand-120'] },
-  { title: 'Sun', note: 'The price, and the reward that follows it. Nothing structural is ever this colour.', names: ['sun-bright', 'sun-1000', 'sun-ink'] },
-  { title: 'Outcomes', note: 'Gain, loss and caution. The tan is dull on purpose, so it is never mistaken for the sun.', names: ['green-1000', 'red-1000', 'tan-1000', 'rose-1000', 'black'] },
+  { title: 'Plum', note: 'The ground: Night, Dusk and Mauve from the guideline. Darker as the number rises.', names: ['plum-950', 'plum-900', 'plum-700'] },
+  { title: 'Sand', note: 'Everything written or ruled: Limestone, Stone and Haze. 240 and 120 are limestone at 24% and 12% over night, kept as solid colours.', names: ['sand-bright', 'sand-1000', 'sand-700', 'sand-500', 'sand-240', 'sand-120'] },
+  { title: 'Sun', note: 'The price, the reward that follows it, and the one main action on a screen. Nothing structural is ever this colour.', names: ['sun-bright', 'sun-1000'] },
+  { title: 'Outcomes', note: 'Gain, loss and caution. The tan is dull on purpose, so it is never mistaken for the sun. Lavender is the one marketing colour allowed in: a chart series, and selection.', names: ['green-1000', 'red-1000', 'tan-1000', 'lavender-1000', 'black'] },
 ];
 
 function BaseColors() {
@@ -213,7 +211,7 @@ function SemanticColors() {
     >
       <SubSection title="Rules">
         <div className="divide-y divide-stroke-weak border-y border-stroke-weak">
-          <Rule title="Semantic classes only" yes={['bg-background-elevated', 'text-weak']} no={[arbitrary('bg', '#2A1B20'), 'text-sand-700']}>
+          <Rule title="Semantic classes only" yes={['bg-background-elevated', 'text-weak']} no={[arbitrary('bg', '#17121A'), 'text-sand-700']}>
             No hex, no arbitrary colour, no base colour in a class. If the role you need is missing, add a token.
           </Rule>
           <Rule title="The utility picks the family" yes={['text-weaker', 'bg-fill-weak', 'border-stroke-strong']} no={['text-fill-weak', 'bg-stroke-strong']}>
@@ -226,7 +224,7 @@ function SemanticColors() {
             Tints and soft edges are a semantic token with an opacity modifier, never a new colour.
           </Rule>
           <Rule title="The sun means price" yes={['text-accent', 'text-success', 'text-error']}>
-            Sun is the price and the reward that follows it. Gain and loss have their own colours and always come with words.
+            Sun is the price, the reward that follows it, and the one main action on a screen. Gain and loss have their own colours and always come with words.
           </Rule>
         </div>
       </SubSection>

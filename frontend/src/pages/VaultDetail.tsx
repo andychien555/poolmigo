@@ -50,7 +50,7 @@ function VaultView({ vaultId, market }: { vaultId: string; market: 'open' | 'clo
           <div className="flex flex-wrap items-start gap-[18px] [--name:clamp(38px,4.4vw,60px)]">
             <span className="flex shrink-0 mt-[calc((var(--name)-36px)/2)]"><TokenPair a={v.token0} b={v.token1} size={36} chain={v.chain} /></span>
             <div>
-              <h1 className="title font-thin text-[length:var(--name)]">{vaultName(v)}</h1>
+              <h1 className="title text-[length:var(--name)]">{vaultName(v)}</h1>
               <p className="num mt-2 text-sm text-weak">{poolLabel(v)}</p>
             </div>
           </div>
