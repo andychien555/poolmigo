@@ -217,7 +217,6 @@ comes from Fontshare; its licence does not allow the files in a public repositor
 | `display` | UI title (a card, a dialog, a panel), and the deposits total on Earn: the same serif, light |
 | `display num` | A reading: the sans stack at regular, so its figures are Switzer |
 | `eyebrow` | The small caps label that names a reading |
-| `wordmark` | The name in the header |
 | `wrap` | The page container (see [Layout](#layout)) |
 | `ruler` | An engraved scale that readings hang from |
 | `hatch` | Diagonal hatching. Only the gutters in the gallery's container diagram use it |
@@ -431,7 +430,7 @@ outside the gallery.
 | ChainLogo | `ChainLogo.tsx` | Yes, through TokenPair |
 | BoostedApr | `BoostedApr.tsx` | No |
 | Collapsible | `Collapsible.tsx` | No |
-| Tooltip, InfoDot | `Tooltip.tsx` | Yes |
+| Tooltip, Hint | `Tooltip.tsx` | Yes |
 | ToastHost | `Toast.tsx` | Yes |
 | Spinner | `Spinner.tsx` | Yes |
 | Modal | `Modal.tsx` | Yes |

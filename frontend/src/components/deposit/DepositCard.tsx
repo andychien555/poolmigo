@@ -7,6 +7,7 @@ import * as m from '@/demo/math';
 import { useStore } from '@/store/useStore';
 import { useVaultApr } from '@/store/selectors';
 import { cx, fmtPct, fmtToken, fmtUsd } from '@/lib/format';
+import { Arrow } from '@/components/ui/Arrow';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { SlidingKey } from '@/components/ui/SlidingKey';
@@ -29,7 +30,7 @@ export function DepositCard({ vault: v, initialAmount, showVaultLink = true }: P
 
   return (
     <div className="w-full max-w-[440px] mx-auto lg:max-w-none">
-      <div className="grid gap-4 rounded-lg border border-stroke-strong bg-background-elevated px-[18px] pb-[18px]">
+      <div className="rounded-lg border border-stroke-strong bg-background-elevated px-[18px] pb-[18px]">
         <div className="relative -mx-[18px] grid grid-cols-2 border-b border-stroke-strong" role="tablist">
           <span
             aria-hidden
@@ -56,15 +57,16 @@ export function DepositCard({ vault: v, initialAmount, showVaultLink = true }: P
           ))}
         </div>
 
+        {/* The vault's name gets room on both sides, so it reads as the title of the overlay, apart from the tabs and the form */}
         {showVaultLink && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 py-8">
             <TokenPair a={v.token0} b={v.token1} size={26} chain={v.chain} />
             <span className="min-w-0 flex-1 font-serif text-xl font-normal leading-tight text-strong">{vaultName(v)}</span>
-            <Link to={`/vault/${v.id}`} className="shrink-0 text-xs text-weaker hover:text-strong">View vault →</Link>
+            <Link to={`/vault/${v.id}`} className="inline-flex shrink-0 items-center gap-1 text-xs text-weaker hover:text-strong">View vault<Arrow /></Link>
           </div>
         )}
 
-        <div key={`${v.id}-${tab}`} className="animate-[vault-tab-in_200ms_ease-out]">
+        <div key={`${v.id}-${tab}`} className={cx('animate-[vault-tab-in_200ms_ease-out]', !showVaultLink && 'pt-4')}>
           {tab === 'deposit' ? <DepositForm vault={v} initialAmount={initialAmount} /> : <WithdrawForm vault={v} />}
         </div>
       </div>

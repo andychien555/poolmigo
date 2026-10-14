@@ -244,7 +244,7 @@ chart are circles; ranges, controls, cards and token tiles are square-cut. The r
 `rounded-full` for that reason; use `rounded-circle` for a real circle.
 
 The motif: two stones mark a range's bounds, the sun marks the price, a graduated scale is the price axis. It appears
-as the mark (`components/brand/Mark.tsx`), the range meter on each vault row (`components/vault/RangeMeter.tsx`), the
+in the range meter on each vault row (`components/vault/RangeMeter.tsx`), the
 price range on the vault page (`components/vault/PriceRange.tsx`) and the scene behind the Earn page. That scene is
 alive (`components/brand/SkyScene.tsx`): the sun drifts and the stones slide to re-centre on it when it leaves the
 gap. It is a three.js scene (`duskScene.ts`) loaded on demand, so three.js stays out of the main bundle; the still

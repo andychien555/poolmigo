@@ -219,7 +219,6 @@
   .eyebrow { @apply text-2xs font-medium uppercase tracking-label text-weaker; }
   /* Page container: one gutter for the header, every page and the footer */
   .wrap { width: 100%; max-width: 1280px; margin-inline: auto; padding-inline: clamp(16px, 4vw, 56px); }
-  .wordmark { @apply font-serif font-light uppercase; font-size: 14px; line-height: 1; letter-spacing: 0.24em; padding-left: 0.24em; white-space: nowrap; }
   /* Keeps text readable over the scene: dark from the left (where the text is) and from the ground up */
   .sky-shade {
     background:

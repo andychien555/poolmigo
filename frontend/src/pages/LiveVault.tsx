@@ -21,6 +21,7 @@ import { Card } from '@/components/ui/Card';
 import { Stat, StatRow } from '@/components/ui/Stat';
 import { Spinner } from '@/components/ui/Spinner';
 import { DataLegend, LiveBadge } from '@/components/ui/DataBadge';
+import { Arrow } from '@/components/ui/Arrow';
 import { AdapterList } from '@/components/live/AdapterList';
 import { LiveDepositCard } from '@/components/live/LiveDepositCard';
 import { LiveRedeemCard } from '@/components/live/LiveRedeemCard';
@@ -51,7 +52,7 @@ export function LiveVault() {
   return (
     <div className="wrap py-6 space-y-6">
       <header className="flex flex-wrap items-center gap-3">
-        <Link to="/" className="text-xs text-weaker hover:text-weak mr-1">← Earn</Link>
+        <Link to="/" className="mr-1 inline-flex items-center gap-1 text-xs text-weaker hover:text-weak"><Arrow dir="left" />Earn</Link>
         <h1 className="display text-2xl">{vault.entry?.label ?? vault.name ?? `${BRAND.name} vault`}</h1>
         <LiveBadge />
         {vault.hasDeployment && (

@@ -136,7 +136,7 @@ function StatRowSection() {
         <Specimen className="!block" code="<StatRow cols={2} packed rule={false}>">
           <StatRow cols={2} packed rule={false}>
             <Stat label="Total TVL" value="$11.4M" />
-            <Stat label="Fees earned (24h)" value="$6,278" />
+            <Stat label="All vaults' fees (24h)" value="$6,278" />
           </StatRow>
         </Specimen>
       </SubSection>

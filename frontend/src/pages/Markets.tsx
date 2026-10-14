@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { VAULTS, VAULT_BY_ID, VOLUME_SNAPSHOT_DATE, vaultName } from '@/demo/data/vaults';
 import { CHAINS, type ChainId } from '@/demo/data/chains';
@@ -12,8 +12,8 @@ import { useMarketStatus, useUserDerived, useVaultApr } from '@/store/selectors'
 import { Stat, StatRow } from '@/components/ui/Stat';
 import { TokenPair } from '@/components/ui/TokenIcon';
 import { Button } from '@/components/ui/Button';
-import { DemoBadge } from '@/components/ui/DataBadge';
-import { InfoDot } from '@/components/ui/Tooltip';
+import { HINT_UNDERLINE, Tooltip } from '@/components/ui/Tooltip';
+import { Arrow } from '@/components/ui/Arrow';
 import { DepositModal } from '@/components/deposit/DepositModal';
 import { Welcome } from '@/components/layout/Welcome';
 import { SkyScene } from '@/components/brand/SkyScene';
@@ -65,26 +65,19 @@ export function Markets() {
           )}
         </div>
         <div className="wrap relative z-[4] py-6 sm:absolute sm:inset-x-0 sm:bottom-0">
-          {showMine ? (
-            <StatRow cols={2} packed rule={false}>
-              <Stat label="Fees earned" value={`+${fmtUsd(totalFees, { compact: false, cents: true })}`} tone="success" />
-            </StatRow>
-          ) : (
-            <StatRow cols={2} packed rule={false}>
-              <Stat label="Total TVL" value={fmtUsd(m.totalTvl(VAULTS, tvlDelta))} />
-              <Stat label="Fees earned (24h)" value={fmtUsd(m.dailyFees(VAULTS, tvlDelta), { compact: false })} />
-            </StatRow>
-          )}
+          {/* Your own fees lead once you hold a position; the whole protocol's readings stay either way */}
+          <StatRow cols={showMine ? 3 : 2} packed rule={false}>
+            {showMine && <Stat label="Your fees earned" value={`+${fmtUsd(totalFees, { compact: false, cents: true })}`} tone="success" />}
+            <Stat label="Total TVL" value={fmtUsd(m.totalTvl(VAULTS, tvlDelta))} />
+            <Stat label="All vaults' fees (24h)" value={fmtUsd(m.dailyFees(VAULTS, tvlDelta), { compact: false })} />
+          </StatRow>
         </div>
       </section>
 
       {/* The plaza: every vault as an instrument */}
       <div className="wrap pt-[52px] pb-[120px]">
         <div className="mb-[22px] flex flex-wrap items-end justify-between gap-x-7 gap-y-[18px]">
-          <div className="flex items-center gap-2.5">
-            <h1 className="title text-[clamp(32px,3.6vw,46px)]">Vaults</h1>
-            <DemoBadge />
-          </div>
+          <h1 className="title text-[clamp(32px,3.6vw,46px)]">Vaults</h1>
           <div className="flex w-full flex-wrap items-center gap-x-[22px] gap-y-3.5 sm:w-auto">
             <ChainFilter value={chain} onChange={setChain} />
             <label className="flex h-10 w-full items-center gap-2 rounded border border-stroke-strong px-3 text-weaker focus-within:border-stroke-strongest sm:w-[220px]">
@@ -108,13 +101,13 @@ export function Markets() {
           <span>Price within its range</span>
           <span className="justify-self-end"><SortHead label="APR" active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} /></span>
           <span className="justify-self-end"><SortHead label="TVL" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} /></span>
-          <span className="inline-flex items-center gap-1.5 justify-self-end"><SortHead label="1D Vol" active={sort.key === 'vol'} dir={sort.dir} onClick={() => toggleSort('vol')} /><VolumeNote /></span>
+          <span className="justify-self-end"><SortHead label="1D Vol" tip={VOLUME_NOTE} active={sort.key === 'vol'} dir={sort.dir} onClick={() => toggleSort('vol')} /></span>
           <span />
         </div>
         <div className="eyebrow flex justify-end gap-[18px] px-3 lg:hidden">
           <SortHead label="APR" active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} />
           <SortHead label="TVL" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} />
-          <span className="inline-flex items-center gap-1.5"><SortHead label="1D Vol" active={sort.key === 'vol'} dir={sort.dir} onClick={() => toggleSort('vol')} /><VolumeNote /></span>
+          <SortHead label="1D Vol" tip={VOLUME_NOTE} active={sort.key === 'vol'} dir={sort.dir} onClick={() => toggleSort('vol')} />
         </div>
         <ul>
           {rows.map(({ v, tvl }) => (
@@ -172,24 +165,22 @@ function VaultRow({ vault: v, tvl, market, onDeposit }: { vault: Vault; tvl: num
   );
 }
 
-function SortHead({ label, active, dir, onClick }: { label: string; active: boolean; dir: 'asc' | 'desc'; onClick: () => void }) {
-  return (
+/** A sortable column label. With a `tip`, the label is underlined and explains itself on hover or focus. */
+function SortHead({ label, active, dir, onClick, tip }: { label: string; active: boolean; dir: 'asc' | 'desc'; onClick: () => void; tip?: ReactNode }) {
+  const head = (
     <button onClick={onClick} className={cx('inline-flex items-center gap-[5px] whitespace-nowrap uppercase tracking-label hover:text-strong', active && 'text-strong')}>
-      {label}
-      {/* The sorted column shows its direction, the others a quieter ↕, so every label reads as one that sorts */}
-      <span aria-hidden className={cx(!active && 'opacity-50')}>{active ? (dir === 'desc' ? '↓' : '↑') : '↕'}</span>
+      {/* Only the sorted column carries an arrow. It sits before the label, so the label stays flush with the
+          right-aligned figures below and does not shift when the arrow comes and goes */}
+      {active && <Arrow dir={dir === 'desc' ? 'down' : 'up'} size={10} />}
+      <span className={cx(tip != null && HINT_UNDERLINE)}>{label}</span>
       {/* aria-sort is only read on a column header, and these rows are a list, not a table: the state goes in the name */}
       <span className="sr-only">{active ? `, sorted ${dir === 'desc' ? 'descending' : 'ascending'}` : ', sortable'}</span>
     </button>
   );
+  return tip ? <Tooltip content={tip} align="end">{head}</Tooltip> : head;
 }
 
 /** What the 1D Vol figure is: the whole pool's, from one day's snapshot, not the vault's own and not live. */
-function VolumeNote() {
-  return (
-    <InfoDot
-      align="end"
-      tip={<span className="normal-case tracking-normal">The whole pool's trading volume over 24 hours, not this vault's share. Snapshot from {VOLUME_SNAPSHOT_DATE}, not updated live.</span>}
-    />
-  );
-}
+const VOLUME_NOTE = (
+  <span className="normal-case tracking-normal">The whole pool's trading volume over 24 hours, not this vault's share. Snapshot from {VOLUME_SNAPSHOT_DATE}, not updated live.</span>
+);

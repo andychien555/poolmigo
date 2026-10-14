@@ -1,7 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
-import { Mark, MarkLoader } from '@/components/brand/Mark';
+import { Mark, MarkLoader, Wordmark, WordmarkZh } from '@/components/brand/Mark';
 import { Button } from '@/components/ui/Button';
-import { BRAND } from '@/lib/brand';
 import { cx } from '@/lib/format';
 import { PRIMITIVES, SEMANTIC_GROUPS, primitiveHex, type PrimitiveName, type SemanticGroup, type SemanticToken } from '@/lib/tokens';
 import { Code, Rule, Section, Specimen, SubSection, px, useComputed } from './parts';
@@ -77,7 +76,6 @@ function Typography() {
           <Role cls=".display" note="UI titles, a size down, and the deposits total on Earn: the same serif, light"><span className="display text-md">Price range</span></Role>
           <Role cls=".display.num" note="A reading: the sans stack at regular, so the figures are Switzer"><span className="display num text-[22px] leading-7">$2.4M</span></Role>
           <Role cls=".eyebrow" note="The small caps label that names a reading"><span className="eyebrow">Total TVL</span></Role>
-          <Role cls=".wordmark" note="The name in the header"><span className="wordmark">{BRAND.name}</span></Role>
         </div>
       </SubSection>
 
@@ -358,7 +356,7 @@ function Shape() {
         <Specimen className="justify-center gap-x-12 !py-10">
           <Mark size={88} className="text-strong" />
           <p className="max-w-[40ch] text-sm text-weak">
-            Two stones are the bounds of the range. The sun between them is the price. In the mark, in a chart and in a control, a circle means the same thing.
+            The sun in the mark is the price. In the mark, in a chart and in a control, a circle means the same thing.
           </p>
         </Specimen>
       </SubSection>
@@ -535,7 +533,7 @@ function Marks() {
       source="src/components/brand/Mark.tsx · src/index.css"
       lede="The few drawn things the interface owns. Each one stands for something, so none of them is used as decoration."
     >
-      <SubSection title="The mark" note="Two stones on a horizon with the sun setting between them. It takes the text colour; the sun keeps its own.">
+      <SubSection title="The mark" note="An s with the sun set in its waist. It takes the text colour; the sun keeps its own. The wordmark's s is the mark, so the two never stand side by side.">
         <Specimen align="end" className="gap-x-10">
           {[16, 24, 40, 64].map((s) => (
             <div key={s} className="grid justify-items-start gap-2.5">
@@ -544,8 +542,12 @@ function Marks() {
             </div>
           ))}
           <div className="grid justify-items-start gap-2.5">
-            <span className="flex items-center gap-3 text-strong"><Mark size={24} /><span className="wordmark">{BRAND.name}</span></span>
-            <span className="font-mono text-xs text-weaker">with the wordmark</span>
+            <Wordmark className="h-5 text-strong" />
+            <span className="font-mono text-xs text-weaker">wordmark, 20px</span>
+          </div>
+          <div className="grid justify-items-start gap-2.5">
+            <WordmarkZh className="h-5 text-strong" />
+            <span className="font-mono text-xs text-weaker">Chinese wordmark, 20px</span>
           </div>
         </Specimen>
       </SubSection>
