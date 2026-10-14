@@ -178,7 +178,7 @@ function DepositForm({ vault: v, initialAmount }: { vault: Vault; initialAmount?
   const deposit = useStore((s) => s.deposit);
   const pushToast = useStore((s) => s.pushToast);
   const { tvl, breakdown: b } = useVaultApr(v);
-  const apr = b.totalApr;
+  const apr = b.feeApr;
 
   const [asset, setAsset] = useState(STABLE);
   const [amount, setAmount] = useState(initialAmount ?? '');

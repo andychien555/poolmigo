@@ -177,7 +177,7 @@ The four neutral steps are named by weight, not by state, because the same weigh
 place and rest in another. `border` with no colour class resolves to `stroke-weak`.
 
 Inside a popover (`background-popover`, Mauve) a divider or an inner edge is `stroke-strong`: `stroke-weak`
-sits too close to Mauve to read there. The APR breakdown and the wallet menu follow this.
+sits too close to Mauve to read there. The wallet menu follows this.
 
 ### Chart colours
 
@@ -263,7 +263,6 @@ Keys and wells set their own radius in `index.css`, outside this scale:
 | Class | Radius |
 |---|---|
 | `btn` | 10px (`--btn-radius`); 8px at Button size `xs` |
-| `seg` | 8px (`--seg-radius`). Nothing uses it since Segmented moved into a groove |
 | `well` | 11px (`--well-radius`) |
 | `groove` | The well's radius less its 3px padding, for the key inside it |
 
@@ -430,7 +429,7 @@ outside the gallery.
 | DemoBadge, LiveBadge, DataLegend | `DataBadge.tsx` | Yes |
 | TokenIcon, TokenPair | `TokenIcon.tsx` | Yes |
 | ChainLogo | `ChainLogo.tsx` | Yes, through TokenPair |
-| BoostedApr | `BoostedApr.tsx` | Yes |
+| BoostedApr | `BoostedApr.tsx` | No |
 | Collapsible | `Collapsible.tsx` | No |
 | Tooltip, InfoDot | `Tooltip.tsx` | Yes |
 | ToastHost | `Toast.tsx` | Yes |

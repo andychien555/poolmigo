@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { VAULT_BY_ID, TIER_CAPACITY, poolLabel, vaultName } from '@/demo/data/vaults';
 import { fmtDate, fmtPct, fmtToken, fmtUsd, cx } from '@/lib/format';
@@ -8,12 +7,10 @@ import { useMarketStatus, useVaultApr } from '@/store/selectors';
 import { TokenPair } from '@/components/ui/TokenIcon';
 import { Stat, StatRow } from '@/components/ui/Stat';
 import { PriceRange } from '@/components/vault/PriceRange';
-import { AprBreakdown } from '@/components/vault/AprBreakdown';
 import { NavChart } from '@/components/vault/NavChart';
 import { DepositCard } from '@/components/deposit/DepositCard';
 import type { Vault } from '@/lib/types';
 import { Tooltip } from '@/components/ui/Tooltip';
-import { BoostedApr } from '@/components/ui/BoostedApr';
 
 export function VaultDetail() {
   const { id = '' } = useParams();
@@ -33,7 +30,6 @@ function VaultView({ vaultId, market }: { vaultId: string; market: 'open' | 'clo
   const v = VAULT_BY_ID[vaultId];
   const { tvl, breakdown: b } = useVaultApr(v);
   const cap = TIER_CAPACITY[v.tier];
-  const [aprHover, setAprHover] = useState(false);
 
   return (
     <div className="wrap pt-[26px] pb-[120px]">
@@ -56,14 +52,8 @@ function VaultView({ vaultId, market }: { vaultId: string; market: 'open' | 'clo
           </div>
           <StatRow cols={3}>
             <Stat label="TVL" value={fmtUsd(tvl)} />
-            <div className="cursor-help" onMouseEnter={() => setAprHover(true)} onMouseLeave={() => setAprHover(false)}>
-              <Stat label="APR" value={<BoostedApr value={fmtPct(b.totalApr)} />} />
-              {aprHover && (
-                <div className="absolute left-0 top-full mt-1 z-40 w-72 bg-background-popover border border-stroke-strong rounded-md shadow-pop p-3 animate-fade-in">
-                  <AprBreakdown vault={v} compact />
-                </div>
-              )}
-            </div>
+            {/* The fee APR alone: PMG rewards are not counted while nothing on screen shows or pays them */}
+            <Stat label="APR" value={fmtPct(b.feeApr)} />
             <Stat label="Capacity" value={`${fmtUsd(tvl)} / ${cap / 1_000_000}M`} />
           </StatRow>
         </header>
@@ -95,7 +85,7 @@ function YourPosition({ vault: v, tvl }: { vault: Vault; tvl: number }) {
       </Tooltip>
       <dl className="num text-sm">
         <Row label="Fees earned" value={`+${fmtUsd(fees, { compact: false, cents: true })}`} tone="text-success" tip={`Fees compound into your ${v.receiptSymbol} automatically. Nothing to claim.`} />
-        <Row label="Your APR" value={fmtPct(b.totalApr)} tip={`${fmtPct(b.feeApr)} from fees + ${fmtPct(b.tideApr)} in PMG`} />
+        <Row label="Your APR" value={fmtPct(b.feeApr)} tip="From trading fees: the 7-day average, annualised." />
       </dl>
     </section>
   );

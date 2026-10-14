@@ -1,5 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { VAULTS, VAULT_BY_ID, VOLUME_SNAPSHOT_DATE, vaultName } from '@/demo/data/vaults';
 import { CHAINS, type ChainId } from '@/demo/data/chains';
@@ -12,11 +11,9 @@ import { useStore } from '@/store/useStore';
 import { useMarketStatus, useUserDerived, useVaultApr } from '@/store/selectors';
 import { Stat, StatRow } from '@/components/ui/Stat';
 import { TokenPair } from '@/components/ui/TokenIcon';
-import { BoostedApr } from '@/components/ui/BoostedApr';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DataBadge';
 import { InfoDot } from '@/components/ui/Tooltip';
-import { AprBreakdown } from '@/components/vault/AprBreakdown';
 import { DepositModal } from '@/components/deposit/DepositModal';
 import { Welcome } from '@/components/layout/Welcome';
 import { SkyScene } from '@/components/brand/SkyScene';
@@ -36,7 +33,7 @@ export function Markets() {
     () =>
       VAULTS.filter((v) => chain === 'all' || v.chain === chain)
         .filter((v) => `${vaultName(v)} ${CHAINS[v.chain].name}`.toLowerCase().replace(/\s/g, '').includes(q.toLowerCase().replace(/\s/g, '')))
-        .map((v) => ({ v, tvl: m.effectiveTvl(v, tvlDelta), apr: m.aprBreakdown(v, m.effectiveTvl(v, tvlDelta)).totalApr, vol: v.volume24h }))
+        .map((v) => ({ v, tvl: m.effectiveTvl(v, tvlDelta), apr: m.aprBreakdown(v, m.effectiveTvl(v, tvlDelta)).feeApr, vol: v.volume24h }))
         .sort((a, b) => (sort.dir === 'desc' ? b[sort.key] - a[sort.key] : a[sort.key] - b[sort.key])),
     [q, chain, tvlDelta, sort],
   );
@@ -145,14 +142,6 @@ const COLS =
 function VaultRow({ vault: v, tvl, market, onDeposit }: { vault: Vault; tvl: number; market: MarketStatus; onDeposit: () => void }) {
   const navigate = useNavigate();
   const { breakdown: b } = useVaultApr(v);
-  const [hover, setHover] = useState(false);
-  const aprCell = useRef<HTMLDivElement>(null);
-  const [pop, setPop] = useState<{ top: number; right: number } | null>(null);
-  const onEnter = () => {
-    const r = aprCell.current?.getBoundingClientRect();
-    if (r) setPop({ top: r.bottom + 4, right: window.innerWidth - r.right });
-    setHover(true);
-  };
   const label = 'mr-1.5 text-xs font-normal text-weaker lg:hidden';
 
   return (
@@ -170,21 +159,8 @@ function VaultRow({ vault: v, tvl, market, onDeposit }: { vault: Vault; tvl: num
         <div className="min-w-0 font-serif text-[23px] font-normal leading-[var(--name)] text-strong lg:truncate" title={vaultName(v)}>{vaultName(v)}</div>
       </div>
       <div className="min-w-0 [grid-area:meter] lg:[grid-area:auto]"><RangeMeter vault={v} market={market} /></div>
-      <div ref={aprCell} className="justify-self-end whitespace-nowrap [grid-area:apr] lg:[grid-area:auto]" onMouseEnter={onEnter} onMouseLeave={() => setHover(false)}>
-        <BoostedApr value={fmtPct(b.totalApr)} className="display num text-xl" />
-        {hover &&
-          pop &&
-          createPortal(
-            <div
-              className="fixed z-40 w-72 bg-background-popover border border-stroke-strong rounded-md shadow-pop p-3 text-left animate-fade-in"
-              style={{ top: pop.top, right: pop.right }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <AprBreakdown vault={v} compact />
-            </div>,
-            document.body,
-          )}
-      </div>
+      {/* The fee APR alone: PMG rewards are not counted while nothing on screen shows or pays them */}
+      <div className="display num justify-self-end whitespace-nowrap text-xl text-strong [grid-area:apr] lg:[grid-area:auto]">{fmtPct(b.feeApr)}</div>
       <div className="num text-md text-weak [grid-area:tvl] lg:justify-self-end lg:[grid-area:auto]"><span className={label}>TVL</span>{fmtUsd(tvl)}</div>
       <div className="num text-md text-weak [grid-area:vol] lg:justify-self-end lg:[grid-area:auto]"><span className={label}>1D Vol</span>{fmtUsd(v.volume24h, { tenths: true })}</div>
       <div className="justify-self-end self-center [grid-area:act] lg:[grid-area:auto]">
