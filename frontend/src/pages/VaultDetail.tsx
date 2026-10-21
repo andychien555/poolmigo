@@ -3,11 +3,11 @@
  * lists that key), as the original vault page laid it out — stats, the deposit / withdraw card in
  * the side column, the price range, the basket, the price chart — read live
  * (src/chain/useLiveVaults.ts + src/chain/useVault.ts): TVL and spot NAV at the reference pools'
- * live spot, receipt supply and cap, performance fee, the basket composition and the exact spot
+ * live spot, receipt supply, performance fee, the basket composition and the exact spot
  * prices used, and the price range: the live spot between the adapters' on-chain range
  * (src/chain/useVaultRanges.ts). The card's deposits and withdrawals are real transactions on this
- * vault's chain. Mocked, and badged: the price chart's line only (no history on chain) — never the
- * live price or the spot-NAV readout. The fee APR (stat row + "Your APR") and "Fees earned" come from the
+ * vault's chain. Mocked: the price chart's line only (no history on chain), unbadged for now — never
+ * the live price or the spot-NAV readout. The fee APR (stat row + "Your APR") and "Fees earned" come from the
  * NAV-history collector (src/chain/feeApy.ts) through the chart's own fetch; "—" until 7 days are covered.
  */
 import { useEffect, useMemo } from 'react';
@@ -15,7 +15,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useWallet } from '@/wallet/context';
 import { DEPLOYMENTS, chainFor, chainLabel, findVault, isLocalChain } from '@/chain/chains';
 import { formatAmount, formatAmountSignificant, shortHex } from '@/chain/amounts';
-import { basketName, feeLabel, holdingUsd, resolveVaultRouteId, tokenUsdPrices, vaultRouteId } from '@/chain/liveVaults';
+import { basketName, displaySymbol, feeLabel, holdingUsd, resolveVaultRouteId, tokenUsdPrices, vaultRouteId } from '@/chain/liveVaults';
 import { USD_ANCHOR_SYMBOL, spotUsdPerToken } from '@/chain/spot';
 import { anchorOf, useLiveVaults, type LiveVaultRow } from '@/chain/useLiveVaults';
 import { useOpenVault, useSwitchToChain } from '@/chain/useTargetChain';
@@ -26,6 +26,7 @@ import { useVaultRanges } from '@/chain/useVaultRanges';
 import { FEE_APR_WINDOW_DAYS, feeApyPct, fmtFeeApr, latestFeesUsd } from '@/chain/feeApy';
 import { useNavHistoryRows } from '@/chain/useNavHistory';
 import { cx, fmtPct, fmtPrice, fmtUsd } from '@/lib/format';
+import { TOKEN_COLORS } from '@/demo/data/vaults';
 import { TokenGroup } from '@/components/ui/TokenIcon';
 import { Stat, StatRow } from '@/components/ui/Stat';
 import { Button } from '@/components/ui/Button';
@@ -96,7 +97,6 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
 
   const symbols = v.tokens.map((t) => t.symbol);
   const name = basketName(v.ready ? symbols : [], v.entry.label);
-  const cap = v.maxTotalSupply;
   const usd = (x: number | undefined, cents = true) => (x === undefined ? '—' : fmtUsd(x, { cents }));
   const wrongChain = Boolean(address) && chainId !== v.chainId;
   const switchTarget = chainFor(v.chainId);
@@ -137,12 +137,11 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
               {switchError && switchTarget && <Message tone="error">{describeSwitchError(switchError, switchTarget)}</Message>}
             </div>
           )}
-          <StatRow cols={5}>
+          <StatRow cols={4}>
             <Stat label="TVL" value={usd(valuation.usd)} sub={valuation.unpriced.length > 0 ? `no price for ${valuation.unpriced.join(', ')}` : undefined} />
             {/* The fee APR alone, as the original design's stat row drew it */}
             <Stat label="APR" value={fmtFeeApr(earnings.apr)} />
             <Stat label="Spot NAV" value={nav === undefined ? '—' : fmtPrice(nav)} sub={`per ${v.entry.receipt.symbol}`} />
-            <Stat label="Supply" value={v.supply === undefined ? '—' : formatAmountSignificant(v.supply, v.decimals)} sub={cap === undefined ? undefined : cap === 0n ? 'uncapped' : `cap ${formatAmountSignificant(cap, v.decimals)}`} />
             <Stat label="Performance fee" value={feeLabel(v.performanceFeeBps)} sub="on harvested fees only" />
           </StatRow>
         </header>
@@ -159,14 +158,7 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
 
         <section className="min-w-0 lg:col-start-1">
           <h2 className="title text-2xl leading-tight mb-3.5">Basket</h2>
-          {/* Each token's share of the spot value, in the table's order; the Share column has the numbers */}
-          {valuation.usd !== undefined && valuation.usd > 0 && (
-            <div className="mb-4 flex h-1.5 w-full overflow-hidden rounded-full bg-fill-track" aria-hidden>
-              {valuation.legs.map((l, i) => (
-                <span key={i} className={cx('h-full', i % 2 === 0 ? 'bg-fill-primary' : 'bg-strong/40')} style={{ width: `${(l.share ?? 0) * 100}%` }} />
-              ))}
-            </div>
-          )}
+          {valuation.usd !== undefined && valuation.usd > 0 && <BasketBar tokens={v.tokens.map((t) => displaySymbol(t.symbol))} legs={valuation.legs} />}
           <table className="w-full text-sm num">
             <thead>
               <tr className="text-xs text-weaker border-b border-stroke-strong">
@@ -184,7 +176,7 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
                 const price = t.symbol === USD_ANCHOR_SYMBOL ? 1 : leg?.spot && anchor ? spotUsdPerToken(leg.spot, t.decimals, anchor.decimals) : undefined;
                 return (
                   <tr key={t.address} className="border-b border-stroke-weak">
-                    <td className="py-2.5 text-strong">{t.symbol}</td>
+                    <td className="py-2.5 text-strong">{displaySymbol(t.symbol)}</td>
                     <td className="py-2.5 text-right text-strong">{formatAmount(t.total, t.decimals, 6)}</td>
                     <td className="py-2.5 text-right text-weak">{price === undefined ? '—' : fmtPrice(price)}</td>
                     <td className="py-2.5 text-right text-weak">{usd(leg?.usd)}</td>
@@ -242,6 +234,42 @@ function Row({ label, value, sub, tone, tip }: { label: string; value: string; s
         <dd className={cx(tone ?? 'text-strong')}>{value}</dd>
       </div>
     </Tooltip>
+  );
+}
+
+/** For a token with no logo colour (the local mock stack): the chart inks, in turn. */
+const BAR_FALLBACK = ['rgb(var(--color-strong))', 'rgb(var(--color-chart-secondary))', 'rgb(var(--color-weaker))'];
+
+/**
+ * Each token's share of the spot value, in the table's order, drawn in its logo's colour: a bar with
+ * the share and value on hover, and a legend under it naming every colour.
+ */
+function BasketBar({ tokens, legs }: { tokens: string[]; legs: LiveVaultRow['valuation']['legs'] }) {
+  const items = tokens.map((symbol, i) => ({ symbol, share: legs[i]?.share, usd: legs[i]?.usd, color: TOKEN_COLORS[symbol] ?? BAR_FALLBACK[i % BAR_FALLBACK.length] }));
+  const pct = (share: number | undefined) => (share === undefined ? '—' : fmtPct(share));
+  return (
+    <div className="mb-4 grid gap-2.5">
+      <div className="flex h-2 w-full gap-px rounded-full bg-fill-track">
+        {items.map((t) => (
+          <span key={t.symbol} className="flex first:[&>*>span]:rounded-l-full last:[&>*>span]:rounded-r-full" style={{ width: `${(t.share ?? 0) * 100}%` }}>
+            <Tooltip content={`${t.symbol} · ${pct(t.share)} · ${t.usd === undefined ? '—' : fmtUsd(t.usd, { cents: true })}`} className="w-full">
+              {/* the taller hit area makes the 8px bar easy to hover */}
+              <span className="-my-1.5 flex w-full cursor-help py-1.5">
+                <span className="h-2 w-full" style={{ background: t.color }} />
+              </span>
+            </Tooltip>
+          </span>
+        ))}
+      </div>
+      <ul className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-weak num">
+        {items.map((t) => (
+          <li key={t.symbol} className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-sm" style={{ background: t.color }} aria-hidden />
+            {t.symbol} <span className="text-strong">{pct(t.share)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

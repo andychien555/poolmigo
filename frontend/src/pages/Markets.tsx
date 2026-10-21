@@ -7,7 +7,7 @@
  * page's chart reads); "—" until 7 days are covered. No volume column: the chain cannot answer it
  * (docs/LIVE-DATA.md). NAV, the fee and the basket's composition are on the vault page. Each row's
  * range meter puts the live spot between the adapters' on-chain range (src/chain/ranges.ts). "Deposit"
- * opens the vault's page; `?deposit=<vault id>` opens the deposit card over this page, as the original did.
+ * opens the deposit card over this page (`?deposit=<vault id>`), as the original did; the row opens the vault's page.
  */
 import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -40,7 +40,6 @@ const APR_HINT = 'Trading fees over the last 7 days ÷ average TVL, annualised. 
 export function Markets() {
   const { address } = useWallet();
   const { rows: all, spotsFor } = useLiveVaults(address ?? undefined);
-  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const depositRef = resolveVaultRouteId(params.get('deposit') ?? undefined, DEPLOYMENTS);
   const depositRow = depositRef.kind === 'found' ? all.find((r) => r.id === vaultRouteId(depositRef.ref.chainId, depositRef.ref.key)) ?? null : null;
@@ -73,7 +72,7 @@ export function Markets() {
     .filter((x): x is number => x !== undefined && x > 0);
   const showMine = Boolean(address) && mine.length > 0;
 
-  const deposit = (r: LiveVaultRow) => navigate(`/vault/${r.id}`);
+  const deposit = (r: LiveVaultRow) => setParams({ deposit: r.id });
 
   return (
     <div>

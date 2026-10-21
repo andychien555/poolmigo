@@ -112,10 +112,13 @@ describe('live-vault helpers', () => {
   });
 
   it('basket names put the anchor last; fee labels', () => {
-    expect(basketName(['USDG', 'WETH'], 'x')).toBe('WETH / USDG');
-    expect(basketName(['USDG', 'WETH', 'PONS'], 'x')).toBe('WETH / PONS / USDG');
-    expect(basketName([], 'USDG / WETH basket (Robinhood Chain)')).toBe('USDG / WETH basket');
-    expect(feeLabel(1000)).toBe('10.00%');
+    // WETH goes by ETH in names
+    expect(basketName(['USDG', 'WETH'], 'x')).toBe('ETH / USDG');
+    expect(basketName(['USDG', 'WETH', 'PONS'], 'x')).toBe('ETH / PONS / USDG');
+    expect(basketName([], 'USDG / WETH basket (Robinhood Chain)')).toBe('USDG / ETH basket');
+    // whole percents drop the decimals
+    expect(feeLabel(1000)).toBe('10%');
+    expect(feeLabel(1250)).toBe('12.50%');
     expect(feeLabel(undefined)).toBe('—');
   });
 
@@ -284,9 +287,9 @@ describe('Analytics — the original design (PR #7), illustrative series', () =>
 describe('vault page — live figures, the original deposit card, illustrative bits badged', () => {
   it('stats and basket come from the live view; old demo ids are not found', () => {
     renderAt(`/vault/4663-${ENTRY.key}`);
-    expect(screen.getByRole('heading', { level: 1, name: 'WETH / USDG' })).toBeDefined();
+    expect(screen.getByRole('heading', { level: 1, name: 'ETH / USDG' })).toBeDefined();
     expect(screen.getAllByText('$2,000.00').length).toBeGreaterThan(0);
-    expect(screen.getByText('uncapped')).toBeDefined();
+    expect(screen.queryByText('Supply')).toBeNull();
     cleanup();
     renderAt('/vault/eth-usdg');
     expect(screen.getByText(/Vault not found/)).toBeDefined();
@@ -294,7 +297,7 @@ describe('vault page — live figures, the original deposit card, illustrative b
 
   it('the classic /vault/<key> id opens the same vault; a key on two chains asks which', () => {
     renderAt(`/vault/${ENTRY.key}`);
-    expect(screen.getByRole('heading', { level: 1, name: 'WETH / USDG' })).toBeDefined();
+    expect(screen.getByRole('heading', { level: 1, name: 'ETH / USDG' })).toBeDefined();
     cleanup();
     renderAt('/vault/pons');
     const links = screen.getAllByRole('link').map((l) => l.getAttribute('href'));
@@ -305,10 +308,10 @@ describe('vault page — live figures, the original deposit card, illustrative b
     renderAt(`/vault/4663-${ENTRY.key}`);
     expect(screen.getByRole('tab', { name: 'Deposit' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('tab', { name: 'Withdraw' })).toBeDefined();
-    // In kind is the only pickable facet here (the zap does not serve this vault in the fixture),
-    // but the chain lists a zap, so USDG only holds its column from the start, not pickable.
-    expect(screen.getByRole('button', { name: /In kind/ }).getAttribute('aria-pressed')).toBe('true');
-    expect((screen.getByRole('button', { name: /USDG only/ }) as HTMLButtonElement).disabled).toBe(true);
+    // USDG only is the default, but the zap does not serve this vault in the fixture: Both shows,
+    // and USDG only holds its column from the start, not pickable.
+    expect(screen.getByRole('button', { name: 'Both' }).getAttribute('aria-pressed')).toBe('true');
+    expect((screen.getByRole('button', { name: 'USDG' }) as HTMLButtonElement).disabled).toBe(true);
     // One amount box per basket token, read from the chain view; the CTA opens the wallet picker.
     expect(screen.getByLabelText('USDG amount')).toBeDefined();
     expect(screen.getByLabelText('WETH amount')).toBeDefined();
@@ -317,7 +320,7 @@ describe('vault page — live figures, the original deposit card, illustrative b
     expect(screen.getByText(`1 ${ENTRY.receipt.symbol} = $2.00 · spot`)).toBeDefined();
   });
 
-  it('the price range draws the live spot between the on-chain band; only the chart line is badged', () => {
+  it('the price range draws the live spot between the on-chain band; nothing is badged for now', () => {
     renderAt(`/vault/4663-${ENTRY.key}`);
     const range = screen.getByRole('region', { name: 'Price range' });
     expect(within(range).getByRole('img', { name: /Price 2500\.0 USDG per WETH, between the lower bound 2210\.0 and the upper bound 2610\.0/ })).toBeDefined();
@@ -326,8 +329,8 @@ describe('vault page — live figures, the original deposit card, illustrative b
     const readout = screen.getByTestId('nav-live');
     expect(within(readout).getByText('$2.00')).toBeDefined();
     expect(within(readout).queryByText(/^(Demo( data)?|Illustrative)$/i)).toBeNull();
-    // The one illustrative block left on the page is the NAV chart line.
-    expect(demoBadges().map((b) => b.textContent)).toEqual(['Illustrative']);
+    // The NAV chart line is still illustrative, but carries no badge for now.
+    expect(demoBadges()).toEqual([]);
   });
 
   it('a spot outside the band reads "Out of range"', () => {
@@ -341,11 +344,11 @@ describe('vault page — live figures, the original deposit card, illustrative b
     BANDS = new Map();
     renderAt(`/vault/4663-${ENTRY.key}`);
     expect(screen.queryByRole('region', { name: 'Price range' })).toBeNull();
-    expect(screen.getByRole('heading', { level: 1, name: 'WETH / USDG' })).toBeDefined();
+    expect(screen.getByRole('heading', { level: 1, name: 'ETH / USDG' })).toBeDefined();
   });
 });
 
-describe('Markets — the deposit CTA opens the vault; ?deposit= opens the card over the page', () => {
+describe('Markets — the deposit CTA and ?deposit= open the card over the page; the row opens the vault', () => {
   it('?deposit=<vault id> mounts the real card in an overlay, linked to the vault page', () => {
     renderAt(`/?deposit=4663-${ENTRY.key}`);
     const dialog = screen.getByRole('dialog');
@@ -375,9 +378,20 @@ describe('Markets — the deposit CTA opens the vault; ?deposit= opens the card 
     expect(within(row).getByText('$2,000.00')).toBeDefined();
   });
 
-  it('the Deposit button opens the vault page', async () => {
+  it('the Deposit button opens the deposit card over Markets, not the vault page', async () => {
     renderAt('/');
     await act(async () => screen.getByRole('button', { name: 'Deposit' }).click());
-    expect(screen.getByRole('heading', { level: 1, name: 'WETH / USDG' })).toBeDefined();
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('tab', { name: 'Deposit' })).toBeDefined();
+    expect(screen.queryByRole('heading', { level: 1, name: 'ETH / USDG' })).toBeNull();
+    expect(screen.getByRole('heading', { level: 1, name: 'Vaults' })).toBeDefined();
+  });
+
+  it('a click on the row itself still opens the vault page', async () => {
+    const { container } = renderAt('/');
+    const row = container.querySelector(`li[data-vault="4663-${ENTRY.key}"]`) as HTMLElement;
+    await act(async () => row.click());
+    expect(screen.getByRole('heading', { level: 1, name: 'ETH / USDG' })).toBeDefined();
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

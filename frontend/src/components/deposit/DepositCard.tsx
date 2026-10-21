@@ -249,16 +249,17 @@ interface ChoiceOption {
 }
 
 /**
- * In kind (the whole basket) first — always there; then USDG only wherever the chain lists the zap.
+ * The whole basket in kind first, "Both" or "All" — always there; then the zap's one token ("USDG")
+ * wherever the chain lists the zap.
  * Both columns are drawn from the registry at once, so the groove never opens on a lone full-width
  * key; USDG only just stays unpickable until the chain confirms its route.
  */
 function modeOptions(v: LiveVault, route: ZapRoute | undefined, zap: Address | undefined): ChoiceOption[] {
   const symbols = v.tokens.map((t) => t.symbol);
-  const out: ChoiceOption[] = [{ id: 'basket', label: 'In kind', name: symbols.join(' + '), icon: <TokenGroup symbols={symbols} size={18} /> }];
+  const out: ChoiceOption[] = [{ id: 'basket', label: symbols.length === 2 ? 'Both' : 'All', name: symbols.join(' + '), icon: <TokenGroup symbols={symbols} size={18} /> }];
   if (zap) {
     const symbol = route?.token.symbol ?? ZAP_ROUTE_SYMBOL;
-    out.push({ id: 'zap', label: `${symbol} only`, name: `${symbol} only, through the zap`, icon: <TokenIcon symbol={symbol} size={18} />, disabled: !route });
+    out.push({ id: 'zap', label: symbol, name: `${symbol} only, through the zap`, icon: <TokenIcon symbol={symbol} size={18} />, disabled: !route });
   }
   return out;
 }
@@ -347,7 +348,8 @@ function useWriteGate(v: LiveVault) {
 // ───────────────────────── Deposit ─────────────────────────
 
 function DepositForm({ ctx, route, initialAmount }: { ctx: FormContext; route: ZapRoute | undefined; initialAmount?: string }) {
-  const [mode, setMode] = useState<Mode>('basket');
+  // USDG only by default: the in-kind form shows until the route is confirmed, then this one.
+  const [mode, setMode] = useState<Mode>('zap');
   const options = modeOptions(ctx.vault, route, ctx.vault.deployment?.periphery?.zapIn);
   const active = route && mode === 'zap' ? 'zap' : 'basket';
   const choice = (
