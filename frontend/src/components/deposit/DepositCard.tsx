@@ -39,6 +39,7 @@ import { describeChainError } from '@/chain/errors';
 import {
   ZAP_DEFAULT_SLIPPAGE_BPS,
   ZAP_MAX_SLIPPAGE_BPS,
+  ZAP_ROUTE_SYMBOL,
   describeZapError,
   parseZapDepositAmount,
   parseZapRedeemShares,
@@ -244,13 +245,21 @@ interface ChoiceOption {
   label: string;
   name: string;
   icon: ReactNode;
+  disabled?: boolean;
 }
 
-/** In kind (the whole basket) first — always there; then USDG only, when the zap serves this vault. */
-function modeOptions(v: LiveVault, route: ZapRoute | undefined): ChoiceOption[] {
+/**
+ * In kind (the whole basket) first — always there; then USDG only wherever the chain lists the zap.
+ * Both columns are drawn from the registry at once, so the groove never opens on a lone full-width
+ * key; USDG only just stays unpickable until the chain confirms its route.
+ */
+function modeOptions(v: LiveVault, route: ZapRoute | undefined, zap: Address | undefined): ChoiceOption[] {
   const symbols = v.tokens.map((t) => t.symbol);
   const out: ChoiceOption[] = [{ id: 'basket', label: 'In kind', name: symbols.join(' + '), icon: <TokenGroup symbols={symbols} size={18} /> }];
-  if (route) out.push({ id: 'zap', label: `${route.token.symbol} only`, name: `${route.token.symbol} only, through the zap`, icon: <TokenIcon symbol={route.token.symbol} size={18} /> });
+  if (zap) {
+    const symbol = route?.token.symbol ?? ZAP_ROUTE_SYMBOL;
+    out.push({ id: 'zap', label: `${symbol} only`, name: `${symbol} only, through the zap`, icon: <TokenIcon symbol={symbol} size={18} />, disabled: !route });
+  }
   return out;
 }
 
@@ -268,11 +277,12 @@ function TokenChoice({ options, value, onChange }: { options: ChoiceOption[]; va
         <button
           key={o.id}
           onClick={() => onChange(o.id)}
+          disabled={o.disabled}
           aria-pressed={value === o.id}
           title={o.name === o.label ? undefined : o.name}
           className={cx(
             'inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap text-sm font-medium transition-colors duration-300 ease-dusk',
-            value === o.id ? 'text-strong' : 'text-weak hover:text-strong',
+            value === o.id ? 'text-strong' : o.disabled ? 'text-weak cursor-default' : 'text-weak hover:text-strong',
           )}
         >
           {o.icon}
@@ -338,7 +348,7 @@ function useWriteGate(v: LiveVault) {
 
 function DepositForm({ ctx, route, initialAmount }: { ctx: FormContext; route: ZapRoute | undefined; initialAmount?: string }) {
   const [mode, setMode] = useState<Mode>('basket');
-  const options = modeOptions(ctx.vault, route);
+  const options = modeOptions(ctx.vault, route, ctx.vault.deployment?.periphery?.zapIn);
   const active = route && mode === 'zap' ? 'zap' : 'basket';
   const choice = (
     <Field label="Pay with">
@@ -720,7 +730,7 @@ function ZapDepositForm({ ctx, route, choice, initialAmount }: { ctx: FormContex
 
 function WithdrawForm({ ctx, route }: { ctx: FormContext; route: ZapRoute | undefined }) {
   const [mode, setMode] = useState<Mode>('basket');
-  const options = modeOptions(ctx.vault, route);
+  const options = modeOptions(ctx.vault, route, ctx.vault.deployment?.periphery?.zapOut);
   const active = route && mode === 'zap' ? 'zap' : 'basket';
   const choice = (
     <Field label="Receive in">

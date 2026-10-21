@@ -159,6 +159,14 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
 
         <section className="min-w-0 lg:col-start-1">
           <h2 className="title text-2xl leading-tight mb-3.5">Basket</h2>
+          {/* Each token's share of the spot value, in the table's order; the Share column has the numbers */}
+          {valuation.usd !== undefined && valuation.usd > 0 && (
+            <div className="mb-4 flex h-1.5 w-full overflow-hidden rounded-full bg-fill-track" aria-hidden>
+              {valuation.legs.map((l, i) => (
+                <span key={i} className={cx('h-full', i % 2 === 0 ? 'bg-fill-primary' : 'bg-strong/40')} style={{ width: `${(l.share ?? 0) * 100}%` }} />
+              ))}
+            </div>
+          )}
           <table className="w-full text-sm num">
             <thead>
               <tr className="text-xs text-weaker border-b border-stroke-strong">

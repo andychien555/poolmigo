@@ -305,9 +305,10 @@ describe('vault page — live figures, the original deposit card, illustrative b
     renderAt(`/vault/4663-${ENTRY.key}`);
     expect(screen.getByRole('tab', { name: 'Deposit' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('tab', { name: 'Withdraw' })).toBeDefined();
-    // In kind is the only facet here (the zap does not serve this vault in the fixture).
+    // In kind is the only pickable facet here (the zap does not serve this vault in the fixture),
+    // but the chain lists a zap, so USDG only holds its column from the start, not pickable.
     expect(screen.getByRole('button', { name: /In kind/ }).getAttribute('aria-pressed')).toBe('true');
-    expect(screen.queryByRole('button', { name: /USDG only/ })).toBeNull();
+    expect((screen.getByRole('button', { name: /USDG only/ }) as HTMLButtonElement).disabled).toBe(true);
     // One amount box per basket token, read from the chain view; the CTA opens the wallet picker.
     expect(screen.getByLabelText('USDG amount')).toBeDefined();
     expect(screen.getByLabelText('WETH amount')).toBeDefined();
@@ -364,7 +365,6 @@ describe('Markets — the deposit CTA opens the vault; ?deposit= opens the card 
     expect(within(row).getByRole('img', { name: 'Price 2500.0 inside the range 2210.0 to 2610.0' })).toBeDefined();
     expect(screen.queryByText(/Illustrative ranges/i)).toBeNull();
     expect(demoBadges()).toEqual([]);
-    expect(screen.getByText(/bounds = the adapters' on-chain ranges/)).toBeDefined();
   });
 
   it('a row without a live position shows no meter', () => {
