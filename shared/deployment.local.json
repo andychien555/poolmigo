@@ -1,0 +1,50 @@
+{
+  "chainId": 46630,
+  "fork": true,
+  "mintable": false,
+  "periphery": {
+    "planExecutor": "0x7215743362Ad8C5343AF6A75D884D97726806F6F",
+    "zapIn": "0xFC846911BdfB3b080F941A4C8425DA915C6397d2",
+    "zapOut": "0xB8E3Ab37DcA1091dBDAC0AE735a6c89DD5c5Bab2"
+  },
+  "rpcUrl": "http://127.0.0.1:8547",
+  "vaults": [
+    {
+      "demoUser": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      "implementation": "0x94Eb73BFE32ceD19204aa5ae93D2C75329f59469",
+      "keeper": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "key": "demo",
+      "label": "USDG / WETH basket (RHC fork - real Uniswap v3 + Fables ETH v4)",
+      "receipt": {
+        "name": "sunEthLP",
+        "symbol": "sunEthLP"
+      },
+      "vault": "0x97076CA9EEE0E8637c0373A25d8d14a17f7c6a1e"
+    },
+    {
+      "demoUser": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      "implementation": "0x3615068c29Cc00fACc14ca07e782D2CE87b2D79E",
+      "keeper": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "key": "pons",
+      "label": "PONS / USDG basket (RHC fork - real Uniswap v4 FablesRamp)",
+      "receipt": {
+        "name": "sunPonsLP",
+        "symbol": "sunPonsLP"
+      },
+      "vault": "0xDFA3Da3c74b6EE3ebCA2cB62BC99e2B534557Db1"
+    },
+    {
+      "demoUser": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      "implementation": "0x354aa1E4EFF5f4077BBa0c21FD5fa687cC4500Cb",
+      "keeper": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "key": "tri",
+      "label": "USDG / WETH / PONS basket (RHC fork - 3 real Uniswap v4 pools)",
+      "receipt": {
+        "name": "sunTriLP",
+        "symbol": "sunTriLP"
+      },
+      "vault": "0x5a18F8d9535dAF63B926D5d4aE7eB9f4318AC19f"
+    }
+  ],
+  "version": 2
+}

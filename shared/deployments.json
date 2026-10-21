@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "chains": {
+    "4663": {
+      "name": "Robinhood Chain",
+      "rpcUrl": "https://robinhood.drpc.org",
+      "testnet": false,
+      "status": "deployed",
+      "explorerUrl": "https://robinhoodchain.blockscout.com",
+      "vaults": [
+        {
+          "key": "main",
+          "label": "USDG / WETH basket (Robinhood Chain)",
+          "receipt": {
+            "name": "sunEthLP",
+            "symbol": "sunEthLP"
+          },
+          "vault": "0x6767257AAFfCE82f6ba4B6E96EDBa80e9e1112FC",
+          "implementation": "0x1b8a02FeF41cAA651a6C275d859D1950e08605E8",
+          "keeper": "0x0856965c4A6346C5E33352A670CEb6E569DeF678",
+          "planExecutor": "0xbE744F7685bd7fa6365B6519CE66DeDa71873139"
+        },
+        {
+          "key": "pons",
+          "label": "PONS / USDG basket (Robinhood Chain)",
+          "receipt": {
+            "name": "sunPonsLP",
+            "symbol": "sunPonsLP"
+          },
+          "vault": "0x0621252C87307Ed4F07a644F1Ad3a7bb7340c35f",
+          "implementation": "0x8bd16efce86b7bacd2c3d3184f6e10e0ad1c6f60",
+          "keeper": "0x0856965c4A6346C5E33352A670CEb6E569DeF678",
+          "planExecutor": "0x792Efc2e0D59679390742203F664c67F9D02F8cA"
+        },
+        {
+          "key": "tri",
+          "label": "USDG / WETH / PONS basket (Robinhood Chain)",
+          "receipt": {
+            "name": "sunTriLP",
+            "symbol": "sunTriLP"
+          },
+          "vault": "0x4bbfd5c66e5df6cbebb3240027f9f8194bcebb98",
+          "implementation": "0xfb2b8bb278ed4f794508fb1967be280dda03f020",
+          "keeper": "0x0856965c4A6346C5E33352A670CEb6E569DeF678",
+          "planExecutor": "0x4d6a45Aa30c2832bB88c9a24bBdD3aCAD7f1b31F"
+        }
+      ],
+      "periphery": {
+        "zapIn": "0x8187691738907dCCBB34f6Aa82059CCF1Ae3870f",
+        "zapOut": "0xd9151216e2Ab52b446aAb0207Ab34652b44D228C",
+        "planExecutor": "0xbE744F7685bd7fa6365B6519CE66DeDa71873139"
+      }
+    },
+    "46630": {
+      "name": "Demo Chain",
+      "rpcUrl": "http://127.0.0.1:8547",
+      "testnet": true,
+      "status": "deployed"
+    }
+  }
+}
