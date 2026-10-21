@@ -65,17 +65,17 @@ export function NavChart({
 
   return (
     <section className={className}>
-      <header className="mb-3.5 flex flex-wrap items-end justify-between gap-3">
-        <div className="grid gap-1.5">
+      <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div className="grid gap-2">
           <h2 className="title text-2xl leading-tight">Vault token price</h2>
           <span className="inline-flex items-center gap-2 text-xs text-weak num" data-testid="nav-live">
             Spot NAV now <span className="text-strong">{liveNav === undefined ? '—' : fmtPrice(liveNav)}</span>
             <LiveBadge label="Live" />
           </span>
         </div>
-        <div className="flex flex-wrap items-center gap-3.5 text-xs">
+        <div className="flex flex-wrap items-center gap-4 text-xs">
           <span className="inline-flex items-center gap-2 text-weak num">
-            <span className="h-[1.5px] w-3.5 bg-strong" /> {symbol} <span className={tdlpRet >= 0 ? 'text-success' : 'text-error'}>{fmtPctSigned(tdlpRet, 2)}</span>
+            <span className="h-[1.5px] w-4 bg-strong" /> {symbol} <span className={tdlpRet >= 0 ? 'text-success' : 'text-error'}>{fmtPctSigned(tdlpRet, 2)}</span>
             {real && (
               <span className="text-weaker" data-testid="nav-history-until">
                 snapshots until {fmtStamp(new Date(last.date))}
@@ -97,7 +97,7 @@ export function NavChart({
             <CartesianGrid stroke={pal.strokeWeak} vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fill: pal.weaker, fontSize: 10.5 }}
+              tick={{ fill: pal.weaker, fontSize: 10 }}
               tickLine={false}
               axisLine={{ stroke: pal.strokeStrong }}
               tickFormatter={(d: string) => (byHour ? fmtHour : fmtDay).format(new Date(d))}
@@ -105,7 +105,7 @@ export function NavChart({
             />
             <YAxis
               domain={[yMin - pad, yMax + pad]}
-              tick={{ fill: pal.weaker, fontSize: 10.5 }}
+              tick={{ fill: pal.weaker, fontSize: 10 }}
               tickLine={false}
               axisLine={false}
               width={52}
@@ -117,7 +117,7 @@ export function NavChart({
                 if (!active || !payload?.length) return null;
                 const p = payload[0].payload as { tdlp: number };
                 return (
-                  <div className={cx('rounded-sm bg-fill-inverse px-2 py-[5px] text-xs font-medium text-inverse-strong num')}>
+                  <div className={cx('rounded-sm bg-fill-inverse px-2 py-1 text-xs font-medium text-inverse-strong num')}>
                     {real ? fmtStamp(new Date(String(label))) : label} · ${p.tdlp.toFixed(4)}
                   </div>
                 );

@@ -81,7 +81,7 @@ export function Markets() {
         {/* On phones the scene is a band across the top; from sm up it fills the section */}
         <SkyScene className="absolute inset-x-0 top-0 h-[260px] w-full sm:h-full" />
         <div className="sky-shade absolute inset-x-0 top-0 z-[2] h-[260px] pointer-events-none sm:h-full" />
-        <div className="wrap relative z-[4] grid justify-items-start gap-[18px] pt-[190px] sm:pt-[clamp(32px,6vh,56px)]">
+        <div className="wrap relative z-[4] grid justify-items-start gap-5 pt-48 sm:pt-[clamp(32px,6vh,56px)]">
           {showMine ? (
             <>
               <p className="eyebrow !text-weak">Your deposits</p>
@@ -100,11 +100,11 @@ export function Markets() {
 
       {/* The plaza: every vault as an instrument */}
       <div className="wrap pt-[52px] pb-[120px]">
-        <div className="mb-[22px] flex flex-wrap items-end justify-between gap-x-7 gap-y-[18px]">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-x-7 gap-y-5">
           <h1 className="title text-[clamp(32px,3.6vw,46px)]">Vaults</h1>
-          <div className="flex w-full flex-wrap items-center gap-x-[22px] gap-y-3.5 sm:w-auto">
+          <div className="flex w-full flex-wrap items-center gap-x-6 gap-y-4 sm:w-auto">
             <label className="flex h-10 w-full items-center gap-2 rounded border border-stroke-strong px-3 text-weaker focus-within:border-stroke-strongest sm:w-[220px]">
-              <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 shrink-0" fill="none" aria-hidden>
+              <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0" fill="none" aria-hidden>
                 <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
@@ -113,20 +113,20 @@ export function Markets() {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search vaults"
                 aria-label="Search vaults"
-                className="min-w-0 flex-1 bg-transparent text-sm text-strong outline-none placeholder:text-weaker focus-visible:outline-none"
+                className="min-w-0 flex-1 bg-transparent text-base text-strong outline-none placeholder:text-weaker focus-visible:outline-none"
               />
             </label>
           </div>
         </div>
 
-        <div className={cx('eyebrow hidden items-center border-b border-stroke-strong px-4 pb-2.5 lg:grid', COLS)}>
+        <div className={cx('eyebrow hidden items-center border-b border-stroke-strong px-4 pb-3 lg:grid', COLS)}>
           <span>Vault</span>
           <span>Price range</span>
           <span className="justify-self-end"><SortHead label="APR" hint={APR_HINT} active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} /></span>
           <span className="justify-self-end"><SortHead label="TVL" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} /></span>
           <span />
         </div>
-        <div className="eyebrow flex justify-end gap-[18px] px-3 lg:hidden">
+        <div className="eyebrow flex justify-end gap-5 px-3 lg:hidden">
           <SortHead label="APR" hint={APR_HINT} active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} />
           <SortHead label="TVL" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} />
         </div>
@@ -156,11 +156,11 @@ const COLS =
 function VaultRow({ row: r, apr, spots, onDeposit }: { row: LiveVaultRow; apr: number | undefined; spots: ChainSpots; onDeposit: () => void }) {
   const navigate = useNavigate();
   const { v, valuation } = r;
-  const label = 'mr-1.5 text-xs font-normal text-weaker lg:hidden';
+  const label = 'mr-2 text-xs font-normal text-weaker lg:hidden';
   const symbols = v.tokens.map((t) => t.symbol);
   const loading = !v.failed && (!v.ready || (r.spotsLoading && valuation.usd === undefined));
   const usdCell = (x: number | undefined, fmt: (n: number) => string) =>
-    v.failed ? <span className="text-weaker">—</span> : loading ? <Spinner className="h-3.5 w-3.5 text-weaker inline-block" /> : x === undefined ? <span className="text-weaker">—</span> : fmt(x);
+    v.failed ? <span className="text-weaker">—</span> : loading ? <Spinner className="h-4 w-4 text-weaker inline-block" /> : x === undefined ? <span className="text-weaker">—</span> : fmt(x);
 
   return (
     <li
@@ -172,10 +172,10 @@ function VaultRow({ row: r, apr, spots, onDeposit }: { row: LiveVaultRow; apr: n
       )}
       onClick={() => navigate(`/vault/${r.id}`)}
     >
-      <div className="flex min-w-0 items-start gap-3.5 [grid-area:pair] [--name:calc(23px*1.1)] lg:[grid-area:auto]">
+      <div className="flex min-w-0 items-start gap-3 [grid-area:pair] [--name:28px] lg:[grid-area:auto]">
         {symbols.length > 0 && <span className="flex shrink-0 mt-[calc((var(--name)-26px)/2)]"><TokenGroup symbols={symbols} size={26} /></span>}
         <div className="min-w-0">
-          <div className="font-serif text-[23px] font-normal leading-[var(--name)] text-strong lg:truncate" title={v.entry.label}>{nameOf(r)}</div>
+          <div className="font-serif text-xl font-normal leading-[var(--name)] text-strong lg:truncate" title={v.entry.label}>{nameOf(r)}</div>
           {/* Only an exception earns a line under the name */}
           {v.paused && <div className="mt-1 text-2xs text-warning">Paused</div>}
           {v.failed && <div className="mt-1 text-2xs text-warning">Chain not reachable</div>}
@@ -210,7 +210,7 @@ function Range({ row: { v }, spots }: { row: LiveVaultRow; spots: ChainSpots }) 
 /** A sortable column label; with a hint, the label is underlined and explains itself on hover or focus. */
 function SortHead({ label, hint, active, dir, onClick }: { label: string; hint?: string; active: boolean; dir: 'asc' | 'desc'; onClick: () => void }): ReactNode {
   const head = (
-    <button onClick={onClick} className={cx('inline-flex items-center gap-[5px] whitespace-nowrap uppercase tracking-label hover:text-strong', active && 'text-strong')}>
+    <button onClick={onClick} className={cx('inline-flex items-center gap-1 whitespace-nowrap uppercase tracking-label hover:text-strong', active && 'text-strong')}>
       {/* Only the sorted column carries an arrow, before the label, so the label stays flush right */}
       {active && <Arrow dir={dir === 'desc' ? 'down' : 'up'} size={10} />}
       <span className={hint && HINT_UNDERLINE}>{label}</span>
