@@ -100,10 +100,10 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
   const usd = (x: number | undefined, cents = true) => (x === undefined ? '—' : fmtUsd(x, { cents }));
   const wrongChain = Boolean(address) && chainId !== v.chainId;
   const switchTarget = chainFor(v.chainId);
-  // The wallet's slice of each basket token — what its receipt redeems for now. Only with a position;
-  // "—" until the redeem preview lands (a position always owes something).
-  const yours = user.shares > 0n ? new Map(vault.tokens.map((t, i) => [t.address.toLowerCase(), user.owed[i] ?? 0n])) : undefined;
-  const yoursReady = user.owed.some((x) => x > 0n);
+  // The wallet's slice of each basket token — what its receipt redeems for now. Whenever a wallet is
+  // connected; "—" with no position, and until the redeem preview lands (a position always owes something).
+  const yours = address ? new Map(vault.tokens.map((t, i) => [t.address.toLowerCase(), user.owed[i] ?? 0n])) : undefined;
+  const yoursReady = user.shares > 0n && user.owed.some((x) => x > 0n);
 
   return (
     <div className="wrap pt-6 pb-[120px]">
