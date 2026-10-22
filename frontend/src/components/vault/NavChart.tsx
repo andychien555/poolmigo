@@ -2,7 +2,6 @@ import { useId, useMemo, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip as RTooltip, XAxis, YAxis } from 'recharts';
 import { illustrativeNavSeries } from '@/demo/series';
 import { useNavHistory } from '@/chain/useNavHistory';
-import { LiveBadge } from '@/components/ui/DataBadge';
 import { Segmented } from '@/components/ui/Tabs';
 import { cx, fmtPctSigned, fmtPrice } from '@/lib/format';
 import { usePalette } from '@/lib/theme';
@@ -18,8 +17,8 @@ const fmtStamp = (d: Date) => `${fmtDay.format(d)}, ${fmtHour.format(d)} UTC`;
  * Vault token price over the period: one line, no panel around it. The spot NAV readout under the
  * title is live. The line is REAL when the NAV-history collector (`VITE_NAV_HISTORY_URL`, src/chain/useNavHistory)
  * has ≥ 6 snapshots for this vault — drawn at the snapshots' own timestamps. Otherwise it is
- * ILLUSTRATIVE (src/demo/series.ts) and ends on the live spot NAV. Neither carries a badge for now, so
- * the page reads as a user will see it; the illustrative line needs one again before it ships.
+ * ILLUSTRATIVE (src/demo/series.ts) and ends on the live spot NAV. Neither the line nor the readout
+ * carries a badge; the site footer says the chart is illustrative until enough history exists.
  */
 export function NavChart({
   seed,
@@ -70,7 +69,6 @@ export function NavChart({
           <h2 className="title text-2xl leading-tight">Vault token price</h2>
           <span className="inline-flex items-center gap-2 text-xs text-weak num" data-testid="nav-live">
             Spot NAV now <span className="text-strong">{liveNav === undefined ? '—' : fmtPrice(liveNav)}</span>
-            <LiveBadge label="Live" />
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-4 text-xs">

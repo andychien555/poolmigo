@@ -64,7 +64,7 @@ import {
   type UserBasket,
   type ZapRoute,
 } from '@/chain/useVault';
-import { basketName, feeLabel, tokenUsdPrices, vaultRouteId } from '@/chain/liveVaults';
+import { basketName, displaySymbol, feeLabel, tokenUsdPrices, vaultRouteId } from '@/chain/liveVaults';
 import type { LiveVaultRow } from '@/chain/useLiveVaults';
 import type { ChainSpots } from '@/chain/useSpotPrices';
 import { useStore } from '@/store/useStore';
@@ -150,9 +150,9 @@ export function DepositCard({ vault: v, user, usdPrices, nav, initialAmount, sho
           ) : v.tokens.length === 0 ? (
             <div className="flex justify-center py-10"><Spinner className="h-5 w-5 text-weaker" /></div>
           ) : tab === 'deposit' ? (
-            <DepositForm ctx={ctx} route={routes.zapIn} initialAmount={initialAmount} />
+            <DepositForm ctx={ctx} route={routes.zapIn} pending={routes.zapInPending} initialAmount={initialAmount} />
           ) : (
-            <WithdrawForm ctx={ctx} route={routes.zapOut} />
+            <WithdrawForm ctx={ctx} route={routes.zapOut} pending={routes.zapOutPending} />
           )}
         </div>
       </div>
@@ -179,6 +179,9 @@ function errorContext(v: LiveVault, route?: ZapRoute) {
   };
 }
 
+/** The vault as the confirmation toasts name it: the basket's display name ("ETH / USDG"), not the registry label. */
+const vaultName = (v: LiveVault) => basketName(v.tokens.map((t) => t.symbol), v.entry?.label ?? 'the vault');
+
 /** Whole-token display value of a raw amount (USD estimates only — never fed to a transaction). */
 const whole = (raw: bigint, decimals: number) => Number(raw) / 10 ** decimals;
 
@@ -201,10 +204,10 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 /** Amount box — the one thing the user touches. The token is shown, or chosen in `picker` where the form offers a choice. */
 function AmountBox({
-  value, onChange, tokenLabel, tokenIcon, picker, balance, decimals, connected, usd, autoFocus, error, note, ariaLabel,
+  value, onChange, tokenLabel, tokenIcon, picker, balance, decimals, connected, usd, autoFocus, disabled, error, note, ariaLabel,
 }: {
   value: string; onChange: (s: string) => void; tokenLabel: string; tokenIcon?: ReactNode; picker?: ReactNode;
-  balance?: bigint; decimals: number; connected: boolean; usd?: number; autoFocus?: boolean; error?: string | boolean; note?: string; ariaLabel: string;
+  balance?: bigint; decimals: number; connected: boolean; usd?: number; autoFocus?: boolean; disabled?: boolean; error?: string | boolean; note?: string; ariaLabel: string;
 }) {
   return (
     <div className={cx('well grid gap-2 px-4 py-3 ring-inset', error ? 'ring-1 ring-stroke-error/60' : 'focus-within:ring-1 focus-within:ring-stroke-focused')}>
@@ -214,6 +217,7 @@ function AmountBox({
           autoComplete="off"
           spellCheck={false}
           autoFocus={autoFocus}
+          disabled={disabled}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="0"
@@ -314,14 +318,15 @@ interface ChoiceOption {
 
 /**
  * The whole basket in kind first, "Both" or "All" — always there; then the zap's one token ("USDG")
- * wherever the chain lists the zap.
- * Both columns are drawn from the registry at once, so the groove never opens on a lone full-width
- * key; USDG only just stays unpickable until the chain confirms its route.
+ * while the chain confirms its route and once it has. A vault the zap does not serve (or whose probe
+ * failed) keeps only the in-kind key.
+ * USDG is drawn from the start of the probe, so the groove never opens on a lone full-width key and
+ * then splits; it stays unpickable until the route is confirmed.
  */
-function modeOptions(v: LiveVault, route: ZapRoute | undefined, zap: Address | undefined): ChoiceOption[] {
+function modeOptions(v: LiveVault, route: ZapRoute | undefined, pending: boolean): ChoiceOption[] {
   const symbols = v.tokens.map((t) => t.symbol);
-  const out: ChoiceOption[] = [{ id: 'basket', label: symbols.length === 2 ? 'Both' : 'All', name: symbols.join(' + '), icon: <TokenGroup symbols={symbols} size={18} /> }];
-  if (zap) {
+  const out: ChoiceOption[] = [{ id: 'basket', label: symbols.length === 2 ? 'Both' : 'All', name: symbols.map(displaySymbol).join(' + '), icon: <TokenGroup symbols={symbols} size={18} /> }];
+  if (route || pending) {
     const symbol = route?.token.symbol ?? ZAP_ROUTE_SYMBOL;
     out.push({ id: 'zap', label: symbol, name: `${symbol} only, through the zap`, icon: <TokenIcon symbol={symbol} size={18} />, disabled: !route });
   }
@@ -411,20 +416,66 @@ function useWriteGate(v: LiveVault) {
 
 // ───────────────────────── Deposit ─────────────────────────
 
-function DepositForm({ ctx, route, initialAmount }: { ctx: FormContext; route: ZapRoute | undefined; initialAmount?: string }) {
-  // USDG only by default: the in-kind form shows until the route is confirmed, then this one.
+function DepositForm({ ctx, route, pending, initialAmount }: { ctx: FormContext; route: ZapRoute | undefined; pending: boolean; initialAmount?: string }) {
+  // USDG only by default. While the chain confirms the route, the zap form's shape shows with nothing
+  // to type into, so no amount is lost and nothing moves when it lands; a vault the zap does not
+  // serve opens on the in-kind form.
   const [mode, setMode] = useState<Mode>('zap');
-  const options = modeOptions(ctx.vault, route, ctx.vault.deployment?.periphery?.zapIn);
-  const active = route && mode === 'zap' ? 'zap' : 'basket';
+  const options = modeOptions(ctx.vault, route, pending);
+  const active = mode === 'zap' && (route || pending) ? 'zap' : 'basket';
   const choice = (
     <Field label="Pay with">
       <TokenChoice options={options} value={active} onChange={setMode} />
     </Field>
   );
-  return active === 'zap' && route ? (
+  if (active === 'basket') return <BasketDepositForm key="basket" ctx={ctx} choice={choice} />;
+  return route ? (
     <ZapDepositForm key="zap" ctx={ctx} routes={[route]} choice={choice} initialAmount={initialAmount} />
   ) : (
-    <BasketDepositForm key="basket" ctx={ctx} choice={choice} />
+    <ZapPendingForm key="zap-pending" ctx={ctx} choice={choice} />
+  );
+}
+
+/** What the zap does, under both the zap form and its pending shape. */
+const ZAP_EXPLAINER =
+  'The zap buys the other basket tokens on the route pool (TWAP-guarded), then makes the normal in-kind deposit — the vault itself never swaps. Leftovers come back to your wallet.';
+
+/** The zap deposit form's shape while the chain confirms the route: nothing to type into or press yet. */
+function ZapPendingForm({ ctx: { vault: v, nav }, choice }: { ctx: FormContext; choice: ReactNode }) {
+  return (
+    <div className="grid gap-4">
+      {choice}
+
+      <Field label="Amount">
+        <AmountBox
+          value=""
+          onChange={() => {}}
+          tokenLabel={ZAP_ROUTE_SYMBOL}
+          tokenIcon={<TokenIcon symbol={ZAP_ROUTE_SYMBOL} size={20} />}
+          decimals={0}
+          connected={false}
+          disabled
+          ariaLabel={`${ZAP_ROUTE_SYMBOL} amount`}
+        />
+      </Field>
+
+      <Field label="You receive">
+        <div className="flex items-baseline justify-between gap-3 border-t border-stroke-strong pt-3 num">
+          <span className="display num truncate text-2xl text-weaker">
+            0 <span className="ml-0.5 text-base font-normal text-weak">{v.receipt.symbol}</span>
+          </span>
+        </div>
+      </Field>
+
+      <Button block variant="accent" disabled loading>
+        Checking the {ZAP_ROUTE_SYMBOL} route…
+      </Button>
+
+      <div className="text-xs num">
+        <div className="py-0.5 text-weaker">1 {v.receipt.symbol} = {nav === undefined ? '—' : fmtPrice(nav)} · spot</div>
+        <p className="mt-3 text-xs leading-normal text-weaker">{ZAP_EXPLAINER}</p>
+      </div>
+    </div>
   );
 }
 
@@ -514,7 +565,7 @@ function BasketDepositForm({ ctx, choice }: { ctx: FormContext; choice: ReactNod
       preview.refetch();
       pushToast({
         title: 'Deposit confirmed',
-        detail: `Minted ${formatAmountSignificant(shares, v.decimals)} ${v.receipt.symbol} from ${v.entry?.label ?? 'the vault'} on ${chainLabel(v.chainId)}`,
+        detail: `Minted ${formatAmountSignificant(shares, v.decimals)} ${v.receipt.symbol} from ${vaultName(v)} on ${chainLabel(v.chainId)}`,
         tone: 'success',
       });
     } catch (err) {
@@ -692,7 +743,7 @@ function ZapDepositForm({ ctx, routes, choice, initialAmount }: { ctx: FormConte
       preview.refetch();
       pushToast({
         title: 'Zap deposit confirmed',
-        detail: `Minted ${formatAmountSignificant(shares, v.decimals)} ${v.receipt.symbol} from ${formatAmount(amountIn, token.decimals, 6)} ${token.symbol} into ${v.entry?.label ?? 'the vault'} on ${chainLabel(v.chainId)}`,
+        detail: `Minted ${formatAmountSignificant(shares, v.decimals)} ${v.receipt.symbol} from ${formatAmount(amountIn, token.decimals, 6)} ${token.symbol} into ${vaultName(v)} on ${chainLabel(v.chainId)}`,
         tone: 'success',
       });
     } catch (err) {
@@ -794,9 +845,7 @@ function ZapDepositForm({ ctx, routes, choice, initialAmount }: { ctx: FormConte
             A route pool charges {route.routeFeeBps / 100}% — above your tolerance — so each swap leg uses its route’s own cap; your tolerance still bounds the minimum.
           </p>
         )}
-        <p className="mt-3 text-xs leading-normal text-weaker">
-          The zap buys the other basket tokens on the route pool (TWAP-guarded), then makes the normal in-kind deposit — the vault itself never swaps. Leftovers come back to your wallet.
-        </p>
+        <p className="mt-3 text-xs leading-normal text-weaker">{ZAP_EXPLAINER}</p>
       </div>
     </div>
   );
@@ -804,9 +853,9 @@ function ZapDepositForm({ ctx, routes, choice, initialAmount }: { ctx: FormConte
 
 // ───────────────────────── Withdraw ─────────────────────────
 
-function WithdrawForm({ ctx, route }: { ctx: FormContext; route: ZapRoute | undefined }) {
+function WithdrawForm({ ctx, route, pending }: { ctx: FormContext; route: ZapRoute | undefined; pending: boolean }) {
   const [mode, setMode] = useState<Mode>('basket');
-  const options = modeOptions(ctx.vault, route, ctx.vault.deployment?.periphery?.zapOut);
+  const options = modeOptions(ctx.vault, route, pending);
   const active = route && mode === 'zap' ? 'zap' : 'basket';
   const choice = (
     <Field label="Receive in">
@@ -868,7 +917,7 @@ function BasketWithdrawForm({ ctx, choice }: { ctx: FormContext; choice: ReactNo
       user.refetch();
       pushToast({
         title: 'Withdrawal confirmed',
-        detail: `Burned ${formatAmountSignificant(shares, v.decimals)} ${v.receipt.symbol} from ${v.entry?.label ?? 'the vault'} on ${chainLabel(v.chainId)}`,
+        detail: `Burned ${formatAmountSignificant(shares, v.decimals)} ${v.receipt.symbol} from ${vaultName(v)} on ${chainLabel(v.chainId)}`,
         tone: 'success',
       });
     } catch (err) {
@@ -995,7 +1044,7 @@ function ZapWithdrawForm({ ctx, route, choice }: { ctx: FormContext; route: ZapR
       refetchAllowance();
       pushToast({
         title: 'Zap withdrawal confirmed',
-        detail: `Burned ${formatAmountSignificant(shares, v.decimals)} ${v.receipt.symbol} for ${formatAmount(amountOut, token.decimals, 6)} ${token.symbol} from ${v.entry?.label ?? 'the vault'} on ${chainLabel(v.chainId)}`,
+        detail: `Burned ${formatAmountSignificant(shares, v.decimals)} ${v.receipt.symbol} for ${formatAmount(amountOut, token.decimals, 6)} ${token.symbol} from ${vaultName(v)} on ${chainLabel(v.chainId)}`,
         tone: 'success',
       });
     } catch (err) {

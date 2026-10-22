@@ -30,7 +30,7 @@ import { TOKEN_COLORS } from '@/demo/data/vaults';
 import { TokenGroup } from '@/components/ui/TokenIcon';
 import { Stat, StatRow } from '@/components/ui/Stat';
 import { Button } from '@/components/ui/Button';
-import { Tooltip } from '@/components/ui/Tooltip';
+import { Hint, Tooltip } from '@/components/ui/Tooltip';
 import { LiveBadge } from '@/components/ui/DataBadge';
 import { NavChart } from '@/components/vault/NavChart';
 import { PriceRange } from '@/components/vault/PriceRange';
@@ -116,7 +116,7 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
             </svg>
             All vaults
           </Link>
-          <div className="flex flex-wrap items-start gap-[18px] [--name:clamp(38px,4.4vw,60px)]">
+          <div className="flex flex-wrap items-start gap-5 [--name:clamp(38px,4.4vw,60px)]">
             {symbols.length > 0 && <span className="flex shrink-0 mt-[calc((var(--name)-36px)/2)]"><TokenGroup symbols={symbols} size={36} /></span>}
             <div>
               <h1 className="title !font-normal text-[length:var(--name)]">{name}</h1>
@@ -173,9 +173,9 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
                 <th className="text-right font-medium pb-2">Share</th>
                 {yours && (
                   <th className="text-right font-medium pb-2">
-                    <Tooltip content={`What your ${v.entry.receipt.symbol} redeems for right now, in kind.`} align="end" wide>
-                      <span className="cursor-help">Yours</span>
-                    </Tooltip>
+                    <Hint tip={`What your ${v.entry.receipt.symbol} redeems for right now, in kind.`} align="end" wide>
+                      Yours
+                    </Hint>
                   </th>
                 )}
               </tr>
@@ -262,12 +262,13 @@ function BasketBar({ tokens, legs }: { tokens: string[]; legs: LiveVaultRow['val
   return (
     <div className="mb-4 grid gap-3">
       <div className="flex h-2 w-full gap-px rounded-full bg-fill-track">
-        {items.map((t) => (
-          <span key={t.symbol} className="flex first:[&>*>span]:rounded-l-full last:[&>*>span]:rounded-r-full" style={{ width: `${(t.share ?? 0) * 100}%` }}>
+        {items.map((t, i) => (
+          <span key={t.symbol} className="flex" style={{ width: `${(t.share ?? 0) * 100}%` }}>
             <Tooltip content={`${t.symbol} · ${pct(t.share)} · ${t.usd === undefined ? '—' : fmtUsd(t.usd, { cents: true })}`} className="w-full">
               {/* the taller hit area makes the 8px bar easy to hover */}
               <span className="-my-2 flex w-full cursor-help py-2">
-                <span className="h-2 w-full" style={{ background: t.color }} />
+                {/* the ends are rounded on the coloured bar itself: clipping the track would cut the hit area */}
+                <span className={cx('h-2 w-full', i === 0 && 'rounded-l-full', i === items.length - 1 && 'rounded-r-full')} style={{ background: t.color }} />
               </span>
             </Tooltip>
           </span>
@@ -289,7 +290,7 @@ function BasketBar({ tokens, legs }: { tokens: string[]; legs: LiveVaultRow['val
 function PricesUsed({ row: { v }, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
   const lines = v.tokens.flatMap((t) => {
     const s = spots.spots.get(t.address.toLowerCase());
-    return s ? [{ symbol: t.symbol, pool: s.pool, fee: s.fee }] : [];
+    return s ? [{ symbol: displaySymbol(t.symbol), pool: s.pool, fee: s.fee }] : [];
   });
   return (
     <p className={cx('mt-3 text-2xs text-weaker leading-relaxed')}>

@@ -213,9 +213,12 @@ function fixtureVault(): LiveVault {
 }
 const NO_USER: UserBasket = { shares: 0n, owed: [0n, 0n], balances: [0n, 0n], allowances: [0n, 0n], isLoading: false, refetch: () => {} };
 
+/** The zap probe: by default it has answered that the zap does not serve the fixture vault. */
+const ZAP_NOT_SERVED = { zapInPending: false, zapOutPending: false };
+let ZAP_ROUTES: { zapInPending: boolean; zapOutPending: boolean } = ZAP_NOT_SERVED;
 vi.mock('@/chain/useVault', async (orig) => {
   const actual = await orig<typeof import('@/chain/useVault')>();
-  return { ...actual, useLiveVaultAt: () => fixtureVault(), useUserBasket: () => NO_USER, useZapRoutes: () => ({}) };
+  return { ...actual, useLiveVaultAt: () => fixtureVault(), useUserBasket: () => NO_USER, useZapRoutes: () => ZAP_ROUTES };
 });
 
 
@@ -241,6 +244,7 @@ function renderAt(path: string) {
 
 beforeEach(() => {
   BANDS = new Map([[WETH.toLowerCase(), WETH_BAND]]);
+  ZAP_ROUTES = ZAP_NOT_SERVED;
 });
 afterEach(cleanup);
 
@@ -309,9 +313,9 @@ describe('vault page — live figures, the original deposit card, illustrative b
     expect(screen.getByRole('tab', { name: 'Deposit' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('tab', { name: 'Withdraw' })).toBeDefined();
     // USDG only is the default, but the zap does not serve this vault in the fixture: Both shows,
-    // and USDG only holds its column from the start, not pickable.
+    // and no USDG key is offered.
     expect(screen.getByRole('button', { name: 'Both' }).getAttribute('aria-pressed')).toBe('true');
-    expect((screen.getByRole('button', { name: 'USDG' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole('button', { name: 'USDG' })).toBeNull();
     // One amount box per basket token, read from the chain view; the CTA opens the wallet picker.
     expect(screen.getByLabelText('USDG amount')).toBeDefined();
     expect(screen.getByLabelText('WETH amount')).toBeDefined();
@@ -320,10 +324,21 @@ describe('vault page — live figures, the original deposit card, illustrative b
     expect(screen.getByText(`1 ${ENTRY.receipt.symbol} = $2.00 · spot`)).toBeDefined();
   });
 
+  it('while the zap route is being confirmed, the card holds the USDG form with nothing to type into', () => {
+    ZAP_ROUTES = { zapInPending: true, zapOutPending: true };
+    renderAt(`/vault/4663-${ENTRY.key}`);
+    const usdg = screen.getByRole('button', { name: 'USDG' }) as HTMLButtonElement;
+    expect(usdg.getAttribute('aria-pressed')).toBe('true');
+    expect(usdg.disabled).toBe(true);
+    expect((screen.getByLabelText('USDG amount') as HTMLInputElement).disabled).toBe(true);
+    expect(screen.queryByLabelText('WETH amount')).toBeNull();
+    expect(screen.getByRole('button', { name: /Checking the USDG route/ })).toBeDefined();
+  });
+
   it('the price range draws the live spot between the on-chain band; nothing is badged for now', () => {
     renderAt(`/vault/4663-${ENTRY.key}`);
     const range = screen.getByRole('region', { name: 'Price range' });
-    expect(within(range).getByRole('img', { name: /Price 2500\.0 USDG per WETH, between the lower bound 2210\.0 and the upper bound 2610\.0/ })).toBeDefined();
+    expect(within(range).getByRole('img', { name: /Price 2500\.0 USDG per ETH, between the lower bound 2210\.0 and the upper bound 2610\.0/ })).toBeDefined();
     expect(within(range).getByText('Live price · on-chain range')).toBeDefined();
     expect(within(range).queryByText(/^(Demo( data)?|Illustrative)$/i)).toBeNull();
     const readout = screen.getByTestId('nav-live');

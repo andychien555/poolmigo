@@ -10,7 +10,7 @@
  * opens the deposit card over this page (`?deposit=<vault id>`), as the original did; the row opens the vault's page.
  */
 import { useMemo, useState, type ReactNode } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useWallet } from '@/wallet/context';
 import { DEPLOYMENTS } from '@/chain/chains';
 import { useTargetChain } from '@/chain/useTargetChain';
@@ -41,6 +41,8 @@ export function Markets() {
   const { address } = useWallet();
   const { rows: all, spotsFor } = useLiveVaults(address ?? undefined);
   const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const depositRef = resolveVaultRouteId(params.get('deposit') ?? undefined, DEPLOYMENTS);
   const depositRow = depositRef.kind === 'found' ? all.find((r) => r.id === vaultRouteId(depositRef.ref.chainId, depositRef.ref.key)) ?? null : null;
   const [q, setQ] = useState('');
@@ -61,7 +63,8 @@ export function Markets() {
     const needle = q.toLowerCase().replace(/\s/g, '');
     return all
       .filter((r) => String(r.v.chainId) === chain)
-      .filter((r) => `${nameOf(r)} ${r.v.entry.receipt.symbol} ${r.v.chainName}`.toLowerCase().replace(/\s/g, '').includes(needle))
+      // The display name says ETH; the on-chain symbols keep "WETH" findable too.
+      .filter((r) => `${nameOf(r)} ${r.v.tokens.map((t) => t.symbol).join(' ')} ${r.v.entry.receipt.symbol} ${r.v.chainName}`.toLowerCase().replace(/\s/g, '').includes(needle))
       .sort((a, b) => (sort.dir === 'desc' ? val(b) - val(a) : val(a) - val(b)));
   }, [all, q, chain, sort, aprOf]);
 
@@ -72,7 +75,11 @@ export function Markets() {
     .filter((x): x is number => x !== undefined && x > 0);
   const showMine = Boolean(address) && mine.length > 0;
 
-  const deposit = (r: LiveVaultRow) => setParams({ deposit: r.id });
+  // The CTA pushes `?deposit=` with a marker, so Back closes the overlay. Closing steps back out of that
+  // entry instead of pushing another, so Back afterwards leaves Markets rather than reopening the card;
+  // a deep-linked `?deposit=` has no entry of ours to step out of, so it is replaced.
+  const deposit = (r: LiveVaultRow) => setParams({ deposit: r.id }, { state: { depositOverlay: true } });
+  const closeDeposit = () => ((location.state as { depositOverlay?: boolean } | null)?.depositOverlay ? navigate(-1) : setParams({}, { replace: true }));
 
   return (
     <div>
@@ -139,7 +146,7 @@ export function Markets() {
           )}
         </ul>
       </div>
-      <DepositModal row={depositRow} spots={depositRow ? spotsFor(depositRow.v.chainId) : undefined} onClose={() => setParams({})} />
+      <DepositModal row={depositRow} spots={depositRow ? spotsFor(depositRow.v.chainId) : undefined} onClose={closeDeposit} />
     </div>
   );
 }
@@ -175,7 +182,7 @@ function VaultRow({ row: r, apr, spots, onDeposit }: { row: LiveVaultRow; apr: n
       <div className="flex min-w-0 items-start gap-3 [grid-area:pair] [--name:28px] lg:[grid-area:auto]">
         {symbols.length > 0 && <span className="flex shrink-0 mt-[calc((var(--name)-26px)/2)]"><TokenGroup symbols={symbols} size={26} /></span>}
         <div className="min-w-0">
-          <div className="font-serif text-xl font-normal leading-[var(--name)] text-strong lg:truncate" title={v.entry.label}>{nameOf(r)}</div>
+          <div className="font-serif text-xl font-normal leading-[var(--name)] text-strong lg:truncate" title={nameOf(r)}>{nameOf(r)}</div>
           {/* Only an exception earns a line under the name */}
           {v.paused && <div className="mt-1 text-2xs text-warning">Paused</div>}
           {v.failed && <div className="mt-1 text-2xs text-warning">Chain not reachable</div>}
