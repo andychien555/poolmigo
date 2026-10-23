@@ -26,7 +26,8 @@ export function Tooltip({ content, children, side = 'top', align = 'center', cla
         <span
           role="tooltip"
           className={cx(
-            'absolute z-40 rounded-sm bg-fill-inverse text-inverse-strong px-3 py-2 text-xs font-medium leading-snug animate-fade-in',
+            // normal-case: a tooltip on an eyebrow label must not inherit its capitals and tracking
+            'absolute z-40 rounded-sm bg-fill-inverse text-inverse-strong px-3 py-2 text-xs font-medium leading-snug normal-case tracking-normal animate-fade-in',
             wide ? 'w-72' : 'w-max max-w-[260px]',
             side === 'top' ? 'bottom-full mb-2' : 'top-full mt-2',
             align === 'center' && 'left-1/2 -translate-x-1/2',

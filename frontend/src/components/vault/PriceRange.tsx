@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 import { fmtQuote } from '@/lib/format';
 import { useElementWidth } from '@/lib/useElementWidth';
 import { Button } from '@/components/ui/Button';
+import { Segmented } from '@/components/ui/Tabs';
 
 /**
  * One pair the drawing can show: `price` is the LIVE spot (quote per base, from the reference pool);
@@ -17,7 +18,7 @@ export interface RangePair {
 }
 
 interface Props {
-  /** One per non-anchor basket token; a switch appears when there is more than one. */
+  /** One per non-anchor basket token; a segmented switch appears when there is more than one. */
   pairs: readonly RangePair[];
   className?: string;
 }
@@ -137,12 +138,14 @@ export function PriceRange({ pairs, className }: Props) {
             </Button>
           </h3>
           <span className="flex flex-wrap items-center gap-2 num">
-            {pairs.length > 1 &&
-              pairs.map((p, i) => (
-                <Button key={p.base} type="button" variant={i === pick ? 'secondary' : 'ghost'} size="xs" aria-pressed={i === pick} onClick={() => setPick(i)}>
-                  {p.base}
-                </Button>
-              ))}
+            {pairs.length > 1 && (
+              <Segmented
+                size="sm"
+                value={pair.base}
+                onChange={(b) => setPick(pairs.findIndex((p) => p.base === b))}
+                options={pairs.map((p) => ({ value: p.base, label: p.base }))}
+              />
+            )}
             {!inRange && <span className="text-error">Out of range</span>}
             <span>Live price · on-chain range</span>
           </span>

@@ -68,7 +68,7 @@ export function NavChart({
         <div className="grid gap-2">
           <h2 className="title text-2xl leading-tight">Vault token price</h2>
           <span className="inline-flex items-center gap-2 text-xs text-weak num" data-testid="nav-live">
-            Spot NAV now <span className="text-strong">{liveNav === undefined ? '—' : fmtPrice(liveNav)}</span>
+            Price now <span className="text-strong">{liveNav === undefined ? '—' : fmtPrice(liveNav)}</span>
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-4 text-xs">

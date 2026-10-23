@@ -145,7 +145,7 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
             <Stat label="TVL" value={usd(valuation.usd)} sub={valuation.unpriced.length > 0 ? `no price for ${valuation.unpriced.join(', ')}` : undefined} />
             {/* The fee APR alone, as the original design's stat row drew it */}
             <Stat label="APR" value={fmtFeeApr(earnings.apr)} />
-            <Stat label="Spot NAV" value={nav === undefined ? '—' : fmtPrice(nav)} sub={`per ${v.entry.receipt.symbol}`} />
+            <Stat label="Price" value={nav === undefined ? '—' : fmtPrice(nav)} sub={`per ${v.entry.receipt.symbol}`} />
             <Stat label="Performance fee" value={feeLabel(v.performanceFeeBps)} sub="on harvested fees only" />
           </StatRow>
         </header>
