@@ -71,6 +71,7 @@ import { useStore } from '@/store/useStore';
 import { cx, fmtPrice, fmtUsd } from '@/lib/format';
 import { Arrow } from '@/components/ui/Arrow';
 import { Button } from '@/components/ui/Button';
+import { PercentInput } from '@/components/ui/PercentInput';
 import { SlidingKey } from '@/components/ui/SlidingKey';
 import { Spinner } from '@/components/ui/Spinner';
 import { TokenGroup, TokenIcon } from '@/components/ui/TokenIcon';
@@ -367,21 +368,30 @@ function TokenChoice({ options, value, onChange }: { options: ChoiceOption[]; va
   );
 }
 
-/** The percent box inside the details fold. */
-function SlippageField({ value, onChange, ariaLabel }: { value: string; onChange: (s: string) => void; ariaLabel: string }) {
+/**
+ * The fold under the button: a "Details" eyebrow, like the card's other labels, that opens the rows.
+ * `disabled` draws it closed with nothing to open (the zap's pending shape).
+ */
+function DetailsFold({ open, onToggle, disabled, children }: { open: boolean; onToggle: () => void; disabled?: boolean; children?: ReactNode }) {
   return (
-    <span className="inline-flex items-center rounded border border-stroke-weak bg-background-elevated px-2 h-7">
-      <input
-        inputMode="decimal"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={ariaLabel}
-        className="w-12 bg-transparent outline-none text-right text-strong"
-      />
-      <span className="text-weaker ml-0.5">%</span>
-    </span>
+    <>
+      <button
+        type="button"
+        onClick={onToggle}
+        disabled={disabled}
+        aria-expanded={open}
+        className="eyebrow w-full flex items-center justify-between gap-3 py-0.5 text-left enabled:hover:text-weak disabled:cursor-default"
+      >
+        Details
+        <Chevron className={cx('transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && <dl className="mt-2 grid border-t border-stroke-strong pt-2 animate-fade-in">{children}</dl>}
+    </>
   );
 }
+
+/** The live price of one receipt token, the first row of every deposit fold. */
+const priceRow = (nav: number | undefined, symbol: string) => <Row k="Price" v={nav === undefined ? '—' : `${fmtPrice(nav)} per ${symbol}`} />;
 
 function Row({ k, v }: { k: ReactNode; v: ReactNode }) {
   return (
@@ -447,7 +457,7 @@ const ZAP_EXPLAINER =
   'The zap buys the other basket tokens on the route pool (TWAP-guarded), then makes the normal in-kind deposit — the vault itself never swaps. Leftovers come back to your wallet.';
 
 /** The zap deposit form's shape while the chain confirms the route: nothing to type into or press yet. */
-function ZapPendingForm({ ctx: { vault: v, nav }, choice }: { ctx: FormContext; choice: ReactNode }) {
+function ZapPendingForm({ ctx: { vault: v }, choice }: { ctx: FormContext; choice: ReactNode }) {
   return (
     <div className="grid gap-4">
       {choice}
@@ -478,7 +488,7 @@ function ZapPendingForm({ ctx: { vault: v, nav }, choice }: { ctx: FormContext; 
       </Button>
 
       <div className="text-xs num">
-        <div className="py-0.5 text-weaker">1 {v.receipt.symbol} = {nav === undefined ? '—' : fmtPrice(nav)} · spot</div>
+        <DetailsFold open={false} onToggle={() => {}} disabled />
       </div>
     </div>
   );
@@ -645,19 +655,14 @@ function BasketDepositForm({ ctx, choice }: { ctx: FormContext; choice: ReactNod
       {footer}
 
       <div className="text-xs num">
-        <button onClick={() => setDetails(!details)} aria-expanded={details} className="w-full flex items-center justify-between gap-3 py-0.5 text-left text-weaker hover:text-weak">
-          <span>1 {v.receipt.symbol} = {nav === undefined ? '—' : fmtPrice(nav)} · spot</span>
-          <Chevron className={cx('transition-transform', details && 'rotate-180')} />
-        </button>
-        {details && (
-          <dl className="mt-2 grid animate-fade-in">
-            <Row k="Slippage tolerance" v={<SlippageField value={slippage} onChange={setSlippage} ariaLabel="Slippage tolerance in percent" />} />
-            <Row k="Minimum received" v={slip.ok ? `${formatAmountSignificant(minShares, v.decimals)} ${v.receipt.symbol}` : <span className="text-error">{slip.error}</span>} />
-            <Row k="Offers" v="Maximums · only what is required is pulled" />
-            <Row k="Performance fee" v={`${feeLabel(v.performanceFeeBps)} of harvested fees`} />
-            <Row k="Lock-up" v="None · redeem anytime" />
-          </dl>
-        )}
+        <DetailsFold open={details} onToggle={() => setDetails(!details)}>
+          {priceRow(nav, v.receipt.symbol)}
+          <Row k="Slippage tolerance" v={<PercentInput value={slippage} onChange={setSlippage} error={!slip.ok} ariaLabel="Slippage tolerance in percent" />} />
+          <Row k="Minimum received" v={slip.ok ? `${formatAmountSignificant(minShares, v.decimals)} ${v.receipt.symbol}` : <span className="text-error">{slip.error}</span>} />
+          <Row k="Offers" v="Maximums · only what is required is pulled" />
+          <Row k="Performance fee" v={`${feeLabel(v.performanceFeeBps)} of harvested fees`} />
+          <Row k="Lock-up" v="None · redeem anytime" />
+        </DetailsFold>
       </div>
     </div>
   );
@@ -773,6 +778,10 @@ function ZapDepositForm({ ctx, routes, choice, initialAmount }: { ctx: FormConte
   const kept = preview.offers?.[route.index];
   const bought = v.tokens.map((t, i) => ({ t, amount: preview.offers?.[i] ?? 0n, i })).filter((x) => x.i !== route.index && x.amount > 0n);
   const previewError = preview.error ? describeZapError(preview.error, errCtx) : null;
+  // The tolerance does not clear a route pool's fee, so the legs go at the routes' own caps (zapLegSlippageBps)
+  const legNote = slip.ok && slip.bps > 0 && legBps === 0
+    ? `One swap pool charges a ${route.routeFeeBps / 100}% fee, more than this tolerance allows, so that swap uses the route’s own preset limit. The minimum you receive still follows your tolerance.`
+    : undefined;
 
   return (
     <div className="grid gap-4">
@@ -828,27 +837,20 @@ function ZapDepositForm({ ctx, routes, choice, initialAmount }: { ctx: FormConte
       {footer}
 
       <div className="text-xs num">
-        <button onClick={() => setDetails(!details)} aria-expanded={details} className="w-full flex items-center justify-between gap-3 py-0.5 text-left text-weaker hover:text-weak">
-          <span>1 {v.receipt.symbol} = {nav === undefined ? '—' : fmtPrice(nav)} · spot</span>
-          <Chevron className={cx('transition-transform', details && 'rotate-180')} />
-        </button>
-        {details && (
-          <dl className="mt-2 grid animate-fade-in">
-            {kept !== undefined && bought.length > 0 && (
-              <Row k="Auto-swap" v={`${formatAmount(amountIn - kept, token.decimals, 6)} ${token.symbol} → ${bought.map((x) => `${formatAmount(x.amount, x.t.decimals, 6)} ${x.t.symbol}`).join(' + ')}`} />
-            )}
-            <Row k="Slippage tolerance" v={<SlippageField value={slippage} onChange={setSlippage} ariaLabel="Zap slippage tolerance in percent" />} />
-            <Row k="Minimum received" v={slip.ok ? `${formatAmountSignificant(minShares, v.decimals)} ${v.receipt.symbol}` : <span className="text-error">{slip.error}</span>} />
-            <Row k="Performance fee" v={`${feeLabel(v.performanceFeeBps)} of harvested fees`} />
-            <Row k="Lock-up" v="None · redeem anytime" />
-          </dl>
-        )}
+        <DetailsFold open={details} onToggle={() => setDetails(!details)}>
+          {priceRow(nav, v.receipt.symbol)}
+          {kept !== undefined && bought.length > 0 && (
+            <Row k="Auto-swap" v={`${formatAmount(amountIn - kept, token.decimals, 6)} ${token.symbol} → ${bought.map((x) => `${formatAmount(x.amount, x.t.decimals, 6)} ${x.t.symbol}`).join(' + ')}`} />
+          )}
+          <Row
+            k={legNote ? <Hint tip={legNote} align="start" wide>Slippage tolerance</Hint> : 'Slippage tolerance'}
+            v={<PercentInput value={slippage} onChange={setSlippage} error={!slip.ok} ariaLabel="Zap slippage tolerance in percent" />}
+          />
+          <Row k="Minimum received" v={slip.ok ? `${formatAmountSignificant(minShares, v.decimals)} ${v.receipt.symbol}` : <span className="text-error">{slip.error}</span>} />
+          <Row k="Performance fee" v={`${feeLabel(v.performanceFeeBps)} of harvested fees`} />
+          <Row k="Lock-up" v="None · redeem anytime" />
+        </DetailsFold>
         {slip.ok && slip.clamped && <p className="mt-2 text-2xs text-warning">Capped at the route limit of {ZAP_MAX_SLIPPAGE_BPS / 100}%.</p>}
-        {slip.ok && slip.bps > 0 && legBps === 0 && (
-          <p className="mt-2 text-2xs text-weaker">
-            A route pool charges {route.routeFeeBps / 100}% — above your tolerance — so each swap leg uses its route’s own cap; your tolerance still bounds the minimum.
-          </p>
-        )}
       </div>
     </div>
   );
@@ -1094,16 +1096,10 @@ function ZapWithdrawForm({ ctx, route, choice }: { ctx: FormContext; route: ZapR
       </Button>
       {footer}
       <div className="text-xs num">
-        <button onClick={() => setDetails(!details)} aria-expanded={details} className="w-full flex items-center justify-between gap-3 py-0.5 text-left text-weaker hover:text-weak">
-          <span>Minimum {slip.ok ? `${formatAmount(minOut, token.decimals, 6)} ${token.symbol}` : '—'}</span>
-          <Chevron className={cx('transition-transform', details && 'rotate-180')} />
-        </button>
-        {details && (
-          <dl className="mt-2 grid animate-fade-in">
-            <Row k="Slippage tolerance" v={<SlippageField value={slippage} onChange={setSlippage} ariaLabel="Zap withdraw slippage tolerance in percent" />} />
-            <Row k="Minimum received" v={slip.ok ? `${formatAmount(minOut, token.decimals, 6)} ${token.symbol}` : <span className="text-error">{slip.error}</span>} />
-          </dl>
-        )}
+        <DetailsFold open={details} onToggle={() => setDetails(!details)}>
+          <Row k="Slippage tolerance" v={<PercentInput value={slippage} onChange={setSlippage} error={!slip.ok} ariaLabel="Zap withdraw slippage tolerance in percent" />} />
+          <Row k="Minimum received" v={slip.ok ? `${formatAmount(minOut, token.decimals, 6)} ${token.symbol}` : <span className="text-error">{slip.error}</span>} />
+        </DetailsFold>
         {slip.ok && slip.clamped && <p className="mt-2 text-2xs text-warning">Capped at the route limit of {ZAP_MAX_SLIPPAGE_BPS / 100}%.</p>}
       </div>
     </div>

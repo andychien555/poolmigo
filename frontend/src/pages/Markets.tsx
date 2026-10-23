@@ -5,19 +5,16 @@
  * display only). APR is the original design's fee APR — trading fees over the last 7 days ÷ the mean
  * TVL, annualised — from the NAV-history collector (src/chain/feeApy.ts; the same fetch the vault
  * page's chart reads); "—" until 7 days are covered. No volume column: the chain cannot answer it
- * (docs/LIVE-DATA.md). NAV, the fee and the basket's composition are on the vault page. Each row's
- * range meter puts the live spot between the adapters' on-chain range (src/chain/ranges.ts). "Deposit"
- * opens the deposit card over this page (`?deposit=<vault id>`), as the original did; the row opens the vault's page.
+ * (docs/LIVE-DATA.md). NAV, the fee, the basket's composition and the price range are on the vault page.
+ * "Deposit" opens the deposit card over this page (`?deposit=<vault id>`), as the original did; the row opens the vault's page.
  */
 import { useMemo, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useWallet } from '@/wallet/context';
 import { DEPLOYMENTS } from '@/chain/chains';
 import { useTargetChain } from '@/chain/useTargetChain';
-import { basketName, holdingUsd, resolveVaultRouteId, tokenUsdPrices, vaultRouteId } from '@/chain/liveVaults';
+import { basketName, holdingUsd, resolveVaultRouteId, vaultRouteId } from '@/chain/liveVaults';
 import { useLiveVaults, type LiveVaultRow } from '@/chain/useLiveVaults';
-import type { ChainSpots } from '@/chain/useSpotPrices';
-import { useVaultRanges } from '@/chain/useVaultRanges';
 import { FEE_APR_WINDOW_DAYS, feeApyPct, fmtFeeApr } from '@/chain/feeApy';
 import { useNavHistoryRows } from '@/chain/useNavHistory';
 import { cx, fmtUsd } from '@/lib/format';
@@ -27,8 +24,6 @@ import { Button } from '@/components/ui/Button';
 import { Arrow } from '@/components/ui/Arrow';
 import { Spinner } from '@/components/ui/Spinner';
 import { HINT_UNDERLINE, Tooltip } from '@/components/ui/Tooltip';
-import { RangeMeter } from '@/components/vault/RangeMeter';
-import { rangePairsFor } from '@/components/vault/rangePairs';
 import { DepositModal } from '@/components/deposit/DepositModal';
 import { Welcome } from '@/components/layout/Welcome';
 import { SkyScene } from '@/components/brand/SkyScene';
@@ -128,7 +123,6 @@ export function Markets() {
 
         <div className={cx('eyebrow hidden items-center border-b border-stroke-strong px-4 pb-3 lg:grid', COLS)}>
           <span>Vault</span>
-          <span>Price range</span>
           <span className="justify-self-end"><SortHead label="APR" hint={APR_HINT} active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} /></span>
           <span className="justify-self-end"><SortHead label="TVL" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} /></span>
           <span />
@@ -139,7 +133,7 @@ export function Markets() {
         </div>
         <ul>
           {rows.map((r) => (
-            <VaultRow key={r.id} row={r} apr={aprOf.get(r.id)} spots={spotsFor(r.v.chainId)} onDeposit={() => deposit(r)} />
+            <VaultRow key={r.id} row={r} apr={aprOf.get(r.id)} onDeposit={() => deposit(r)} />
           ))}
           {rows.length === 0 && (
             <li className="border-b border-stroke-weak py-12 text-center text-weaker">No vaults match{q ? ` "${q}"` : ''}.</li>
@@ -155,12 +149,12 @@ function nameOf(r: LiveVaultRow): string {
   return basketName(r.v.ready ? r.v.tokens.map((t) => t.symbol) : [], r.v.entry.label);
 }
 
-// Columns: vault, its price range, APR, TVL, action
+// Columns: vault, APR, TVL, action
 // A row only fits from lg; below that it stacks as on a phone.
 const COLS =
-  'lg:grid-cols-[minmax(220px,1.15fr)_minmax(180px,1.7fr)_72px_92px_76px] lg:gap-x-4 xl:grid-cols-[minmax(190px,1.15fr)_minmax(200px,1.7fr)_88px_104px_104px] xl:gap-x-6';
+  'lg:grid-cols-[minmax(220px,1fr)_72px_92px_76px] lg:gap-x-4 xl:grid-cols-[minmax(190px,1fr)_88px_104px_104px] xl:gap-x-6';
 
-function VaultRow({ row: r, apr, spots, onDeposit }: { row: LiveVaultRow; apr: number | undefined; spots: ChainSpots; onDeposit: () => void }) {
+function VaultRow({ row: r, apr, onDeposit }: { row: LiveVaultRow; apr: number | undefined; onDeposit: () => void }) {
   const navigate = useNavigate();
   const { v, valuation } = r;
   const label = 'mr-2 text-xs font-normal text-weaker lg:hidden';
@@ -174,7 +168,7 @@ function VaultRow({ row: r, apr, spots, onDeposit }: { row: LiveVaultRow; apr: n
       data-vault={r.id}
       className={cx(
         'grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 border-b border-stroke-weak px-3 py-4 lg:px-4 transition-colors duration-300 ease-dusk hover:bg-strong/[0.035]',
-        "[grid-template-areas:'pair_pair''meter_meter''apr_act''tvl_act'] lg:[grid-template-areas:none]",
+        "[grid-template-areas:'pair_pair''apr_act''tvl_act'] lg:[grid-template-areas:none]",
         COLS,
       )}
       onClick={() => navigate(`/vault/${r.id}`)}
@@ -188,9 +182,6 @@ function VaultRow({ row: r, apr, spots, onDeposit }: { row: LiveVaultRow; apr: n
           {v.failed && <div className="mt-1 text-2xs text-warning">Chain not reachable</div>}
         </div>
       </div>
-      <div className="min-w-0 [grid-area:meter] lg:[grid-area:auto]">
-        <Range row={r} spots={spots} />
-      </div>
       <div className="num text-md text-weak [grid-area:apr] lg:justify-self-end lg:[grid-area:auto]" title="Trading fees, 7-day average, annualised"><span className={label}>APR</span>{apr === undefined ? <span className="text-weaker">—</span> : fmtFeeApr(apr)}</div>
       <div className="display num text-xl text-strong [grid-area:tvl] lg:justify-self-end lg:[grid-area:auto]"><span className={label}>TVL</span>{usdCell(valuation.usd, (n) => fmtUsd(n, { cents: n < 10_000 }))}</div>
       <div className="justify-self-end self-center [grid-area:act] lg:[grid-area:auto]">
@@ -199,18 +190,6 @@ function VaultRow({ row: r, apr, spots, onDeposit }: { row: LiveVaultRow; apr: n
         </Button>
       </div>
     </li>
-  );
-}
-
-/** The first non-USDG token with a live position: its spot between the adapters' on-chain range. */
-function Range({ row: { v }, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
-  const { bands } = useVaultRanges(v.chainId, v.address, v.tokens);
-  const pair = rangePairsFor(v.tokens, tokenUsdPrices(v.tokens, spots.spots), bands)[0];
-  if (!pair) return null;
-  return (
-    <div title={`${pair.base} in ${pair.quote} — live price, on-chain range`}>
-      <RangeMeter price={pair.price} lower={pair.lower} upper={pair.upper} />
-    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { AmountInput } from '@/components/ui/AmountInput';
+import { PercentInput } from '@/components/ui/PercentInput';
 import { Segmented, UnderlineTabs } from '@/components/ui/Tabs';
 import { Toggle } from '@/components/ui/Toggle';
 import { Code, PropsTable, Section, Specimen, SubSection } from './parts';
@@ -8,6 +9,7 @@ export function InputsControlsContent() {
   return (
     <>
       <AmountInputSection />
+      <PercentInputSection />
       <ToggleSection />
       <SegmentedSection />
       <UnderlineTabsSection />
@@ -57,6 +59,49 @@ function AmountInputSection() {
             { name: 'onMax', type: '() => void', note: 'Adds the Max button.' },
             { name: 'error', type: 'string | null', note: 'Turns the edge to stroke-error and replaces the hint. Say what is wrong and how much is allowed.' },
             { name: 'hint', type: 'string', note: 'Quiet help under the field.' },
+          ]}
+        />
+      </SubSection>
+    </Section>
+  );
+}
+
+function PercentInputSection() {
+  const [tol, setTol] = useState('0.25');
+  const [bad, setBad] = useState('abc');
+  const invalid = !Number.isFinite(Number(bad)) || bad.trim() === '';
+  return (
+    <Section
+      id="percent-input"
+      title="Percent input"
+      source="src/components/ui/PercentInput.tsx"
+      lede="A short percentage, typed: the slippage tolerance in the deposit card's details. A small well, recessed like the amount box, with the % after the figure. Focused, the edge lights; wrong, it turns to error and the row says why."
+    >
+      <SubSection title="States">
+        <div className="grid gap-5 md:grid-cols-2">
+          <Specimen surface="elevated" className="!block" code="default">
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span className="text-weaker">Slippage tolerance</span>
+              <PercentInput value={tol} onChange={setTol} ariaLabel="Slippage tolerance in percent" />
+            </div>
+          </Specimen>
+          <Specimen surface="elevated" className="!block" code="error">
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span className="text-weaker">Slippage tolerance</span>
+              <PercentInput value={bad} onChange={setBad} error={invalid} ariaLabel="Slippage tolerance in percent" />
+            </div>
+            {invalid && <p className="mt-2 text-right text-xs text-error">Numbers only</p>}
+          </Specimen>
+        </div>
+      </SubSection>
+
+      <SubSection title="Props">
+        <PropsTable
+          rows={[
+            { name: 'value', type: 'string', note: 'The figure as typed, without the %. Kept as a string so "0." survives.' },
+            { name: 'onChange', type: '(v: string) => void', note: 'Called with every edit.' },
+            { name: 'ariaLabel', type: 'string', note: 'The field has no visible label of its own; name it, with the unit.' },
+            { name: 'error', type: 'boolean', note: 'Turns the edge to stroke-error. Say what is wrong next to the field.' },
           ]}
         />
       </SubSection>

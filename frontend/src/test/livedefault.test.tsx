@@ -320,8 +320,9 @@ describe('vault page — live figures, the original deposit card, illustrative b
     expect(screen.getByLabelText('USDG amount')).toBeDefined();
     expect(screen.getByLabelText('WETH amount')).toBeDefined();
     expect(screen.getAllByRole('button', { name: 'Connect wallet' }).length).toBeGreaterThan(0);
-    // The details line is the live spot NAV, not a prototype price per share.
-    expect(screen.getByText(`1 ${ENTRY.receipt.symbol} = $2.00 · spot`)).toBeDefined();
+    // The Details fold opens on the live price per receipt token, not a prototype price per share.
+    act(() => screen.getByRole('button', { name: /Details/ }).click());
+    expect(screen.getByText(`$2.00 per ${ENTRY.receipt.symbol}`)).toBeDefined();
   });
 
   it('while the zap route is being confirmed, the card holds the USDG form with nothing to type into', () => {
@@ -377,20 +378,13 @@ describe('Markets — the deposit CTA and ?deposit= open the card over the page;
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('each row carries its range meter: the live spot inside the on-chain band, no demo badge', () => {
-    const { container } = renderAt('/');
-    const row = container.querySelector(`li[data-vault="4663-${ENTRY.key}"]`) as HTMLElement;
-    expect(within(row).getByRole('img', { name: 'Price 2500.0 inside the range 2210.0 to 2610.0' })).toBeDefined();
-    expect(screen.queryByText(/Illustrative ranges/i)).toBeNull();
-    expect(demoBadges()).toEqual([]);
-  });
-
-  it('a row without a live position shows no meter', () => {
-    BANDS = new Map();
+  it('a row carries no range meter: the price range lives on the vault page', () => {
     const { container } = renderAt('/');
     const row = container.querySelector(`li[data-vault="4663-${ENTRY.key}"]`) as HTMLElement;
     expect(within(row).queryByRole('img', { name: /inside|outside the range/ })).toBeNull();
     expect(within(row).getByText('$2,000.00')).toBeDefined();
+    expect(screen.queryByText(/Illustrative ranges/i)).toBeNull();
+    expect(demoBadges()).toEqual([]);
   });
 
   it('the Deposit button opens the deposit card over Markets, not the vault page', async () => {
