@@ -11,7 +11,7 @@ interface Props<T extends string> {
 }
 
 /**
- * Segmented control — used for 30D/7D, the analytics window, the Markets chain filter.
+ * Segmented control — used for 30D/7D and the Markets chain filter.
  * A groove like the deposit card's token choice: the options sit in the well, and the chosen one is
  * raised out of it as a glass key that slides to it.
  */

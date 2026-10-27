@@ -5,30 +5,34 @@
  * display only). APR is the original design's fee APR — trading fees over the last 7 days ÷ the mean
  * TVL, annualised — from the NAV-history collector (src/chain/feeApy.ts; the same fetch the vault
  * page's chart reads); "—" until 7 days are covered. No volume column: the chain cannot answer it
- * (docs/LIVE-DATA.md). NAV, the fee, the basket's composition and the price range are on the vault page.
+ * (docs/LIVE-DATA.md). Each row's basket bar is every token's share of that spot value, in the name's
+ * order. NAV, the fee, the per-token amounts and the price range are on the vault page.
  * "Deposit" opens the deposit card over this page (`?deposit=<vault id>`), as the original did; the row opens the vault's page.
  */
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useWallet } from '@/wallet/context';
 import { DEPLOYMENTS } from '@/chain/chains';
 import { useTargetChain } from '@/chain/useTargetChain';
-import { basketName, basketOrder, holdingUsd, resolveVaultRouteId, vaultRouteId } from '@/chain/liveVaults';
+import { basketName, basketOrder, displaySymbol, holdingUsd, resolveVaultRouteId, vaultRouteId } from '@/chain/liveVaults';
 import { useLiveVaults, type LiveVaultRow } from '@/chain/useLiveVaults';
 import { FEE_APR_WINDOW_DAYS, feeApyPct, fmtFeeApr } from '@/chain/feeApy';
 import { useNavHistoryRows } from '@/chain/useNavHistory';
 import { cx, fmtUsd } from '@/lib/format';
-import { Stat, StatRow } from '@/components/ui/Stat';
+import { Stat } from '@/components/ui/Stat';
 import { TokenGroup } from '@/components/ui/TokenIcon';
 import { Button } from '@/components/ui/Button';
 import { Arrow } from '@/components/ui/Arrow';
 import { Spinner } from '@/components/ui/Spinner';
 import { HINT_UNDERLINE, Tooltip } from '@/components/ui/Tooltip';
+import { BasketBar } from '@/components/vault/BasketBar';
 import { DepositModal } from '@/components/deposit/DepositModal';
 import { Welcome } from '@/components/layout/Welcome';
 import { SkyScene } from '@/components/brand/SkyScene';
 
 type SortKey = 'apr' | 'tvl';
+type SortDir = 'asc' | 'desc';
+type Sort = { key: SortKey; dir: SortDir };
 
 const APR_HINT = 'Trading fees over the last 7 days ÷ average TVL, annualised. Shows — until 7 days of history exist.';
 
@@ -40,10 +44,9 @@ export function Markets() {
   const navigate = useNavigate();
   const depositRef = resolveVaultRouteId(params.get('deposit') ?? undefined, DEPLOYMENTS);
   const depositRow = depositRef.kind === 'found' ? all.find((r) => r.id === vaultRouteId(depositRef.ref.chainId, depositRef.ref.key)) ?? null : null;
-  const [q, setQ] = useState('');
   const { selectedChainId } = useTargetChain();
   const chain = String(selectedChainId);
-  const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'tvl', dir: 'desc' });
+  const [sort, setSort] = useState<Sort>({ key: 'tvl', dir: 'desc' });
   const toggleSort = (key: SortKey) => setSort((s) => (s.key === key ? { key, dir: s.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' }));
 
   const { rows: history } = useNavHistoryRows();
@@ -55,13 +58,10 @@ export function Markets() {
 
   const rows = useMemo(() => {
     const val = (r: LiveVaultRow) => (sort.key === 'apr' ? aprOf.get(r.id) : r.valuation.usd) ?? -1;
-    const needle = q.toLowerCase().replace(/\s/g, '');
     return all
       .filter((r) => String(r.v.chainId) === chain)
-      // The display name says ETH; the on-chain symbols keep "WETH" findable too.
-      .filter((r) => `${nameOf(r)} ${r.v.tokens.map((t) => t.symbol).join(' ')} ${r.v.entry.receipt.symbol} ${r.v.chainName}`.toLowerCase().replace(/\s/g, '').includes(needle))
       .sort((a, b) => (sort.dir === 'desc' ? val(b) - val(a) : val(a) - val(b)));
-  }, [all, q, chain, sort, aprOf]);
+  }, [all, chain, sort, aprOf]);
 
   const priced = rows.filter((r) => r.valuation.usd !== undefined);
   const totalTvl = priced.reduce((s, r) => s + (r.valuation.usd ?? 0), 0);
@@ -80,10 +80,10 @@ export function Markets() {
     <div>
       {/* The sky: who you are here and what you hold, over the scene */}
       <section className={cx('relative overflow-hidden border-b border-stroke-strong', showMine ? 'sm:h-[clamp(360px,44vh,410px)]' : 'sm:h-[clamp(410px,54vh,500px)]')}>
-        {/* On phones the scene is a band across the top; from sm up it fills the section */}
-        <SkyScene className="absolute inset-x-0 top-0 h-[260px] w-full sm:h-full" />
-        <div className="sky-shade absolute inset-x-0 top-0 z-[2] h-[260px] pointer-events-none sm:h-full" />
-        <div className="wrap relative z-[4] grid justify-items-start gap-5 pt-48 sm:pt-[clamp(32px,6vh,56px)]">
+        {/* On phones the scene is a band across the top, with the title rising into its foot; from sm up it fills the section */}
+        <SkyScene className="absolute inset-x-0 top-0 h-[200px] w-full sm:h-full" />
+        <div className="sky-shade absolute inset-x-0 top-0 z-[2] h-[200px] pointer-events-none sm:h-full" />
+        <div className="wrap relative z-[4] grid justify-items-start gap-5 pt-44 sm:pt-[clamp(32px,6vh,56px)]">
           {showMine ? (
             <>
               <p className="eyebrow !text-weak">Your deposits</p>
@@ -94,49 +94,30 @@ export function Markets() {
           )}
         </div>
         <div className="wrap relative z-[4] py-6 sm:absolute sm:inset-x-0 sm:bottom-0">
-          <StatRow cols={2} packed rule={false}>
-            <Stat label="Total TVL" value={priced.length > 0 ? fmtUsd(totalTvl) : '—'} sub={priced.length < rows.length && priced.length > 0 ? `${priced.length} of ${rows.length} vaults priced` : undefined} />
-          </StatRow>
+          <Stat label="TVL" value={priced.length > 0 ? fmtUsd(totalTvl) : '—'} sub={priced.length < rows.length && priced.length > 0 ? `${priced.length} of ${rows.length} vaults priced` : undefined} />
         </div>
       </section>
 
       {/* The plaza: every vault as an instrument */}
-      <div className="wrap pt-[52px] pb-[120px]">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-x-7 gap-y-5">
+      <div className="wrap pt-8 pb-20 sm:pt-[52px] sm:pb-[120px]">
+        <div className="mb-6 flex items-center justify-between gap-4">
           <h1 className="title text-[clamp(32px,3.6vw,46px)]">Vaults</h1>
-          <div className="flex w-full flex-wrap items-center gap-x-6 gap-y-4 sm:w-auto">
-            <label className="flex h-10 w-full items-center gap-2 rounded border border-stroke-strong px-3 text-weaker focus-within:border-stroke-strongest sm:w-[220px]">
-              <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0" fill="none" aria-hidden>
-                <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search vaults"
-                aria-label="Search vaults"
-                className="min-w-0 flex-1 bg-transparent text-base text-strong outline-none placeholder:text-weaker focus-visible:outline-none"
-              />
-            </label>
-          </div>
+          <SortMenu sort={sort} onChange={setSort} className="lg:hidden" />
         </div>
 
         <div className={cx('eyebrow hidden items-center border-b border-stroke-strong px-4 pb-3 lg:grid', COLS)}>
           <span>Vault</span>
+          <span>Basket</span>
           <span className="justify-self-end"><SortHead label="APR" hint={APR_HINT} active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} /></span>
-          <span className="justify-self-end"><SortHead label="TVL" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} /></span>
+          <span className="justify-self-end"><SortHead label="Total deposited" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} /></span>
           <span />
-        </div>
-        <div className="eyebrow flex justify-end gap-5 px-3 lg:hidden">
-          <SortHead label="APR" hint={APR_HINT} active={sort.key === 'apr'} dir={sort.dir} onClick={() => toggleSort('apr')} />
-          <SortHead label="TVL" active={sort.key === 'tvl'} dir={sort.dir} onClick={() => toggleSort('tvl')} />
         </div>
         <ul>
           {rows.map((r) => (
             <VaultRow key={r.id} row={r} apr={aprOf.get(r.id)} onDeposit={() => deposit(r)} />
           ))}
           {rows.length === 0 && (
-            <li className="border-b border-stroke-weak py-12 text-center text-weaker">No vaults match{q ? ` "${q}"` : ''}.</li>
+            <li className="border-b border-stroke-weak py-12 text-center text-weaker">No vaults on this network.</li>
           )}
         </ul>
       </div>
@@ -149,16 +130,18 @@ function nameOf(r: LiveVaultRow): string {
   return basketName(r.v.ready ? r.v.tokens.map((t) => t.symbol) : [], r.v.entry.label);
 }
 
-// Columns: vault, APR, TVL, action
-// A row only fits from lg; below that it stacks as on a phone.
+// Columns: vault, its basket, APR, total deposited, action
+// A row only fits from lg; below that it stacks as on a phone: the two readings side by side, Deposit across the foot.
 const COLS =
-  'lg:grid-cols-[minmax(220px,1fr)_72px_92px_76px] lg:gap-x-4 xl:grid-cols-[minmax(190px,1fr)_88px_104px_104px] xl:gap-x-6';
+  'lg:grid-cols-[minmax(220px,1.15fr)_minmax(180px,1fr)_72px_136px_76px] lg:gap-x-4 xl:grid-cols-[minmax(190px,1.15fr)_minmax(200px,1fr)_88px_144px_104px] xl:gap-x-6';
 
 function VaultRow({ row: r, apr, onDeposit }: { row: LiveVaultRow; apr: number | undefined; onDeposit: () => void }) {
   const navigate = useNavigate();
   const { v, valuation } = r;
-  const label = 'mr-2 text-xs font-normal text-weaker lg:hidden';
+  const label = 'eyebrow mb-1 block lg:hidden';
   const symbols = basketOrder(v.tokens.map((t) => t.symbol));
+  // The legs follow the on-chain order; the bar reads in the name's
+  const order = symbols.map((s) => v.tokens.findIndex((t) => t.symbol === s));
   const loading = !v.failed && (!v.ready || (r.spotsLoading && valuation.usd === undefined));
   const usdCell = (x: number | undefined, fmt: (n: number) => string) =>
     v.failed ? <span className="text-weaker">—</span> : loading ? <Spinner className="h-4 w-4 text-weaker inline-block" /> : x === undefined ? <span className="text-weaker">—</span> : fmt(x);
@@ -167,8 +150,8 @@ function VaultRow({ row: r, apr, onDeposit }: { row: LiveVaultRow; apr: number |
     <li
       data-vault={r.id}
       className={cx(
-        'grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 border-b border-stroke-weak px-3 py-4 lg:px-4 transition-colors duration-300 ease-dusk hover:bg-strong/[0.035]',
-        "[grid-template-areas:'pair_pair''apr_act''tvl_act'] lg:[grid-template-areas:none]",
+        'grid cursor-pointer grid-cols-2 items-center gap-x-6 gap-y-3 border-b border-stroke-weak px-3 py-4 lg:px-4 transition-colors duration-300 ease-dusk hover:bg-strong/[0.035]',
+        "[grid-template-areas:'pair_pair''mix_mix''apr_tvl''act_act'] lg:[grid-template-areas:none]",
         COLS,
       )}
       onClick={() => navigate(`/vault/${r.id}`)}
@@ -182,14 +165,105 @@ function VaultRow({ row: r, apr, onDeposit }: { row: LiveVaultRow; apr: number |
           {v.failed && <div className="mt-1 text-2xs text-warning">Chain not reachable</div>}
         </div>
       </div>
-      <div className="num text-md text-weak [grid-area:apr] lg:justify-self-end lg:[grid-area:auto]" title="Trading fees, 7-day average, annualised"><span className={label}>APR</span>{apr === undefined ? <span className="text-weaker">—</span> : fmtFeeApr(apr)}</div>
-      <div className="display num text-xl text-strong [grid-area:tvl] lg:justify-self-end lg:[grid-area:auto]"><span className={label}>TVL</span>{usdCell(valuation.usd, (n) => fmtUsd(n, { cents: n < 10_000 }))}</div>
-      <div className="justify-self-end self-center [grid-area:act] lg:[grid-area:auto]">
-        <Button size="sm" disabled={v.paused === true} onClick={(e) => { e.stopPropagation(); onDeposit(); }}>
+      <div className="mb-2 min-w-0 [grid-area:mix] lg:mb-0 lg:[grid-area:auto]">
+        {valuation.usd !== undefined && valuation.usd > 0 ? (
+          <BasketBar tokens={order.map((i) => displaySymbol(v.tokens[i].symbol))} legs={order.map((i) => valuation.legs[i])} />
+        ) : (
+          // An unpriced or empty basket has no shares to draw; the stacked layout drops the dash
+          !loading && <span className="hidden text-weaker lg:inline">—</span>
+        )}
+      </div>
+      <div className="num text-xl text-weak lg:text-md [grid-area:apr] lg:justify-self-end lg:[grid-area:auto]" title="Trading fees, 7-day average, annualised"><span className={label}>APR</span>{apr === undefined ? <span className="text-weaker">—</span> : fmtFeeApr(apr)}</div>
+      <div className="display num text-xl text-strong [grid-area:tvl] lg:justify-self-end lg:[grid-area:auto]"><span className={label}>Total deposited</span>{usdCell(valuation.usd, (n) => fmtUsd(n, { cents: n < 10_000 }))}</div>
+      <div className="mt-2 self-center [grid-area:act] lg:mt-0 lg:justify-self-end lg:[grid-area:auto]">
+        <Button size="sm" className="w-full lg:w-auto" disabled={v.paused === true} onClick={(e) => { e.stopPropagation(); onDeposit(); }}>
           {v.paused ? 'Paused' : 'Deposit'}
         </Button>
       </div>
     </li>
+  );
+}
+
+const SORT_LABEL: Record<SortKey, string> = { tvl: 'Total deposited', apr: 'APR' };
+const SORTS: Sort[] = [
+  { key: 'tvl', dir: 'desc' },
+  { key: 'tvl', dir: 'asc' },
+  { key: 'apr', dir: 'desc' },
+  { key: 'apr', dir: 'asc' },
+];
+const dirText = (dir: SortDir) => (dir === 'desc' ? 'high to low' : 'low to high');
+
+/** Below lg the column heads are hidden: one button opens every order, the current one ticked. */
+function SortMenu({ sort, onChange, className }: { sort: Sort; onChange: (s: Sort) => void; className?: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className={cx('relative', className)} ref={ref}>
+      <Button
+        type="button"
+        // Quiet: a control over the list, not an action on a vault
+        variant="ghost"
+        size="sm"
+        onClick={() => setOpen(!open)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`Sort: ${SORT_LABEL[sort.key]}, ${dirText(sort.dir)}`}
+      >
+        <span className="flex items-center gap-2">
+          <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-weaker" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M5 13V3M2.5 5.5L5 3l2.5 2.5M11 3v10M8.5 10.5L11 13l2.5-2.5" />
+          </svg>
+          {SORT_LABEL[sort.key]}
+          <Arrow dir={sort.dir === 'desc' ? 'down' : 'up'} size={10} />
+        </span>
+      </Button>
+      {open && (
+        <ul
+          role="listbox"
+          aria-label="Sort vaults"
+          className="absolute right-0 top-full mt-2 w-56 bg-background-popover border border-stroke-strong rounded-md shadow-pop p-1 animate-fade-in z-40"
+        >
+          {SORTS.map((s) => {
+            const current = s.key === sort.key && s.dir === sort.dir;
+            return (
+              <li key={`${s.key}-${s.dir}`} role="option" aria-selected={current}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    onChange(s);
+                  }}
+                  // Rows a thumb can hit: 44px tall
+                  className={cx('w-full rounded px-3 py-3 text-left text-base flex items-center gap-2 hover:bg-background-elevated', current ? 'text-strong' : 'text-weak')}
+                >
+                  {SORT_LABEL[s.key]}
+                  <Arrow dir={s.dir === 'desc' ? 'down' : 'up'} size={10} />
+                  <span className="sr-only">, {dirText(s.dir)}</span>
+                  {current && <span className="ml-auto text-strong" aria-hidden>✓</span>}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }
 

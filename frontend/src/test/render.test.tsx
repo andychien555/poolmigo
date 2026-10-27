@@ -15,6 +15,7 @@ import { ChainProviders } from '@/chain/Providers';
 import { DEPLOYMENTS } from '@/chain/chains';
 import { Layout } from '@/components/layout/Layout';
 import { Markets } from '@/pages/Markets';
+import { useStore } from '@/store/useStore';
 import { VaultDetail } from '@/pages/VaultDetail';
 
 /**
@@ -81,7 +82,22 @@ describe('app renders without a wallet', () => {
     expect(container.querySelectorAll('a[href^="/live"]')).toHaveLength(0);
     expect(screen.queryByRole('link', { name: /Live vault/ })).toBeNull();
     expect(screen.getAllByRole('link', { name: 'Earn' }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole('link', { name: 'Analytics' }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('link', { name: 'Analytics' })).toBeNull();
+  });
+
+  it('the hero offers Connect wallet beside the header until a wallet is connected, deposits or not', () => {
+    renderAt('/');
+    expect(screen.getAllByRole('button', { name: 'Connect wallet' })).toHaveLength(2);
+    cleanup();
+    // Connected with nothing deposited: the title stays, neither connect button does
+    useStore.setState({ connected: true, readOnlyMode: true });
+    try {
+      renderAt('/');
+      expect(screen.getByRole('heading', { level: 1, name: /Markets move/ })).toBeDefined();
+      expect(screen.queryAllByRole('button', { name: 'Connect wallet' })).toEqual([]);
+    } finally {
+      useStore.setState({ connected: false, readOnlyMode: false });
+    }
   });
 
   it('the demo-chain vault page renders the original layout and shows no invented APR (APR —)', async () => {

@@ -60,7 +60,8 @@ export function ChainSelector() {
           ) : (
             <span className={cx('h-2 w-2 rounded-full shrink-0', warn ? 'bg-warning' : 'bg-success')} aria-hidden />
           )}
-          <span className="max-w-[9rem] truncate">{chainShortLabel(chain.id)}</span>
+          {/* Phones show the mark alone, so the header fits one row; the button's label still names the chain */}
+          <span className="hidden max-w-[9rem] truncate sm:block">{chainShortLabel(chain.id)}</span>
           <svg viewBox="0 0 12 12" className="h-3 w-3 text-weaker shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
             <path d="M3 4.5l3 3 3-3" />
           </svg>

@@ -3,7 +3,7 @@
 Automated liquidity vaults for less manual LP management on EVM chains.
 
 **Live is the default.** Every page reads the registry's vaults over RPC (Robinhood Chain 4663 by
-default): Markets, the vault page and Analytics show live TVL / spot NAV / supply / fee / keeper
+default): Markets and the vault page show live TVL / spot NAV / supply / fee / keeper
 (`src/chain/useLiveVaults.ts`), and the vault page's deposit / withdraw card makes real transactions. A number the chain cannot give
 (anything that needs history — no indexer) is either absent ("—") or, where the design keeps a
 placeholder, comes from `src/demo/` under a **Demo / Illustrative** badge. The per-section contract is
@@ -223,7 +223,7 @@ State is persisted to `localStorage` under `mysun-demo-v1`.
 | `src/chain/` | Chain code: registry-driven chains, target chain + vault selection + switching, per-chain viem clients, live reads, amount math, error decoding |
 | `src/wallet/` | The wallet layer: EIP-6963 discovery, WalletConnect, picker modal, connection |
 | `src/config/generated.ts` | The full registry (local overlay included) + ABIs, generated from `../shared` by `pnpm sync:shared` — do not edit. App code reads `CHAINS` / `DEPLOYMENTS` / `vaultsForChain` from `src/chain/chains.ts` (the whole registry, both chains) |
-| `src/chain/useLiveVaults.ts` + `liveVaults.ts` | Every vault live: catalogue reads + reference-pool spots → TVL, spot NAV, fee, keeper (Markets, vault page, Analytics); `/vault/:id` resolution |
+| `src/chain/useLiveVaults.ts` + `liveVaults.ts` | Every vault live: catalogue reads + reference-pool spots → TVL, spot NAV, fee, keeper (Markets, vault page); `/vault/:id` resolution |
 | `src/chain/useVault.ts` | One vault's live state (`useLiveVaultAt`), the wallet's basket, previews and zap routes — the deposit card's data |
 | `src/components/live/` | Local dev tools (mint / fund my wallet), the network-manual and message blocks |
 | `src/components/ui/DataBadge.tsx` | `Demo data` / `Live on-chain` provenance badges |

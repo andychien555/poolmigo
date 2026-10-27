@@ -2,7 +2,7 @@
 /**
  * Live data by default, original design, both chains (TASK-LIVE-DEFAULT-REVISE, docs/LIVE-DATA.md):
  *  - every build offers both registry chains (mainnet 4663 + the demo chain 46630); 4663 is the default;
- *  - Analytics / the vault page / Markets render chain reads (the live-vault view, mocked here at the
+ *  - the vault page / Markets render chain reads (the live-vault view, mocked here at the
  *    hook boundary so the assertions do not depend on a node), and the Demo badge appears only on the
  *    illustrative blocks — never on a live number;
  *  - the vault page mounts the original deposit card (real flow), resolves `<chainId>-<key>` and the
@@ -227,7 +227,6 @@ vi.mock('@/chain/useVault', async (orig) => {
 
 // Imported after vi.mock (hoisted) so the pages see the fixture.
 const { ChainProviders } = await import('@/chain/Providers');
-const { Analytics } = await import('@/pages/Analytics');
 const { VaultDetail } = await import('@/pages/VaultDetail');
 const { Markets } = await import('@/pages/Markets');
 
@@ -236,7 +235,6 @@ function renderAt(path: string) {
     <ChainProviders>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
-          <Route path="/analytics" element={<Analytics />} />
           <Route path="/vault/:id" element={<VaultDetail />} />
           <Route path="/" element={<Markets />} />
         </Routes>
@@ -254,43 +252,6 @@ afterEach(cleanup);
 /** Every Demo-style badge on screen (DemoBadge renders its label; "Illustrative" is the honest one). */
 const demoBadges = () => screen.queryAllByText(/^(Demo( data)?|Illustrative)$/i);
 
-describe('Analytics — the original design (PR #7), illustrative series', () => {
-  it('renders the design: heading, window switch, the four metrics as tiles and charts, the stat row', async () => {
-    renderAt('/analytics');
-    expect(screen.getByRole('heading', { level: 1, name: 'Protocol analytics' })).toBeDefined();
-    expect(screen.getByRole('tab', { name: 'This week' }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByRole('tab', { name: '8 weeks' })).toBeDefined();
-    for (const label of ['Volume', 'Fees', 'Revenue', 'Buybacks']) {
-      expect(screen.getByRole('heading', { level: 3, name: label })).toBeDefined(); // the BarCard
-      expect(screen.getAllByText(label)).toHaveLength(2); // + the tile
-    }
-    expect(screen.getAllByText(/from prior week$/)).toHaveLength(4);
-    expect(screen.getByText(/Revenue is the protocol's 10% share of fees plus zap swap fees/)).toBeDefined();
-    for (const label of ['Emissions this week', 'Buyback coverage', 'Market cap']) expect(screen.getByText(label)).toBeDefined();
-    // The 8-weeks window switches the tiles' sub line.
-    await act(async () => screen.getByRole('tab', { name: '8 weeks' }).click());
-    expect(screen.getAllByText('Last 8 weeks')).toHaveLength(4);
-    expect(screen.queryByText(/from prior week$/)).toBeNull();
-  });
-
-  it("the subtitle names the header's chain; nothing beyond the design (no vaults table, no live tiles)", () => {
-    const { container } = renderAt('/analytics');
-    const mainnet = DEPLOYMENTS.find((d) => d.chainId === 4663)!.name;
-    expect(screen.getByText(new RegExp(`vaults on ${mainnet}\\.$`))).toBeDefined();
-    expect(container.querySelector('table')).toBeNull();
-    expect(container.querySelector('tr[data-vault]')).toBeNull();
-    for (const gone of ['Vaults', 'Total TVL', 'Basket tokens', 'Paused', 'Reward emissions vs buybacks']) expect(screen.queryByText(gone)).toBeNull();
-  });
-
-  it('the page carries the one Demo badge by its title — no live badge on illustrative numbers', () => {
-    renderAt('/analytics');
-    const badges = demoBadges();
-    expect(badges.map((b) => b.textContent)).toEqual(['Demo data']);
-    expect(within(badges[0].closest('section') as HTMLElement).getByRole('heading', { name: 'Protocol analytics' })).toBeDefined();
-    expect(screen.queryByText('Live on-chain')).toBeNull();
-  });
-});
-
 describe('vault page — live figures, the original deposit card, illustrative bits badged', () => {
   it('stats and basket come from the live view; old demo ids are not found', () => {
     renderAt(`/vault/4663-${ENTRY.key}`);
@@ -300,6 +261,14 @@ describe('vault page — live figures, the original deposit card, illustrative b
     cleanup();
     renderAt('/vault/eth-usdg');
     expect(screen.getByText(/Vault not found/)).toBeDefined();
+  });
+
+  it("the basket's bar, legend and table read in the name's order, the anchor last", () => {
+    renderAt(`/vault/4663-${ENTRY.key}`);
+    const basket = screen.getByRole('heading', { name: 'Basket' }).closest('section') as HTMLElement;
+    // on chain the basket is USDG, WETH; the page reads ETH / USDG
+    expect(within(basket).getAllByRole('listitem').map((li) => li.textContent?.split(' ')[0])).toEqual(['ETH', 'USDG']);
+    expect([...basket.querySelectorAll('tbody tr')].map((tr) => tr.firstElementChild?.textContent?.match(/^[A-Z]+/)?.[0])).toEqual(['ETH', 'USDG']);
   });
 
   it('the classic /vault/<key> id opens the same vault; a key on two chains asks which', () => {
@@ -388,6 +357,30 @@ describe('Markets — the deposit CTA and ?deposit= open the card over the page;
     expect(within(row).getByText('$2,000.00')).toBeDefined();
     expect(screen.queryByText(/Illustrative ranges/i)).toBeNull();
     expect(demoBadges()).toEqual([]);
+  });
+
+  it("a row's basket bar names each token's share in the name's order, the anchor last", () => {
+    const { container } = renderAt('/');
+    const row = container.querySelector(`li[data-vault="4663-${ENTRY.key}"]`) as HTMLElement;
+    // on chain the basket is USDG, WETH; the row reads ETH / USDG
+    expect(within(row).getAllByRole('listitem').map((li) => li.textContent?.split(' ')[0])).toEqual(['ETH', 'USDG']);
+  });
+
+  it('the sort button opens every order, the current one ticked; picking one closes the menu', async () => {
+    renderAt('/');
+    const button = screen.getByRole('button', { name: 'Sort: Total deposited, high to low' });
+    await act(async () => button.click());
+    const options = within(screen.getByRole('listbox', { name: 'Sort vaults' })).getAllByRole('option');
+    expect(options.map((o) => o.textContent)).toEqual([
+      'Total deposited, high to low✓',
+      'Total deposited, low to high',
+      'APR, high to low',
+      'APR, low to high',
+    ]);
+    expect(options.map((o) => o.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false', 'false']);
+    await act(async () => within(options[2]).getByRole('button').click());
+    expect(screen.queryByRole('listbox', { name: 'Sort vaults' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Sort: APR, high to low' })).toBeDefined();
   });
 
   it('the Deposit button opens the deposit card over Markets, not the vault page', async () => {

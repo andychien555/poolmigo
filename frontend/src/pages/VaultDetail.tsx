@@ -26,13 +26,13 @@ import { useVaultRanges } from '@/chain/useVaultRanges';
 import { FEE_APR_WINDOW_DAYS, feeApyPct, fmtFeeApr, latestFeesUsd } from '@/chain/feeApy';
 import { useNavHistoryRows } from '@/chain/useNavHistory';
 import { cx, fmtPct, fmtPrice, fmtUsd } from '@/lib/format';
-import { TOKEN_COLORS } from '@/demo/data/vaults';
 import { TokenGroup } from '@/components/ui/TokenIcon';
 import { Stat, StatRow } from '@/components/ui/Stat';
 import { Button } from '@/components/ui/Button';
 import { Hint, Tooltip } from '@/components/ui/Tooltip';
 import { LiveBadge } from '@/components/ui/DataBadge';
 import { NavChart } from '@/components/vault/NavChart';
+import { BasketBar } from '@/components/vault/BasketBar';
 import { PriceRange } from '@/components/vault/PriceRange';
 import { rangePairsFor } from '@/components/vault/rangePairs';
 import { DepositCard } from '@/components/deposit/DepositCard';
@@ -96,6 +96,8 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
   );
 
   const symbols = basketOrder(v.tokens.map((t) => t.symbol));
+  // The legs follow the on-chain order; the bar, its legend and the table read in the name's
+  const order = symbols.map((s) => v.tokens.findIndex((t) => t.symbol === s));
   const name = basketName(v.ready ? symbols : [], v.entry.label);
   const usd = (x: number | undefined, cents = true) => (x === undefined ? '—' : fmtUsd(x, { cents }));
   const wrongChain = Boolean(address) && chainId !== v.chainId;
@@ -162,15 +164,15 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
 
         <section className="min-w-0 lg:col-start-1">
           <h2 className="title text-2xl leading-tight mb-4">Basket</h2>
-          {valuation.usd !== undefined && valuation.usd > 0 && <BasketBar tokens={v.tokens.map((t) => displaySymbol(t.symbol))} legs={valuation.legs} />}
+          {valuation.usd !== undefined && valuation.usd > 0 && <BasketBar className="mb-4" tokens={order.map((i) => displaySymbol(v.tokens[i].symbol))} legs={order.map((i) => valuation.legs[i])} />}
+          {/* No share column: the bar's legend gives each share. Phones fold the spot price under the token, so the table fits */}
           <table className="w-full text-base num">
             <thead>
               <tr className="text-xs text-weaker border-b border-stroke-strong">
                 <th className="text-left font-medium pb-2">Token</th>
                 <th className="text-right font-medium pb-2">In the vault</th>
-                <th className="text-right font-medium pb-2">Spot price</th>
+                <th className="hidden text-right font-medium pb-2 sm:table-cell">Spot price</th>
                 <th className="text-right font-medium pb-2">Value</th>
-                <th className="text-right font-medium pb-2">Share</th>
                 {yours && (
                   <th className="text-right font-medium pb-2">
                     <Hint tip={`What your ${v.entry.receipt.symbol} redeems for right now, in kind.`} align="end" wide>
@@ -181,17 +183,20 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
               </tr>
             </thead>
             <tbody>
-              {v.tokens.map((t, i) => {
+              {order.map((i) => {
+                const t = v.tokens[i];
                 const leg = valuation.legs[i];
                 const anchor = anchorOf(v.tokens);
                 const price = t.symbol === USD_ANCHOR_SYMBOL ? 1 : leg?.spot && anchor ? spotUsdPerToken(leg.spot, t.decimals, anchor.decimals) : undefined;
                 return (
                   <tr key={t.address} className="border-b border-stroke-weak">
-                    <td className="py-3 text-strong">{displaySymbol(t.symbol)}</td>
+                    <td className="py-3 text-strong">
+                      {displaySymbol(t.symbol)}
+                      <div className="text-xs text-weaker sm:hidden">{price === undefined ? '—' : fmtPrice(price)}</div>
+                    </td>
                     <td className="py-3 text-right text-strong">{formatAmount(t.total, t.decimals, 6)}</td>
-                    <td className="py-3 text-right text-weak">{price === undefined ? '—' : fmtPrice(price)}</td>
+                    <td className="hidden py-3 text-right text-weak sm:table-cell">{price === undefined ? '—' : fmtPrice(price)}</td>
                     <td className="py-3 text-right text-weak">{usd(leg?.usd)}</td>
-                    <td className="py-3 text-right text-weak">{leg?.share === undefined ? '—' : fmtPct(leg.share)}</td>
                     {yours && <td className="py-3 text-right text-strong">{yoursReady ? formatAmount(yours.get(t.address.toLowerCase()) ?? 0n, t.decimals, 6) : '—'}</td>}
                   </tr>
                 );
@@ -246,43 +251,6 @@ function Row({ label, value, sub, tone, tip }: { label: string; value: string; s
         <dd className={cx(tone ?? 'text-strong')}>{value}</dd>
       </div>
     </Tooltip>
-  );
-}
-
-/** For a token with no logo colour (the local mock stack): the chart inks, in turn. */
-const BAR_FALLBACK = ['rgb(var(--color-strong))', 'rgb(var(--color-chart-secondary))', 'rgb(var(--color-weaker))'];
-
-/**
- * Each token's share of the spot value, in the table's order, drawn in its logo's colour: a bar with
- * the share and value on hover, and a legend under it naming every colour.
- */
-function BasketBar({ tokens, legs }: { tokens: string[]; legs: LiveVaultRow['valuation']['legs'] }) {
-  const items = tokens.map((symbol, i) => ({ symbol, share: legs[i]?.share, usd: legs[i]?.usd, color: TOKEN_COLORS[symbol] ?? BAR_FALLBACK[i % BAR_FALLBACK.length] }));
-  const pct = (share: number | undefined) => (share === undefined ? '—' : fmtPct(share));
-  return (
-    <div className="mb-4 grid gap-3">
-      <div className="flex h-2 w-full gap-px rounded-full bg-fill-track">
-        {items.map((t, i) => (
-          <span key={t.symbol} className="flex" style={{ width: `${(t.share ?? 0) * 100}%` }}>
-            <Tooltip content={`${t.symbol} · ${pct(t.share)} · ${t.usd === undefined ? '—' : fmtUsd(t.usd, { cents: true })}`} className="w-full">
-              {/* the taller hit area makes the 8px bar easy to hover */}
-              <span className="-my-2 flex w-full cursor-help py-2">
-                {/* the ends are rounded on the coloured bar itself: clipping the track would cut the hit area */}
-                <span className={cx('h-2 w-full', i === 0 && 'rounded-l-full', i === items.length - 1 && 'rounded-r-full')} style={{ background: t.color }} />
-              </span>
-            </Tooltip>
-          </span>
-        ))}
-      </div>
-      <ul className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-weak num">
-        {items.map((t) => (
-          <li key={t.symbol} className="inline-flex items-center gap-2">
-            <span className="h-2 w-2 rounded-sm" style={{ background: t.color }} aria-hidden />
-            {t.symbol} <span className="text-strong">{pct(t.share)}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
 

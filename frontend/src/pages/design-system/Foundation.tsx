@@ -74,7 +74,7 @@ function Typography() {
           <Role cls=".title" note="Page-level titles: the serif, light, tight"><span className="title text-2xl">Vault token price</span></Role>
           <Role cls=".display" note="UI titles, a size down, and the deposits total on Earn: the same serif, light"><span className="display text-md">Price range</span></Role>
           <Role cls=".display.num" note="A reading: the sans stack at regular, so the figures are Switzer"><span className="display num text-2xl">$2.4M</span></Role>
-          <Role cls=".eyebrow" note="The small caps label that names a reading"><span className="eyebrow">Total TVL</span></Role>
+          <Role cls=".eyebrow" note="The small caps label that names a reading"><span className="eyebrow">TVL</span></Role>
         </div>
       </SubSection>
 

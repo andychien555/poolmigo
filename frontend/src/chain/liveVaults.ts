@@ -1,5 +1,5 @@
 /**
- * Pure helpers behind the live vault surfaces (Markets, the vault page, Analytics). No React, no
+ * Pure helpers behind the live vault surfaces (Markets, the vault page). No React, no
  * network: inputs are chain reads already landed (src/chain/useVaultCatalog.ts) and the spot
  * valuation (src/chain/spot.ts). USD stays OFF-CHAIN DISPLAY ONLY — nothing here feeds a write.
  *
