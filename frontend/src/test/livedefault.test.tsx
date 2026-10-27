@@ -216,12 +216,11 @@ function fixtureVault(): LiveVault {
 }
 const NO_USER: UserBasket = { shares: 0n, owed: [0n, 0n], balances: [0n, 0n], allowances: [0n, 0n], isLoading: false, refetch: () => {} };
 
-/** The zap probe: by default it has answered that the zap does not serve the fixture vault. */
-const ZAP_NOT_SERVED = { zapInPending: false, zapOutPending: false };
-let ZAP_ROUTES: { zapInPending: boolean; zapOutPending: boolean } = ZAP_NOT_SERVED;
+/** The zap probe: no route confirmed for the fixture vault, so the zap keys stay unpickable. */
+const NO_ZAP_ROUTE = { zapInPending: false, zapOutPending: false };
 vi.mock('@/chain/useVault', async (orig) => {
   const actual = await orig<typeof import('@/chain/useVault')>();
-  return { ...actual, useLiveVaultAt: () => fixtureVault(), useUserBasket: () => NO_USER, useZapRoutes: () => ZAP_ROUTES };
+  return { ...actual, useLiveVaultAt: () => fixtureVault(), useUserBasket: () => NO_USER, useZapRoutes: () => NO_ZAP_ROUTE };
 });
 
 
@@ -245,7 +244,6 @@ function renderAt(path: string) {
 
 beforeEach(() => {
   BANDS = new Map([[WETH.toLowerCase(), WETH_BAND]]);
-  ZAP_ROUTES = ZAP_NOT_SERVED;
 });
 afterEach(cleanup);
 
@@ -284,10 +282,9 @@ describe('vault page — live figures, the original deposit card, illustrative b
     renderAt(`/vault/4663-${ENTRY.key}`);
     expect(screen.getByRole('tab', { name: 'Deposit' }).getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('tab', { name: 'Withdraw' })).toBeDefined();
-    // USDG only is the default, but the zap does not serve this vault in the fixture: Both shows,
-    // and no USDG key is offered.
-    expect(screen.getByRole('button', { name: 'Both' }).getAttribute('aria-pressed')).toBe('true');
-    expect(screen.queryByRole('button', { name: 'USDG' })).toBeNull();
+    // USDG only is the default; in kind is one click away.
+    expect(screen.getByRole('button', { name: 'USDG' }).getAttribute('aria-pressed')).toBe('true');
+    act(() => screen.getByRole('button', { name: 'Both' }).click());
     // One amount box per basket token, read from the chain view; the CTA opens the wallet picker.
     expect(screen.getByLabelText('USDG amount')).toBeDefined();
     expect(screen.getByLabelText('WETH amount')).toBeDefined();
@@ -297,8 +294,7 @@ describe('vault page — live figures, the original deposit card, illustrative b
     expect(screen.getByText(`$2.00 per ${ENTRY.receipt.symbol}`)).toBeDefined();
   });
 
-  it('while the zap route is being confirmed, the card holds the USDG form with nothing to type into', () => {
-    ZAP_ROUTES = { zapInPending: true, zapOutPending: true };
+  it('until the zap route is confirmed, the card holds the USDG form with nothing to type into', () => {
     renderAt(`/vault/4663-${ENTRY.key}`);
     const usdg = screen.getByRole('button', { name: 'USDG' }) as HTMLButtonElement;
     expect(usdg.getAttribute('aria-pressed')).toBe('true');

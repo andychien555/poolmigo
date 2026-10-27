@@ -480,6 +480,7 @@ function Motion() {
           {[
             ['150ms', 'duration-150', 'A small flip: the toggle knob, a chevron'],
             ['160ms', 'animate-fade-in', 'Something appearing in place: popover, toast, dialog'],
+            ['160ms', 'animate-fade', 'A tooltip: it fades without moving, so it never jumps off its anchor'],
             ['300ms', 'duration-300 ease-dusk', 'A colour change on a control: buttons, vault rows'],
             ['450ms', 'animate-slide-in', 'The side sheet arriving from the right'],
             ['2s', 'animate-rise', 'The loader: the sun rising and setting between the stones'],
@@ -497,6 +498,7 @@ function Motion() {
         <Specimen>
           <div key={run} className="flex flex-wrap items-center gap-x-10 gap-y-6">
             <AnimationTile label="animate-fade-in"><div className="h-14 w-24 animate-fade-in rounded-md border border-stroke-strong bg-background-popover" /></AnimationTile>
+            <AnimationTile label="animate-fade"><div className="h-14 w-24 animate-fade rounded-sm bg-fill-inverse" /></AnimationTile>
             <AnimationTile label="animate-slide-in"><div className="h-14 w-24 animate-slide-in border-l border-stroke-strong bg-background-sheet" /></AnimationTile>
             <AnimationTile label="animate-rise"><MarkLoader className="h-9 w-[58px] text-strong" /></AnimationTile>
           </div>

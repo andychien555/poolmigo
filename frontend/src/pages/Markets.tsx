@@ -12,6 +12,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useWallet } from '@/wallet/context';
+import { useStore } from '@/store/useStore';
 import { DEPLOYMENTS } from '@/chain/chains';
 import { useTargetChain } from '@/chain/useTargetChain';
 import { basketName, basketOrder, displaySymbol, holdingUsd, resolveVaultRouteId, vaultRouteId } from '@/chain/liveVaults';
@@ -69,6 +70,9 @@ export function Markets() {
     .map((r) => holdingUsd(r.v.receiptBalance, r.v.supply, r.valuation.usd))
     .filter((x): x is number => x !== undefined && x > 0);
   const showMine = Boolean(address) && mine.length > 0;
+  const connected = useStore((s) => s.connected);
+  // Connected with nothing deposited, the hero has no button: from sm up the reading follows the title, not the ground
+  const tvlUnderTitle = connected && !showMine;
 
   // The CTA pushes `?deposit=` with a marker, so Back closes the overlay. Closing steps back out of that
   // entry instead of pushing another, so Back afterwards leaves Markets rather than reopening the card;
@@ -93,7 +97,7 @@ export function Markets() {
             <Welcome />
           )}
         </div>
-        <div className="wrap relative z-[4] py-6 sm:absolute sm:inset-x-0 sm:bottom-0">
+        <div className={cx('wrap relative z-[4] py-6', tvlUnderTitle ? 'sm:pt-10' : 'sm:absolute sm:inset-x-0 sm:bottom-0')}>
           <Stat label="TVL" value={priced.length > 0 ? fmtUsd(totalTvl) : '—'} sub={priced.length < rows.length && priced.length > 0 ? `${priced.length} of ${rows.length} vaults priced` : undefined} />
         </div>
       </section>

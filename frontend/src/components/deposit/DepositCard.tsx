@@ -5,7 +5,7 @@
  *
  *  - In kind: offer a MAX per basket token → `previewDeposit` says the shares and what is pulled →
  *    approve the vault only where the allowance is short → `deposit(tokens, amounts, minShares, me)`.
- *  - USDG only (zap-in), where `useZapRoutes` offers it: approve the ZAP for exactly the offer →
+ *  - USDG only (zap-in), the deposit default: approve the ZAP for exactly the offer →
  *    `zapDeposit(vault, USDG, amount, minShares, legBps, me)`.
  *  - Withdraw: `redeem(shares, me)` in kind, or `zapRedeem` to USDG only (approve the zap for the shares).
  *
@@ -93,14 +93,17 @@ interface Props {
   initialAmount?: string;
   /** Name the vault and link to its page. On for the overlay; off on the vault page, which already says so. */
   showVaultLink?: boolean;
+  /** The basket's symbols when the page already read them, so the name and the choice are right from the first frame. */
+  symbols?: string[];
 }
 
-export function DepositCard({ vault: v, user, usdPrices, nav, initialAmount, showVaultLink = true }: Props) {
+export function DepositCard({ vault: v, user, usdPrices, nav, initialAmount, showVaultLink = true, symbols: known }: Props) {
   const [tab, setTab] = useState<Tab>('deposit');
   const routes = useZapRoutes(v);
-  const symbols = basketOrder(v.tokens.map((t) => t.symbol));
+  // Until the token reads land the card's own symbols are bare addresses: take the page's, else wait for them
+  const symbols = basketOrder(known ?? (v.isLoading ? [] : v.tokens.map((t) => t.symbol)));
   const unreachable = v.hasDeployment && (Boolean(v.error) || (!v.isLoading && v.tokens.length === 0));
-  const ctx: FormContext = { vault: v, user, usdPrices: usdPrices ?? new Map(), nav };
+  const ctx: FormContext = { vault: v, symbols, user, usdPrices: usdPrices ?? new Map(), nav };
 
   return (
     <div className="w-full max-w-[440px] mx-auto lg:max-w-none">
@@ -149,12 +152,13 @@ export function DepositCard({ vault: v, user, usdPrices, nav, initialAmount, sho
               {v.deployment ? ` (${resolveLocalRpcUrl(v.deployment.rpcUrl, v.deployment.local === true)})` : ''}.{' '}
               {isLocalChain(v.chainId) ? 'Start the local chain and the demo stack, then reload.' : 'The RPC did not answer; try again shortly.'}
             </Message>
+          ) : tab === 'deposit' ? (
+            // The zap form's shape holds while the vault's reads and the route land, so nothing flashes in
+            <DepositForm ctx={ctx} route={routes.zapIn} initialAmount={initialAmount} />
           ) : v.tokens.length === 0 ? (
             <div className="flex justify-center py-10"><Spinner className="h-5 w-5 text-weaker" /></div>
-          ) : tab === 'deposit' ? (
-            <DepositForm ctx={ctx} route={routes.zapIn} pending={routes.zapInPending} initialAmount={initialAmount} />
           ) : (
-            <WithdrawForm ctx={ctx} route={routes.zapOut} pending={routes.zapOutPending} />
+            <WithdrawForm ctx={ctx} route={routes.zapOut} />
           )}
         </div>
       </div>
@@ -166,6 +170,8 @@ export function DepositCard({ vault: v, user, usdPrices, nav, initialAmount, sho
 
 interface FormContext {
   vault: LiveVault;
+  /** The basket in the name's order. */
+  symbols: string[];
   user: UserBasket;
   usdPrices: ReadonlyMap<string, number>;
   nav: number | undefined;
@@ -319,23 +325,16 @@ interface ChoiceOption {
 }
 
 /**
- * The whole basket in kind, "Both" or "All" — always there; and the zap's one token ("USDG") while
- * the chain confirms its route and once it has. A vault the zap does not serve (or whose probe
- * failed) keeps only the in-kind key.
+ * The whole basket in kind, "Both" or "All", and the zap's one token ("USDG"): both always there, so
+ * the groove never changes shape. Every vault deployed today is served by the zap.
  * The form's default goes first: `zapFirst` (deposit) puts USDG on the left, withdraw keeps the basket there.
- * USDG is drawn from the start of the probe, so the groove never opens on a lone full-width key and
- * then splits; it stays unpickable until the route is confirmed.
+ * Each key stays unpickable until what it needs has landed: the basket's tokens, or the zap's route.
  */
-function modeOptions(v: LiveVault, route: ZapRoute | undefined, pending: boolean, zapFirst = false): ChoiceOption[] {
-  const symbols = basketOrder(v.tokens.map((t) => t.symbol));
-  const out: ChoiceOption[] = [{ id: 'basket', label: symbols.length === 2 ? 'Both' : 'All', name: symbols.map(displaySymbol).join(' + '), icon: <TokenGroup symbols={symbols} size={18} /> }];
-  if (route || pending) {
-    const symbol = route?.token.symbol ?? ZAP_ROUTE_SYMBOL;
-    const zap: ChoiceOption = { id: 'zap', label: symbol, name: `${symbol} only, through the zap`, icon: <TokenIcon symbol={symbol} size={18} />, disabled: !route };
-    if (zapFirst) out.unshift(zap);
-    else out.push(zap);
-  }
-  return out;
+function modeOptions({ vault: v, symbols }: FormContext, route: ZapRoute | undefined, zapFirst = false): ChoiceOption[] {
+  const symbol = route?.token.symbol ?? ZAP_ROUTE_SYMBOL;
+  const basket: ChoiceOption = { id: 'basket', label: symbols.length === 2 ? 'Both' : 'All', name: symbols.map(displaySymbol).join(' + '), icon: <TokenGroup symbols={symbols} size={18} />, disabled: v.tokens.length === 0 };
+  const zap: ChoiceOption = { id: 'zap', label: symbol, name: `${symbol} only, through the zap`, icon: <TokenIcon symbol={symbol} size={18} />, disabled: !route };
+  return zapFirst ? [zap, basket] : [basket, zap];
 }
 
 /**
@@ -430,21 +429,19 @@ function useWriteGate(v: LiveVault) {
 
 // ───────────────────────── Deposit ─────────────────────────
 
-function DepositForm({ ctx, route, pending, initialAmount }: { ctx: FormContext; route: ZapRoute | undefined; pending: boolean; initialAmount?: string }) {
-  // USDG only by default. While the chain confirms the route, the zap form's shape shows with nothing
-  // to type into, so no amount is lost and nothing moves when it lands; a vault the zap does not
-  // serve opens on the in-kind form.
+function DepositForm({ ctx, route, initialAmount }: { ctx: FormContext; route: ZapRoute | undefined; initialAmount?: string }) {
+  // USDG only by default. Until the chain confirms the route, the zap form's shape shows with nothing
+  // to type into, so no amount is lost and nothing moves when it lands.
   const [mode, setMode] = useState<Mode>('zap');
-  const options = modeOptions(ctx.vault, route, pending, true);
-  const active = mode === 'zap' && (route || pending) ? 'zap' : 'basket';
+  const options = modeOptions(ctx, route, true);
   // On the zap the label names it, and what it does is on hover; in kind it is plain "Pay with"
-  const label = active === 'zap' ? <Hint tip={ZAP_EXPLAINER} align="start" wide>Zap in</Hint> : 'Pay with';
+  const label = mode === 'zap' ? <Hint tip={ZAP_EXPLAINER} align="start" wide>Zap in</Hint> : 'Pay with';
   const choice = (
     <Field label={label}>
-      <TokenChoice options={options} value={active} onChange={setMode} />
+      <TokenChoice options={options} value={mode} onChange={setMode} />
     </Field>
   );
-  if (active === 'basket') return <BasketDepositForm key="basket" ctx={ctx} choice={choice} />;
+  if (mode === 'basket') return <BasketDepositForm key="basket" ctx={ctx} choice={choice} />;
   return route ? (
     <ZapDepositForm key="zap" ctx={ctx} routes={[route]} choice={choice} initialAmount={initialAmount} />
   ) : (
@@ -858,9 +855,9 @@ function ZapDepositForm({ ctx, routes, choice, initialAmount }: { ctx: FormConte
 
 // ───────────────────────── Withdraw ─────────────────────────
 
-function WithdrawForm({ ctx, route, pending }: { ctx: FormContext; route: ZapRoute | undefined; pending: boolean }) {
+function WithdrawForm({ ctx, route }: { ctx: FormContext; route: ZapRoute | undefined }) {
   const [mode, setMode] = useState<Mode>('basket');
-  const options = modeOptions(ctx.vault, route, pending);
+  const options = modeOptions(ctx, route);
   const active = route && mode === 'zap' ? 'zap' : 'basket';
   const choice = (
     <Field label="Receive in">
@@ -1116,5 +1113,5 @@ export function VaultDepositCard({ row, spots, initialAmount, showVaultLink }: {
   const vault = useLiveVaultAt(row.v.chainId, row.v.entry);
   const user = useUserBasket(address ?? undefined, vault);
   const usdPrices = useMemo(() => tokenUsdPrices(row.v.tokens, spots.spots), [row.v.tokens, spots.spots]);
-  return <DepositCard vault={vault} user={user} usdPrices={usdPrices} nav={row.nav} initialAmount={initialAmount} showVaultLink={showVaultLink} />;
+  return <DepositCard vault={vault} user={user} usdPrices={usdPrices} nav={row.nav} initialAmount={initialAmount} showVaultLink={showVaultLink} symbols={row.v.ready ? row.v.tokens.map((t) => t.symbol) : undefined} />;
 }

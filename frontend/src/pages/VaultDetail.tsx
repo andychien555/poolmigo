@@ -154,7 +154,7 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
 
         <aside className="grid gap-4 lg:sticky lg:top-20 lg:col-start-2 lg:row-span-4 lg:row-start-1">
           {address && <YourPosition row={row} apr={earnings.apr} fees={earnings.fees} />}
-          <DepositCard vault={vault} user={user} usdPrices={usdPrices} nav={nav} showVaultLink={false} />
+          <DepositCard vault={vault} user={user} usdPrices={usdPrices} nav={nav} showVaultLink={false} symbols={v.ready ? symbols : undefined} />
           {wrongChain && <NetworkManual chainId={v.chainId} />}
           {/* Demo chain only, with no wallet on another network: fund the wallet from the local node. */}
           {isLocalChain(v.chainId) && !wrongChain && vault.tokens.length > 0 && <LocalDevPanel vault={vault} user={user} />}
@@ -191,7 +191,7 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
                 return (
                   <tr key={t.address} className="border-b border-stroke-weak">
                     <td className="py-3 text-strong">
-                      {displaySymbol(t.symbol)}
+                      <div>{displaySymbol(t.symbol)}</div>
                       <div className="text-xs text-weaker sm:hidden">{price === undefined ? '—' : fmtPrice(price)}</div>
                     </td>
                     <td className="py-3 text-right text-strong">{formatAmount(t.total, t.decimals, 6)}</td>
