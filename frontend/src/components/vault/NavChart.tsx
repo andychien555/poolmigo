@@ -2,9 +2,11 @@ import { useId, useMemo, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip as RTooltip, XAxis, YAxis } from 'recharts';
 import { illustrativeNavSeries } from '@/demo/series';
 import { useNavHistory } from '@/chain/useNavHistory';
+import { DemoBadge } from '@/components/ui/DataBadge';
 import { Segmented } from '@/components/ui/Tabs';
 import { cx, fmtPctSigned, fmtPrice } from '@/lib/format';
 import { usePalette } from '@/lib/theme';
+import { fontPx } from '@/lib/tokens';
 
 type Window = '30D' | '7D';
 
@@ -12,13 +14,15 @@ const DAY_MS = 86_400_000;
 const fmtDay = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 const fmtHour = new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'UTC' });
 const fmtStamp = (d: Date) => `${fmtDay.format(d)}, ${fmtHour.format(d)} UTC`;
+/** Axis ticks at the `2xs` step; recharts takes a number, not a class. */
+const TICK_PX = fontPx('2xs');
 
 /**
  * Vault token price over the period: one line, no panel around it. The spot NAV readout under the
  * title is live. The line is REAL when the NAV-history collector (`VITE_NAV_HISTORY_URL`, src/chain/useNavHistory)
  * has ≥ 6 snapshots for this vault — drawn at the snapshots' own timestamps. Otherwise it is
- * ILLUSTRATIVE (src/demo/series.ts) and ends on the live spot NAV. Neither the line nor the readout
- * carries a badge; the site footer says the chart is illustrative until enough history exists.
+ * ILLUSTRATIVE (src/demo/series.ts), ends on the live spot NAV and carries an Illustrative badge.
+ * The readout is live either way and never badged.
  */
 export function NavChart({
   seed,
@@ -74,10 +78,12 @@ export function NavChart({
         <div className="flex flex-wrap items-center gap-4 text-xs">
           <span className="inline-flex items-center gap-2 text-weak num">
             <span className="h-[1.5px] w-4 bg-strong" /> {symbol} <span className={tdlpRet >= 0 ? 'text-success' : 'text-error'}>{fmtPctSigned(tdlpRet, 2)}</span>
-            {real && (
+            {real ? (
               <span className="text-weaker" data-testid="nav-history-until">
                 snapshots until {fmtStamp(new Date(last.date))}
               </span>
+            ) : (
+              <DemoBadge label="Illustrative" />
             )}
           </span>
           <Segmented<Window> size="sm" value={win} onChange={setWin} options={[{ value: '30D', label: '30D' }, { value: '7D', label: '7D' }]} />
@@ -95,7 +101,7 @@ export function NavChart({
             <CartesianGrid stroke={pal.strokeWeak} vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fill: pal.weaker, fontSize: 10 }}
+              tick={{ fill: pal.weaker, fontSize: TICK_PX }}
               tickLine={false}
               axisLine={{ stroke: pal.strokeStrong }}
               tickFormatter={(d: string) => (byHour ? fmtHour : fmtDay).format(new Date(d))}
@@ -103,7 +109,7 @@ export function NavChart({
             />
             <YAxis
               domain={[yMin - pad, yMax + pad]}
-              tick={{ fill: pal.weaker, fontSize: 10 }}
+              tick={{ fill: pal.weaker, fontSize: TICK_PX }}
               tickLine={false}
               axisLine={false}
               width={52}

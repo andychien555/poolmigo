@@ -4,12 +4,13 @@
  * switch (adding the chain first if the wallet does not know it). Chains without a deployment are
  * listed — you can go there — but marked so nobody expects a vault.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { SUPPORTED_CHAINS, chainShortLabel, hasDeployment } from '@/chain/chains';
 import { describeSwitchError } from '@/chain/switchChain';
 import { useSwitchToChain, useTargetChain } from '@/chain/useTargetChain';
 import { Button } from '@/components/ui/Button';
 import { ChainLogo } from '@/components/ui/ChainLogo';
+import { POPOVER_PANEL, useDismiss } from '@/components/ui/Popover';
 import { Spinner } from '@/components/ui/Spinner';
 import { BRAND } from '@/lib/brand';
 import { cx } from '@/lib/format';
@@ -22,14 +23,7 @@ export function ChainSelector() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [open]);
+  useDismiss(ref, open, setOpen);
 
   const warn = isWrongChain || !deployed;
   // The registry does not say whose chain it is, so the mark goes by name. Other chains show the status dot alone.
@@ -71,7 +65,7 @@ export function ChainSelector() {
         <ul
           role="listbox"
           aria-label="Networks"
-          className="absolute right-0 top-full mt-2 w-72 bg-background-popover border border-stroke-strong rounded-md shadow-pop p-1 animate-fade-in z-40"
+          className={cx(POPOVER_PANEL, 'w-72 p-1')}
         >
           {SUPPORTED_CHAINS.map((c) => {
             const current = c.id === chain.id;

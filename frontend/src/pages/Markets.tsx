@@ -9,7 +9,7 @@
  * order. NAV, the fee, the per-token amounts and the price range are on the vault page.
  * "Deposit" opens the deposit card over this page (`?deposit=<vault id>`), as the original did; the row opens the vault's page.
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useWallet } from '@/wallet/context';
 import { useStore } from '@/store/useStore';
@@ -24,6 +24,7 @@ import { Stat } from '@/components/ui/Stat';
 import { TokenGroup } from '@/components/ui/TokenIcon';
 import { Button } from '@/components/ui/Button';
 import { Arrow } from '@/components/ui/Arrow';
+import { POPOVER_PANEL, useDismiss } from '@/components/ui/Popover';
 import { Spinner } from '@/components/ui/Spinner';
 import { HINT_UNDERLINE, Tooltip } from '@/components/ui/Tooltip';
 import { BasketBar } from '@/components/vault/BasketBar';
@@ -35,7 +36,7 @@ type SortKey = 'apr' | 'tvl';
 type SortDir = 'asc' | 'desc';
 type Sort = { key: SortKey; dir: SortDir };
 
-const APR_HINT = 'Trading fees over the last 7 days ÷ average TVL, annualised. Shows — until 7 days of history exist.';
+const APR_HINT = 'Trading fees over the last 7 days ÷ average total deposited, annualised. Shows — until 7 days of history exist.';
 
 export function Markets() {
   const { address } = useWallet();
@@ -177,7 +178,7 @@ function VaultRow({ row: r, apr, onDeposit }: { row: LiveVaultRow; apr: number |
           !loading && <span className="hidden text-weaker lg:inline">—</span>
         )}
       </div>
-      <div className="num text-xl text-weak lg:text-md [grid-area:apr] lg:justify-self-end lg:[grid-area:auto]" title="Trading fees, 7-day average, annualised"><span className={label}>APR</span>{apr === undefined ? <span className="text-weaker">—</span> : fmtFeeApr(apr)}</div>
+      <div className="num text-xl text-weak lg:text-md [grid-area:apr] lg:justify-self-end lg:[grid-area:auto]" title={APR_HINT}><span className={label}>APR</span>{apr === undefined ? <span className="text-weaker">—</span> : fmtFeeApr(apr)}</div>
       <div className="display num text-xl text-strong [grid-area:tvl] lg:justify-self-end lg:[grid-area:auto]"><span className={label}>Total deposited</span>{usdCell(valuation.usd, (n) => fmtUsd(n, { cents: n < 10_000 }))}</div>
       <div className="mt-2 self-center [grid-area:act] lg:mt-0 lg:justify-self-end lg:[grid-area:auto]">
         <Button size="sm" className="w-full lg:w-auto" disabled={v.paused === true} onClick={(e) => { e.stopPropagation(); onDeposit(); }}>
@@ -202,21 +203,7 @@ function SortMenu({ sort, onChange, className }: { sort: Sort; onChange: (s: Sor
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', onDoc);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDoc);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
+  useDismiss(ref, open, setOpen);
 
   return (
     <div className={cx('relative', className)} ref={ref}>
@@ -242,7 +229,7 @@ function SortMenu({ sort, onChange, className }: { sort: Sort; onChange: (s: Sor
         <ul
           role="listbox"
           aria-label="Sort vaults"
-          className="absolute right-0 top-full mt-2 w-56 bg-background-popover border border-stroke-strong rounded-md shadow-pop p-1 animate-fade-in z-40"
+          className={cx(POPOVER_PANEL, 'w-56 p-1')}
         >
           {SORTS.map((s) => {
             const current = s.key === sort.key && s.dir === sort.dir;

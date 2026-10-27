@@ -114,7 +114,8 @@ export function PriceRange({ pairs, className }: Props) {
   const sky = `${id}-sky`, glow = `${id}-glow`, bloom = `${id}-bloom`, sun = `${id}-sun`;
   const face = `${id}-face`, side = `${id}-side`, warmL = `${id}-warm-l`, warmR = `${id}-warm-r`, foot = `${id}-foot`, grain = `${id}-grain`, plate = `${id}-plate`;
   const ground = `${id}-ground`, cast = `${id}-cast`, lane = `${id}-lane`, above = `${id}-above`;
-  const label = { fontSize: 10, letterSpacing: '0.14em' } as const;
+  // The SVG's small caps labels: the `2xs` step at the label tracking
+  const label = { letterSpacing: '0.14em' } as const;
 
   return (
     <section className={className} aria-label="Price range">
@@ -272,19 +273,19 @@ export function PriceRange({ pairs, className }: Props) {
                   <rect x={st.x} y={HORIZON - 26} width={STONE_W} height="26" fill={`url(#${foot})`} />
                 </g>
                 <rect x={st.x} y={top} width={STONE_W} height="1" fill="#fdf3e9" opacity=".3" />
-                <text x={st.centre} y={top - 32} textAnchor="middle" className="fill-weaker" {...label}>{st.name}</text>
+                <text x={st.centre} y={top - 32} textAnchor="middle" className="fill-weaker text-2xs" {...label}>{st.name}</text>
                 <text x={st.centre} y={top - 11} textAnchor="middle" fontSize="16" className="fill-strong num">{fmtQuote(st.value)}</text>
               </g>
             ))}
 
             {/* the price reading */}
             {!aside && <rect x={sunX} y={HORIZON - 96} width="1" height={96 - SUN_R - 14} className="fill-accent-bright" opacity=".55" />}
-            <text x={priceX} y={HORIZON - 132} textAnchor={priceAnchor} className="fill-weak" {...label}>PRICE</text>
+            <text x={priceX} y={HORIZON - 132} textAnchor={priceAnchor} className="fill-weak text-2xs" {...label}>PRICE</text>
             <text x={priceX} y={HORIZON - 106} textAnchor={priceAnchor} fontSize="24" className="fill-accent-bright num">{priceText}</text>
 
             {/* the graduated horizon: the price axis */}
             {minor.map((t, i) => <rect key={i} x={t.x} y={HORIZON + 1} width="1" height={t.major ? 10 : 5} className="fill-weaker" opacity={t.major ? 0.9 : 0.45} />)}
-            {ticks.map((t) => <text key={t} x={X(t)} y={HORIZON + 30} textAnchor="middle" fontSize="10" className="fill-weaker num">{t.toFixed(tickDigits)}</text>)}
+            {ticks.map((t) => <text key={t} x={X(t)} y={HORIZON + 30} textAnchor="middle" className="fill-weaker num text-2xs">{t.toFixed(tickDigits)}</text>)}
           </svg>
         </div>
       </div>

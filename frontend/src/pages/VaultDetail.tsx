@@ -6,7 +6,7 @@
  * live spot, receipt supply, performance fee, the basket composition and the exact spot
  * prices used, and the price range: the live spot between the adapters' on-chain range
  * (src/chain/useVaultRanges.ts). The card's deposits and withdrawals are real transactions on this
- * vault's chain. Mocked: the price chart's line only (no history on chain), unbadged for now — never
+ * vault's chain. Mocked: the price chart's line only (no history on chain), under an Illustrative badge — never
  * the live price or the spot-NAV readout. The fee APR (stat row + "Your APR") and "Fees earned" come from the
  * NAV-history collector (src/chain/feeApy.ts) through the chart's own fetch; "—" until 7 days are covered.
  */
@@ -144,7 +144,7 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
             </div>
           )}
           <StatRow cols={4}>
-            <Stat label="TVL" value={usd(valuation.usd)} sub={valuation.unpriced.length > 0 ? `no price for ${valuation.unpriced.join(', ')}` : undefined} />
+            <Stat label="Total deposited" value={usd(valuation.usd)} sub={valuation.unpriced.length > 0 ? `no price for ${valuation.unpriced.join(', ')}` : undefined} />
             {/* The fee APR alone, as the original design's stat row drew it */}
             <Stat label="APR" value={fmtFeeApr(earnings.apr)} />
             <Stat label="Price" value={nav === undefined ? '—' : fmtPrice(nav)} sub={`per ${v.entry.receipt.symbol}`} />

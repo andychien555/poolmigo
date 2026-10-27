@@ -49,7 +49,7 @@ function Typography() {
     <Section
       id="typography"
       title="Typography"
-      source="tailwind.config.ts · src/index.css"
+      source="src/lib/tokens.ts · tailwind.config.ts · src/index.css"
       lede="Four faces, each with one job. The serif sets every title, Geist carries the interface, and every figure in a reading is set in Switzer so a column of numbers reads as one hand."
     >
       <SubSection title="Families">

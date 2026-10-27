@@ -1,7 +1,7 @@
 import type { Config } from 'tailwindcss';
 import defaultTheme from 'tailwindcss/defaultTheme';
 import plugin from 'tailwindcss/plugin';
-import { cssVariables, tailwindColors } from './src/lib/tokens';
+import { TYPE_SCALE, cssVariables, tailwindColors } from './src/lib/tokens';
 
 // Design tokens — Dusk direction.
 //
@@ -32,19 +32,8 @@ export default {
     // The serif is set at light (300), and at regular (400) for vault names. Geist carries emphasis at 500; 600 is the ceiling.
     fontWeight: { light: '300', normal: '400', medium: '500', semibold: '500', bold: '600' },
     borderRadius: { none: '0', sm: '2px', DEFAULT: '3px', md: '3px', lg: '4px', full: '2px', circle: '50%' },
-    // Even sizes on 4px line heights, and the whole scale: Tailwind's own sizes are replaced, not extended.
-    // There is no `sm`; supporting text is `base` in a weaker colour.
-    fontSize: {
-      '2xs': ['10px', '12px'],
-      xs: ['12px', '16px'],
-      base: ['14px', '20px'],
-      md: ['16px', '24px'],
-      lg: ['18px', '24px'],
-      xl: ['20px', '28px'],
-      '2xl': ['24px', '32px'],
-      '3xl': ['32px', '40px'],
-      '4xl': ['40px', '48px'],
-    },
+    // Even sizes on 4px line heights, and the whole scale (src/lib/tokens.ts): Tailwind's own sizes are replaced, not extended.
+    fontSize: TYPE_SCALE,
     // Tailwind's 4px scale without its 6, 10 and 14px half steps. `0.5` (2px) stays for a nudge.
     spacing: Object.fromEntries(Object.entries(defaultTheme.spacing).filter(([step]) => !['1.5', '2.5', '3.5'].includes(step))),
     extend: {

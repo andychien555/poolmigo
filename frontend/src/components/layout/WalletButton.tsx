@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useWallet } from '@/wallet/context';
 import { useStore } from '@/store/useStore';
 import { Button } from '@/components/ui/Button';
+import { POPOVER_PANEL, useDismiss } from '@/components/ui/Popover';
 import { cx, shortAddress } from '@/lib/format';
 import { NetworkManual } from '@/components/live/NetworkManual';
 import { useConnectWallet, useDisconnectWallet } from '@/chain/useConnectWallet';
@@ -21,14 +22,7 @@ export function WalletButton() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [open]);
+  useDismiss(ref, open, setOpen);
 
   if (!connected) {
     return (
@@ -62,7 +56,7 @@ export function WalletButton() {
         </span>
       </Button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-background-popover border border-stroke-strong rounded-md shadow-pop p-3 animate-fade-in z-40">
+        <div className={cx(POPOVER_PANEL, 'w-72 p-3')}>
           <div className="text-2xs text-weaker mb-2 num break-all">{shown}</div>
 
           {address ? (

@@ -218,7 +218,7 @@ function AmountBox({
   balance?: bigint; decimals: number; connected: boolean; usd?: number; autoFocus?: boolean; disabled?: boolean; error?: string | boolean; note?: string; ariaLabel: string;
 }) {
   return (
-    <div className={cx('well grid gap-2 px-4 py-3 ring-inset', error ? 'ring-1 ring-stroke-error/60' : 'focus-within:ring-1 focus-within:ring-stroke-focused')}>
+    <div className={cx('well grid gap-2 px-4 py-3', error ? 'well-field-error' : 'well-field')}>
       <div className="flex items-center gap-3">
         <input
           inputMode="decimal"
@@ -252,6 +252,20 @@ function AmountBox({
         <div className={cx('text-2xs num', typeof error === 'string' ? 'text-error' : 'text-weaker')}>{typeof error === 'string' ? error : note}</div>
       )}
     </div>
+  );
+}
+
+/** What a deposit mints, in receipt tokens, with its ≈ $ once priced. Until there is a preview it reads 0, dimmed. */
+function YouReceive({ shares, decimals, symbol, usd }: { shares?: bigint; decimals: number; symbol: string; usd?: number }) {
+  return (
+    <Field label="You receive">
+      <div className="flex items-baseline justify-between gap-3 border-t border-stroke-strong pt-3 num">
+        <span className={cx('display num truncate text-2xl', shares !== undefined ? 'text-strong' : 'text-weaker')}>
+          {shares !== undefined ? formatAmountSignificant(shares, decimals) : '0'} <span className="ml-0.5 text-base font-normal text-weak">{symbol}</span>
+        </span>
+        {usd !== undefined && <span className="text-xs text-weaker shrink-0">≈ {fmtUsd(usd, { compact: false, cents: true })}</span>}
+      </div>
+    </Field>
   );
 }
 
@@ -332,7 +346,9 @@ interface ChoiceOption {
  */
 function modeOptions({ vault: v, symbols }: FormContext, route: ZapRoute | undefined, zapFirst = false): ChoiceOption[] {
   const symbol = route?.token.symbol ?? ZAP_ROUTE_SYMBOL;
-  const basket: ChoiceOption = { id: 'basket', label: symbols.length === 2 ? 'Both' : 'All', name: symbols.map(displaySymbol).join(' + '), icon: <TokenGroup symbols={symbols} size={18} />, disabled: v.tokens.length === 0 };
+  // The basket's size lands before its symbols do: name the key by the count, and leave it blank until that lands
+  const count = symbols.length || v.tokens.length;
+  const basket: ChoiceOption = { id: 'basket', label: count === 0 ? '' : count === 2 ? 'Both' : 'All', name: symbols.map(displaySymbol).join(' + '), icon: <TokenGroup symbols={symbols} size={18} />, disabled: v.tokens.length === 0 };
   const zap: ChoiceOption = { id: 'zap', label: symbol, name: `${symbol} only, through the zap`, icon: <TokenIcon symbol={symbol} size={18} />, disabled: !route };
   return zapFirst ? [zap, basket] : [basket, zap];
 }
@@ -472,13 +488,7 @@ function ZapPendingForm({ ctx: { vault: v }, choice }: { ctx: FormContext; choic
         />
       </Field>
 
-      <Field label="You receive">
-        <div className="flex items-baseline justify-between gap-3 border-t border-stroke-strong pt-3 num">
-          <span className="display num truncate text-2xl text-weaker">
-            0 <span className="ml-0.5 text-base font-normal text-weak">{v.receipt.symbol}</span>
-          </span>
-        </div>
-      </Field>
+      <YouReceive decimals={v.decimals} symbol={v.receipt.symbol} />
 
       <Button block variant="accent" disabled loading>
         Checking the {ZAP_ROUTE_SYMBOL} route…
@@ -633,14 +643,7 @@ function BasketDepositForm({ ctx, choice }: { ctx: FormContext; choice: ReactNod
         </div>
       </Field>
 
-      <Field label="You receive">
-        <div className="flex items-baseline justify-between gap-3 border-t border-stroke-strong pt-3 num">
-          <span className={cx('display num truncate text-2xl', preview.shares !== undefined ? 'text-strong' : 'text-weaker')}>
-            {preview.shares !== undefined ? formatAmountSignificant(preview.shares, v.decimals) : '0'} <span className="ml-0.5 text-base font-normal text-weak">{v.receipt.symbol}</span>
-          </span>
-          {sharesUsd !== undefined && <span className="text-xs text-weaker shrink-0">≈ {fmtUsd(sharesUsd, { compact: false, cents: true })}</span>}
-        </div>
-      </Field>
+      <YouReceive shares={preview.shares} decimals={v.decimals} symbol={v.receipt.symbol} usd={sharesUsd} />
 
       {previewError && <Message tone="warn">{previewError}</Message>}
       {error && <Message tone="error">{error}</Message>}
@@ -809,14 +812,7 @@ function ZapDepositForm({ ctx, routes, choice, initialAmount }: { ctx: FormConte
         />
       </Field>
 
-      <Field label="You receive">
-        <div className="flex items-baseline justify-between gap-3 border-t border-stroke-strong pt-3 num">
-          <span className={cx('display num truncate text-2xl', preview.shares !== undefined ? 'text-strong' : 'text-weaker')}>
-            {preview.shares !== undefined ? formatAmountSignificant(preview.shares, v.decimals) : '0'} <span className="ml-0.5 text-base font-normal text-weak">{v.receipt.symbol}</span>
-          </span>
-          {sharesUsd !== undefined && <span className="text-xs text-weaker shrink-0">≈ {fmtUsd(sharesUsd, { compact: false, cents: true })}</span>}
-        </div>
-      </Field>
+      <YouReceive shares={preview.shares} decimals={v.decimals} symbol={v.receipt.symbol} usd={sharesUsd} />
 
       {sizeWarning && <Message tone="warn">{sizeWarning}</Message>}
       {previewError && <Message tone="warn">{previewError}</Message>}
@@ -839,15 +835,14 @@ function ZapDepositForm({ ctx, routes, choice, initialAmount }: { ctx: FormConte
           {kept !== undefined && bought.length > 0 && (
             <Row k="Auto-swap" v={`${formatAmount(amountIn - kept, token.decimals, 6)} ${token.symbol} → ${bought.map((x) => `${formatAmount(x.amount, x.t.decimals, 6)} ${x.t.symbol}`).join(' + ')}`} />
           )}
-          <Row
-            k={legNote ? <Hint tip={legNote} align="start" wide>Slippage tolerance</Hint> : 'Slippage tolerance'}
-            v={<PercentInput value={slippage} onChange={setSlippage} error={!slip.ok} ariaLabel="Zap slippage tolerance in percent" />}
-          />
+          <Row k="Slippage tolerance" v={<PercentInput value={slippage} onChange={setSlippage} error={!slip.ok} ariaLabel="Zap slippage tolerance in percent" />} />
           <Row k="Minimum received" v={slip.ok ? `${formatAmountSignificant(minShares, v.decimals)} ${v.receipt.symbol}` : <span className="text-error">{slip.error}</span>} />
           <Row k="Performance fee" v={`${feeLabel(v.performanceFeeBps)} of harvested fees`} />
           <Row k="Lock-up" v="None · redeem anytime" />
         </DetailsFold>
         {slip.ok && slip.clamped && <p className="mt-2 text-2xs text-warning">Capped at the route limit of {ZAP_MAX_SLIPPAGE_BPS / 100}%.</p>}
+        {/* Under the fold, not inside it: it changes what the swap is allowed, so it shows whenever it applies */}
+        {legNote && <p className="mt-2 text-2xs text-weaker">{legNote}</p>}
       </div>
     </div>
   );

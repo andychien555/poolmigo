@@ -304,7 +304,7 @@ describe('vault page — live figures, the original deposit card, illustrative b
     expect(screen.getByRole('button', { name: /Checking the USDG route/ })).toBeDefined();
   });
 
-  it('the price range draws the live spot between the on-chain band; nothing is badged for now', () => {
+  it('the price range draws the live spot between the on-chain band; only the illustrative chart line is badged', () => {
     renderAt(`/vault/4663-${ENTRY.key}`);
     const range = screen.getByRole('region', { name: 'Price range' });
     expect(within(range).getByRole('img', { name: /Price 2500\.0 USDG per ETH, between the lower bound 2210\.0 and the upper bound 2610\.0/ })).toBeDefined();
@@ -313,8 +313,8 @@ describe('vault page — live figures, the original deposit card, illustrative b
     const readout = screen.getByTestId('nav-live');
     expect(within(readout).getByText('$2.00')).toBeDefined();
     expect(within(readout).queryByText(/^(Demo( data)?|Illustrative)$/i)).toBeNull();
-    // The NAV chart line is still illustrative, but carries no badge for now.
-    expect(demoBadges()).toEqual([]);
+    // The fixture has no NAV history, so the chart line is illustrative and says so — the one badge on the page.
+    expect(demoBadges()).toHaveLength(1);
   });
 
   it('a spot outside the band reads "Out of range"', () => {

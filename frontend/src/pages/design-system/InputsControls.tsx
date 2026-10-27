@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { parseSlippageBps } from '@/chain/deposit';
 import { AmountInput } from '@/components/ui/AmountInput';
 import { PercentInput } from '@/components/ui/PercentInput';
 import { Segmented, UnderlineTabs } from '@/components/ui/Tabs';
@@ -69,7 +70,8 @@ function AmountInputSection() {
 function PercentInputSection() {
   const [tol, setTol] = useState('0.25');
   const [bad, setBad] = useState('abc');
-  const invalid = !Number.isFinite(Number(bad)) || bad.trim() === '';
+  // The deposit card's own check, so the specimen says what the card says
+  const slip = parseSlippageBps(bad);
   return (
     <Section
       id="percent-input"
@@ -88,9 +90,9 @@ function PercentInputSection() {
           <Specimen surface="elevated" className="!block" code="error">
             <div className="flex items-center justify-between gap-3 text-xs">
               <span className="text-weaker">Slippage tolerance</span>
-              <PercentInput value={bad} onChange={setBad} error={invalid} ariaLabel="Slippage tolerance in percent" />
+              <PercentInput value={bad} onChange={setBad} error={!slip.ok} ariaLabel="Slippage tolerance in percent" />
             </div>
-            {invalid && <p className="mt-2 text-right text-xs text-error">Numbers only</p>}
+            {!slip.ok && <p className="mt-2 text-right text-xs text-error">{slip.error}</p>}
           </Specimen>
         </div>
       </SubSection>

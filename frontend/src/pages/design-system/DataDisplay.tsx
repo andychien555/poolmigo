@@ -132,7 +132,7 @@ function StatRowSection() {
           </StatRow>
         </Specimen>
       </SubSection>
-      <SubSection title="Without the rule" note={<><Code>{'rule={false}'}</Code>: from 768px up the readings stand alone. Used over the scene, where a rule would cut the sky.</>}>
+      <SubSection title="Without the rule" note={<><Code>{'rule={false}'}</Code>: from 768px up the readings stand alone. For a row set over the scene, where a rule would cut the sky.</>}>
         <Specimen className="!block" code="<StatRow cols={2} packed rule={false}>">
           <StatRow cols={2} packed rule={false}>
             <Stat label="TVL" value="$11.4M" />

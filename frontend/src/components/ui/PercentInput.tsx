@@ -18,8 +18,8 @@ export function PercentInput({ value, onChange, ariaLabel, error, className }: P
   return (
     <label
       className={cx(
-        'well inline-flex h-8 cursor-text items-center gap-1 px-3 text-xs num ring-inset transition-shadow duration-150',
-        error ? 'ring-1 ring-stroke-error/60' : 'focus-within:ring-1 focus-within:ring-stroke-focused',
+        'well inline-flex h-8 cursor-text items-center gap-1 px-3 text-xs num transition-shadow duration-150',
+        error ? 'well-field-error' : 'well-field',
         className,
       )}
     >
