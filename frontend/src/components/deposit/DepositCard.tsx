@@ -193,6 +193,35 @@ const vaultName = (v: LiveVault) => basketName(v.tokens.map((t) => t.symbol), v.
 /** Whole-token display value of a raw amount (USD estimates only — never fed to a transaction). */
 const whole = (raw: bigint, decimals: number) => Number(raw) / 10 ** decimals;
 
+/** Decimals an auto-filled basket amount keeps (fewer when the token has fewer). */
+const FILL_DECIMALS = 6;
+
+/**
+ * The basket fields after the user types `input` into field `from`: the others follow at the vault's
+ * current mix (amount_i = typed × T_i / T_from), rounded UP to FILL_DECIMALS so the typed token stays
+ * the one that sets the deposit. Clearing a field clears them all. A field the mix cannot size (totals
+ * not read yet, a token the vault does not hold, a typo) keeps what was there.
+ */
+function fillAtMix(tokens: TokenMeta[], totals: bigint[], current: Record<string, string>, from: number, input: string): Record<string, string> {
+  if (input.trim() === '') return {};
+  const next = { ...current, [tokens[from].address]: input };
+  const parsed = parseAmount(input, tokens[from].decimals);
+  const base = totals[from] ?? 0n;
+  if (!parsed.ok || base === 0n) return next;
+  tokens.forEach((t, i) => {
+    const total = totals[i] ?? 0n;
+    if (i === from || total === 0n) return;
+    const step = 10n ** BigInt(Math.max(t.decimals - FILL_DECIMALS, 0));
+    const den = base * step;
+    next[t.address] = toExactString(((parsed.value * total + den - 1n) / den) * step, t.decimals);
+  });
+  return next;
+}
+
+/** How the basket fields fill: the tooltip on the in-kind "Amount" label. */
+const MIX_EXPLAINER =
+  "Deposits go in at the vault's current mix, so the other amounts fill in as you type. The token you hold least of sets the most you can add — use its Max.";
+
 function Chevron({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 16 16" className={cx('h-4 w-4 text-weaker shrink-0', className)} fill="none" aria-hidden>
@@ -616,26 +645,27 @@ function BasketDepositForm({ ctx, choice }: { ctx: FormContext; choice: ReactNod
     <div className="grid gap-4">
       {choice}
 
-      <Field label="Amount">
+      <Field label={<Hint tip={MIX_EXPLAINER} align="start" wide>Amount</Hint>}>
         <div className="space-y-2">
           {v.tokens.map((t, i) => {
             const parsed = parseAmount(inputs[t.address] ?? '', t.decimals);
             const price = usdPrices.get(t.address.toLowerCase());
-            const pulls = required[i];
+            const balance = user.balances[i] ?? 0n;
+            // Red as soon as a field asks for more than the wallet holds, before the preview lands
+            const over = Boolean(address) && parsed.ok && parsed.value > balance;
             return (
               <AmountBox
                 key={t.address}
                 value={inputs[t.address] ?? ''}
-                onChange={(s) => { setInputs((x) => ({ ...x, [t.address]: s })); setMinted(null); }}
+                onChange={(s) => { setInputs((x) => fillAtMix(v.tokens, v.totals, x, i, s)); setMinted(null); }}
                 tokenLabel={t.symbol}
                 tokenIcon={<TokenIcon symbol={t.symbol} size={20} />}
-                balance={user.balances[i] ?? 0n}
+                balance={balance}
                 decimals={t.decimals}
                 connected={Boolean(address)}
                 usd={parsed.ok && price !== undefined ? whole(parsed.value, t.decimals) * price : undefined}
                 autoFocus={i === 0}
-                error={offer.errors[t.address] ?? (short === t.address ? true : undefined)}
-                note={pulls !== undefined && pulls > 0n ? `Vault pulls ${formatAmount(pulls, t.decimals, 6)}` : undefined}
+                error={offer.errors[t.address] ?? (over || short === t.address ? true : undefined)}
                 ariaLabel={`${t.symbol} amount`}
               />
             );
