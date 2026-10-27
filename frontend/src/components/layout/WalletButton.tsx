@@ -45,10 +45,10 @@ export function WalletButton() {
     <div className="relative" ref={ref}>
       <Button variant="secondary" size="sm" onClick={() => setOpen(!open)} className={cx('sm:!px-4', wrongChain && 'btn-glass-warning')}>
         <span className="flex items-center gap-2 font-mono text-xs font-normal">
-          {/* The wallet mark takes the colour the status dot had: green on a real connection, grey in read-only mode. */}
+          {/* The wallet mark takes the label's colour on a real connection, grey in read-only mode. */}
           <svg
             viewBox="0 0 16 16"
-            className={cx('h-4 w-4 shrink-0', address ? 'text-success' : 'text-weaker')}
+            className={cx('h-4 w-4 shrink-0', !address && 'text-weaker')}
             fill="none"
             stroke="currentColor"
             strokeWidth="1.5"

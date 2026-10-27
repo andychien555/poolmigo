@@ -120,24 +120,9 @@ export function PriceRange({ pairs, className }: Props) {
     <section className={className} aria-label="Price range">
       <div className="overflow-hidden rounded-lg border border-stroke-strong bg-fill-recessed">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-stroke-weak px-4 py-3 text-xs text-weaker">
-          <h3 className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <b className="display text-base text-strong">Price range</b>
-            <Button
-              type="button"
-              variant="secondary"
-              size="xs"
-              onClick={() => setFlipped(!flipped)}
-              aria-label={`Priced in ${quote} per ${base}. Switch to ${base} per ${quote}`}
-            >
-              <span className="inline-flex items-center gap-2">
-                {quote} per {base}
-                <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
-                  <path d="M3 5.5h10m0 0L10.5 3M13 5.5 10.5 8M13 10.5H3m0 0L5.5 8M3 10.5 5.5 13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </span>
-            </Button>
-          </h3>
-          <span className="flex flex-wrap items-center gap-2 num">
+          {/* Which token's range, then the unit it reads in; the arrows only turn that unit round */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h3 className="display text-base text-strong">Price range</h3>
             {pairs.length > 1 && (
               <Segmented
                 size="sm"
@@ -146,6 +131,23 @@ export function PriceRange({ pairs, className }: Props) {
                 options={pairs.map((p) => ({ value: p.base, label: p.base }))}
               />
             )}
+            <span className="inline-flex items-center gap-1 num">
+              {quote} per {base}
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                className="w-7 px-0"
+                onClick={() => setFlipped(!flipped)}
+                aria-label={`Priced in ${quote} per ${base}. Switch to ${base} per ${quote}`}
+              >
+                <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
+                  <path d="M3 5.5h10m0 0L10.5 3M13 5.5 10.5 8M13 10.5H3m0 0L5.5 8M3 10.5 5.5 13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Button>
+            </span>
+          </div>
+          <span className="flex flex-wrap items-center gap-2 num">
             {!inRange && <span className="text-error">Out of range</span>}
             <span>Live price · on-chain range</span>
           </span>

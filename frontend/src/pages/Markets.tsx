@@ -13,7 +13,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useWallet } from '@/wallet/context';
 import { DEPLOYMENTS } from '@/chain/chains';
 import { useTargetChain } from '@/chain/useTargetChain';
-import { basketName, holdingUsd, resolveVaultRouteId, vaultRouteId } from '@/chain/liveVaults';
+import { basketName, basketOrder, holdingUsd, resolveVaultRouteId, vaultRouteId } from '@/chain/liveVaults';
 import { useLiveVaults, type LiveVaultRow } from '@/chain/useLiveVaults';
 import { FEE_APR_WINDOW_DAYS, feeApyPct, fmtFeeApr } from '@/chain/feeApy';
 import { useNavHistoryRows } from '@/chain/useNavHistory';
@@ -158,7 +158,7 @@ function VaultRow({ row: r, apr, onDeposit }: { row: LiveVaultRow; apr: number |
   const navigate = useNavigate();
   const { v, valuation } = r;
   const label = 'mr-2 text-xs font-normal text-weaker lg:hidden';
-  const symbols = v.tokens.map((t) => t.symbol);
+  const symbols = basketOrder(v.tokens.map((t) => t.symbol));
   const loading = !v.failed && (!v.ready || (r.spotsLoading && valuation.usd === undefined));
   const usdCell = (x: number | undefined, fmt: (n: number) => string) =>
     v.failed ? <span className="text-weaker">—</span> : loading ? <Spinner className="h-4 w-4 text-weaker inline-block" /> : x === undefined ? <span className="text-weaker">—</span> : fmt(x);

@@ -90,13 +90,21 @@ export function displaySymbol(symbol: string): string {
 }
 
 /**
- * The basket as a display name, from the ON-CHAIN symbols: the anchor (USDG) last, like a pool pair
- * ("ETH / USDG"); the registry label without its parenthetical until the symbols land.
+ * The ON-CHAIN symbols in the order a basket reads: the anchor (USDG) last, like a pool pair, the
+ * rest as on chain. Names and icon rows both take it, so the marks line up with the words.
+ */
+export function basketOrder(symbols: readonly string[]): string[] {
+  const others = symbols.filter((s) => s !== USD_ANCHOR_SYMBOL);
+  return others.length === symbols.length ? [...symbols] : [...others, USD_ANCHOR_SYMBOL];
+}
+
+/**
+ * The basket as a display name, from the ON-CHAIN symbols in `basketOrder` ("ETH / USDG"); the
+ * registry label without its parenthetical until the symbols land.
  */
 export function basketName(symbols: readonly string[], fallbackLabel: string): string {
   if (symbols.length === 0) return fallbackLabel.replace(/\s*\([^)]*\)\s*$/, '').replace(/\bWETH\b/g, 'ETH');
-  const others = symbols.filter((s) => s !== USD_ANCHOR_SYMBOL);
-  return (others.length === symbols.length ? symbols : [...others, USD_ANCHOR_SYMBOL]).map(displaySymbol).join(' / ');
+  return basketOrder(symbols).map(displaySymbol).join(' / ');
 }
 
 /** `performanceFeeBps` → "10%", or "12.50%" when there are hundredths; "—" until read. */

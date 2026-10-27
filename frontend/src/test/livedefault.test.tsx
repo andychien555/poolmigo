@@ -16,7 +16,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { Address } from 'viem';
 import { CHAINS as REGISTRY_CHAINS, DEPLOYMENTS as REGISTRY_DEPLOYMENTS } from '@/config/generated';
 import { CHAINS, DEFAULT_CHAIN_ID, DEPLOYMENTS, defaultChainIds } from '@/chain/chains';
-import { basketName, feeLabel, holdingUsd, navPerShareUsd, parseVaultRouteId, resolveVaultRouteId, tokenUsdPrices, vaultRouteId } from '@/chain/liveVaults';
+import { basketName, basketOrder, feeLabel, holdingUsd, navPerShareUsd, parseVaultRouteId, resolveVaultRouteId, tokenUsdPrices, vaultRouteId } from '@/chain/liveVaults';
 import type { SpotPrice } from '@/chain/spot';
 import type { LiveVault, UserBasket } from '@/chain/useVault';
 import { illustrativeNavSeries } from '@/demo/series';
@@ -116,6 +116,9 @@ describe('live-vault helpers', () => {
     expect(basketName(['USDG', 'WETH'], 'x')).toBe('ETH / USDG');
     expect(basketName(['USDG', 'WETH', 'PONS'], 'x')).toBe('ETH / PONS / USDG');
     expect(basketName([], 'USDG / WETH basket (Robinhood Chain)')).toBe('USDG / ETH basket');
+    // icon rows take the same order as the name; on-chain symbols kept
+    expect(basketOrder(['USDG', 'WETH', 'PONS'])).toEqual(['WETH', 'PONS', 'USDG']);
+    expect(basketOrder(['WETH', 'PONS'])).toEqual(['WETH', 'PONS']);
     // whole percents drop the decimals
     expect(feeLabel(1000)).toBe('10%');
     expect(feeLabel(1250)).toBe('12.50%');

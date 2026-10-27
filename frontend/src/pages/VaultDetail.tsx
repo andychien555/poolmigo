@@ -15,7 +15,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useWallet } from '@/wallet/context';
 import { DEPLOYMENTS, chainFor, chainLabel, findVault, isLocalChain } from '@/chain/chains';
 import { formatAmount, formatAmountSignificant, shortHex } from '@/chain/amounts';
-import { basketName, displaySymbol, feeLabel, holdingUsd, resolveVaultRouteId, tokenUsdPrices, vaultRouteId } from '@/chain/liveVaults';
+import { basketName, basketOrder, displaySymbol, feeLabel, holdingUsd, resolveVaultRouteId, tokenUsdPrices, vaultRouteId } from '@/chain/liveVaults';
 import { USD_ANCHOR_SYMBOL, spotUsdPerToken } from '@/chain/spot';
 import { anchorOf, useLiveVaults, type LiveVaultRow } from '@/chain/useLiveVaults';
 import { useOpenVault, useSwitchToChain } from '@/chain/useTargetChain';
@@ -95,7 +95,7 @@ function VaultView({ row, spots }: { row: LiveVaultRow; spots: ChainSpots }) {
     [history, v.entry.key, v.chainId],
   );
 
-  const symbols = v.tokens.map((t) => t.symbol);
+  const symbols = basketOrder(v.tokens.map((t) => t.symbol));
   const name = basketName(v.ready ? symbols : [], v.entry.label);
   const usd = (x: number | undefined, cents = true) => (x === undefined ? '—' : fmtUsd(x, { cents }));
   const wrongChain = Boolean(address) && chainId !== v.chainId;

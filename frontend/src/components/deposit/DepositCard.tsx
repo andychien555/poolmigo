@@ -64,7 +64,7 @@ import {
   type UserBasket,
   type ZapRoute,
 } from '@/chain/useVault';
-import { basketName, displaySymbol, feeLabel, tokenUsdPrices, vaultRouteId } from '@/chain/liveVaults';
+import { basketName, basketOrder, displaySymbol, feeLabel, tokenUsdPrices, vaultRouteId } from '@/chain/liveVaults';
 import type { LiveVaultRow } from '@/chain/useLiveVaults';
 import type { ChainSpots } from '@/chain/useSpotPrices';
 import { useStore } from '@/store/useStore';
@@ -98,7 +98,7 @@ interface Props {
 export function DepositCard({ vault: v, user, usdPrices, nav, initialAmount, showVaultLink = true }: Props) {
   const [tab, setTab] = useState<Tab>('deposit');
   const routes = useZapRoutes(v);
-  const symbols = v.tokens.map((t) => t.symbol);
+  const symbols = basketOrder(v.tokens.map((t) => t.symbol));
   const unreachable = v.hasDeployment && (Boolean(v.error) || (!v.isLoading && v.tokens.length === 0));
   const ctx: FormContext = { vault: v, user, usdPrices: usdPrices ?? new Map(), nav };
 
@@ -327,7 +327,7 @@ interface ChoiceOption {
  * then splits; it stays unpickable until the route is confirmed.
  */
 function modeOptions(v: LiveVault, route: ZapRoute | undefined, pending: boolean, zapFirst = false): ChoiceOption[] {
-  const symbols = v.tokens.map((t) => t.symbol);
+  const symbols = basketOrder(v.tokens.map((t) => t.symbol));
   const out: ChoiceOption[] = [{ id: 'basket', label: symbols.length === 2 ? 'Both' : 'All', name: symbols.map(displaySymbol).join(' + '), icon: <TokenGroup symbols={symbols} size={18} /> }];
   if (route || pending) {
     const symbol = route?.token.symbol ?? ZAP_ROUTE_SYMBOL;
@@ -879,7 +879,7 @@ function SharesBox({ ctx, value, onChange, error, connected }: { ctx: FormContex
       value={value}
       onChange={onChange}
       tokenLabel={v.receipt.symbol}
-      tokenIcon={<TokenGroup symbols={v.tokens.map((t) => t.symbol)} size={18} />}
+      tokenIcon={<TokenGroup symbols={basketOrder(v.tokens.map((t) => t.symbol))} size={18} />}
       balance={user.shares}
       decimals={v.decimals}
       connected={connected}
